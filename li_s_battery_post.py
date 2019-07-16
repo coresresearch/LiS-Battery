@@ -16,7 +16,7 @@ import pandas as pd
 
 def plot_sim(tags, SV_df, stage, yax, fig, axes):
     
-    if stage == 'Charging':
+    if stage == 'Re-Equilibrating':
         showlegend = 1
     else:
         showlegend = 0
@@ -35,17 +35,17 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
                    frameon=False).set_visible(showlegend)
     SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
-    # Plot Li2S and S8 particle radius
+    # Plot Li2S and S8 volume fractions
     SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1, yax], xlim=[0,t.iloc[-1]])
 #    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel('Particle radii [m]', fontsize = fontsize)
+    SV_plot.set_ylabel('Solid phase volume fractions [-]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
     SV_plot.legend(loc=2, bbox_to_anchor=(1.05, 1), ncol=1, borderaxespad=0,
                    frameon=False).set_visible(showlegend)
     SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], ax=axes[2, yax], logy=True, xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], ax=axes[2, yax], logy=True, xlim=[0,t.iloc[-1]]) #
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(True)

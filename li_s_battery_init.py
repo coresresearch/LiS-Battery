@@ -35,7 +35,7 @@ Li2S_el_s = ct.Interface(inputs.ctifile, inputs.Li2S_elyte_phase,
                              [Li2S_obj, elyte_obj, conductor_obj])
 carbon_el_s = ct.Interface(inputs.ctifile, inputs.graphite_elyte_phase,
                              [carbon_obj, elyte_obj, conductor_obj])
-#Li2S_tpb = ct.Interface('sofc.cti', 'tpb', [anode_bulk, anode_surf, oxide_surf_a])
+#Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [Li2S_obj, Li2S_el_s, ])
 
 if hasattr(inputs, 'X_elyte_init'):
     elyte_obj.X = inputs.X_elyte_init
@@ -150,6 +150,7 @@ class cathode():
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
+    
     ptr['eps_S8'] = 0
     ptr['eps_Li2S'] = 1
     ptr['rho_k_el'] = 2 + np.arange(0, elyte_obj.n_species)
@@ -204,7 +205,7 @@ class cathode():
     
     r_C = (3*eps_C_0*inputs.A_cat*H/4/inputs.npoints_cathode/pi)**(1/3)
     
-    oneC = (1 - eps_el_0 - eps_C_0)*sulfur_obj.density_mole*H*F/3600
+    oneC = (eps_S_0)*sulfur_obj.density_mole*H*F/3600
     
     def get_i_ext():
         return cathode.i_ext

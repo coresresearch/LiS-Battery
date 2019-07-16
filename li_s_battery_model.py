@@ -43,11 +43,11 @@ def main():
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
     
-    atol = 1e-9; rtol = 1e-9; sim_output = 50
+    atol = 1e-6; rtol = 1e-6; sim_output = 50
     
     rate_tag = str(inputs.C_rate)+"C"
     
-    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 4)
+    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 3)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
     fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
@@ -72,7 +72,7 @@ def main():
     sim_eq.verbosity = sim_output
     sim_eq.make_consistent('IDA_YA_YDP_INIT')
     
-    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(0.1*t_f)
+    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(t_f)
     
     # Put solution into pandas dataframe with labeled columns
     SV_eq_df = label_columns(t_eq, SV_eq, an.npoints, sep.npoints, cat.npoints)
@@ -150,47 +150,47 @@ def main():
         
         plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2, fig, axes)
     
-        print('Done re-equilibratin\n')
+        print('Done re-equilibrating\n')
     else:
         SV_req = SV_ch
         SV_dot_req = SV_dot_ch
         
     "-----------Charging-----------"
     
-    print('Charging...')
-    
-    SV_0 = SV_req[-1, :]
-    SV_dot_0 = SV_dot_req[-1, :]
-    
-    cat.set_i_ext(-cat.i_ext_amp)
-    
-    # Update problem instance initial conditions
-    bat_dch = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
-    bat_dch.external_event_detection = True
-    bat_dch.algvar = algvar
-    
-    # Re-initialize simulation object
-    sim_dch = IDA(bat_dch)
-    sim_dch.atol = atol
-    sim_dch.rtol = rtol
-    sim_dch.verbosity = sim_output
-    sim_dch.make_consistent('IDA_YA_YDP_INIT')
-    
-    t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)
-    
-#    if hasattr(cathode, 'get_tflag'):
-#        t_flag_dch = cathode.get_tflag
-        
-    SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
-    
-    plot_sim(tags, SV_dch_df, 'Charging', 3, fig, axes)
-    
-    print('Done Charging\n')
+#    print('Charging...')
+#    
+#    SV_0 = SV_req[-1, :]
+#    SV_dot_0 = SV_dot_req[-1, :]
+#    
+#    cat.set_i_ext(-cat.i_ext_amp)
+#    
+#    # Update problem instance initial conditions
+#    bat_dch = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+#    bat_dch.external_event_detection = True
+#    bat_dch.algvar = algvar
+#    
+#    # Re-initialize simulation object
+#    sim_dch = IDA(bat_dch)
+#    sim_dch.atol = atol
+#    sim_dch.rtol = rtol
+#    sim_dch.verbosity = sim_output
+#    sim_dch.make_consistent('IDA_YA_YDP_INIT')
+#    
+#    t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)
+#    
+##    if hasattr(cathode, 'get_tflag'):
+##        t_flag_dch = cathode.get_tflag
+#        
+#    SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
+#    
+#    plot_sim(tags, SV_dch_df, 'Charging', 3, fig, axes)
+#    
+#    print('Done Charging\n')
     
     t_elapsed = time.time() - t_count
     print('t_cpu=', t_elapsed, '\n')
     
-    return SV_eq_df, SV_ch_df, SV_req_df, SV_dch_df
+    return SV_eq_df, SV_ch_df, SV_req_df #, SV_dch_df
     
 "=============================================================================" 
 "===========RESIDUAL CLASSES AND HELPER FUNCTIONS BEYOND THIS POINT==========="
@@ -232,11 +232,12 @@ class cc_cycling(Implicit_Problem):
             
             i_el_p = 0
             i_io_p = i_ext
-            N_io_p = i_ext/F
+            N_io_p = np.zeros_like(SV[offset + ptr['rho_k_el']])
+            N_io_p[2] = i_ext/F
             
             np_S = SV[offset + ptr['np_S8']]
             np_L = SV[offset + ptr['np_Li2S']]
-            eps_el = 1 - SV[offset + ptr['eps_S8']] - SV[offset + ptr['eps_Li2S']]
+            eps_el = 1 - cat.eps_C_0 - SV[offset + ptr['eps_S8']] - SV[offset + ptr['eps_Li2S']]
             
             # Calculate new particle radii based on new volume fractions
             A_S = 3*(3*SV[offset + ptr['eps_S8']]*cat.V_0/2/pi/np_S)**(-1/3)
@@ -258,11 +259,18 @@ class cc_cycling(Implicit_Problem):
             elyte.electric_potential = phi_el
             conductor.electric_potential = phi_dl + phi_el
             
-            elyte.Y = SV[offset + ptr['rho_k_el']]/sum(SV[offset+ptr['rho_k_el']])
+#            rho = sum(SV[offset + ptr['rho_k_el']])
+            X = SV[offset + ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
+
+            elyte.X = X
             
             sdot_C = C_el_s.net_production_rates
             sdot_S = S_el_s.net_production_rates
-            sdot_L = L_el_s.net_production_rates            
+            sdot_L = L_el_s.net_production_rates 
+            
+#            print(C_el_s.get_net_production_rates(elyte), '\n')
+#            print(L_el_s.creation_rates, '\n', L_el_s.destruction_rates, '\n\n')
+#            print(L_el_s.forward_rate_constants, L_el_s.reverse_rate_constants, L_el_s.net_production_rates, '\n')
             
             # Calculate respective changes in species for each interface. This
             #   is done separately due to some species being produced/consumed
@@ -277,21 +285,24 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L
                         
             i_Far = sdot_C[-2]*F*A_C/cat.dyInv
-    
+            
             """Calculate change in Sulfur"""
-            res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']])
+            res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
        
             """Calculate change in Li2S"""
-            res[offset + ptr['eps_Li2S']] = SV_dot[offset + ptr['eps_Li2S']] 
+            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_L[0]*A_L)
             
             """Calculate change in electrolyte"""
-            res[offset + ptr['rho_k_el']] = SV_dot[offset + ptr['rho_k_el']] - R_net/eps_el
+            res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']]
+            - (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el
+            + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
+                                            - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
             
             """Calculate change in delta-phi double layer"""
-            res[offset + ptr['phi_dl']] = SV_dot[offset + ptr['phi_dl']] - (i_Far + i_el_m - i_el_p)/cat.C_dl/A_C
+            res[offset + ptr['phi_dl']] = SV_dot[offset + ptr['phi_dl']] - (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C
             
             """Algebraic expression for charge neutrality in all phases"""
-            res[offset + ptr['phi_el']] = SV[offset + ptr['phi_el']] - 0  #i_el_m - i_el_p + i_io_m - i_io_p
+            res[offset + ptr['phi_el']] = SV[offset + ptr['phi_el']]  #i_el_m - i_el_p + i_io_m - i_io_p
             
             """Calculate change in S8 nucleation sites"""
             res[offset + ptr['np_S8']] = SV_dot[offset + ptr['np_S8']]
@@ -299,6 +310,8 @@ class cc_cycling(Implicit_Problem):
             """Calculate change in Li2S nucleation sites"""
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
             
+#        print(res, '\n')
+#        print(t, i_ext)
         
         """==================Separator boundary conditions=================="""
             
@@ -377,6 +390,6 @@ class cc_cycling(Implicit_Problem):
     
     
 if __name__ == "__main__":
-    SV_eq_df, SV_ch_df, SV_req_df, SV_dch_df = main()
+    SV_eq_df, SV_ch_df, SV_req_df = main()
 #    SV_eq, SV_ch, SV_req, SV_dch = main()
 

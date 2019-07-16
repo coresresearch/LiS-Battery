@@ -118,7 +118,8 @@ class inputs():
                          3.314e-4, 2.046e-5, 5.348e-10, 8.456e-13])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 0, 0, 
 #                         0, 0, 0, 0])
-#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 0, 0, 0])
+#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 
+#                         2.046e-5, 8.456e-13])
     
     "Cathode geometry and transport"
     # Anode geometry
@@ -166,9 +167,9 @@ class inputs():
     
 print("Inputs check")
 
-#if __name__ == "__main__":
-#    exec(open("li_s_battery_init.py").read())
-#    exec(open("li_s_battery_model.py").read())
+if __name__ == "__main__":
+    exec(open("li_s_battery_init.py").read())
+    exec(open("li_s_battery_model.py").read())
     
     
     
