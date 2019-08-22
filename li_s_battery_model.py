@@ -268,10 +268,6 @@ class cc_cycling(Implicit_Problem):
             sdot_S = S_el_s.net_production_rates
             sdot_L = L_el_s.net_production_rates 
             
-#            print(C_el_s.get_net_production_rates(elyte), '\n')
-#            print(L_el_s.creation_rates, '\n', L_el_s.destruction_rates, '\n\n')
-#            print(L_el_s.forward_rate_constants, L_el_s.reverse_rate_constants, L_el_s.net_production_rates, '\n')
-            
             # Calculate respective changes in species for each interface. This
             #   is done separately due to some species being produced/consumed
             #   at two separate interfaces - i.e. S^2- is produced at the C-el
@@ -285,6 +281,7 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L
                         
             i_Far = sdot_C[-2]*F*A_C/cat.dyInv
+#            print(L_el_s.delta_gibbs, '\n')
             
             """Calculate change in Sulfur"""
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
@@ -310,7 +307,7 @@ class cc_cycling(Implicit_Problem):
             """Calculate change in Li2S nucleation sites"""
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
             
-#        print(res, '\n')
+#        print(SV, '\n')
 #        print(t, i_ext)
         
         """==================Separator boundary conditions=================="""

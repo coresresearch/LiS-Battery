@@ -59,7 +59,7 @@ class inputs():
     test_type = 'cc_cycling'
     
     # Set temperature for isothermal testing
-    T = 300  # [K]
+    T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
     ctifile = 'sulfur_cathode_prelim.cti'
