@@ -19,12 +19,13 @@ metal(
 	initial_state = state(temperature=300.0)
 	)
 
-metal(
+IdealSolidSolution(
 	name 	 = "lithium_sulfide",
 	elements = "Li S",
-	species  = "Li2S(s)",
+	species  = "Li2S",
 	density  = (1640, 'kg/m3'),
-	initial_state = state(temperature=300.0)
+	initial_state = state(temperature=300.0),
+	standard_concentration = "unity"
 	)
 
 metal(
@@ -125,10 +126,11 @@ species(
 	)
 
 species(
-	name = "Li2S(s)",
+	name = "Li2S",
 	atoms = "Li:2 S:1",
-	thermo = const_cp(h0 = (-154.72, 'kJ/mol'), s0 = (0.0, 'J/mol/K'))
-	)# 688.98
+	thermo = const_cp(h0 = (-863.15, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (45.95/1.67, 'cm3/mol'))
+	)# 688.98 -154.72
 
 """
 species(
@@ -155,9 +157,9 @@ species(
 species(
 	name 		= "Li+(e)",
 	atoms 		= " Li:1 E:-1 ",
-	thermo 		= const_cp(h0 = (0.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo 		= const_cp(h0 = (-278.49, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState	= constantIncompressible(molarVolume = (6.940455/1.260, 'cm3/mol'))
-	)# -278.49 13.4
+	)# -278.49 13.4 153.085
 
 #------------------------------------------------------------------------------
 # Hexafluorophosphate ion, MW: 144.964745 g/mol
@@ -207,7 +209,7 @@ species(
 species(
 	name = "S8(s)",
 	atoms = "S:8",
-	thermo = const_cp(h0 = (0.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (0.0, 'kJ/mol'), s0 = (31.8, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
 	)
 
@@ -221,35 +223,35 @@ species(
 species(
 	name = "S8-(e)",
 	atoms = "S:8 E:2",
-	thermo = const_cp(h0 = (-125.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-443.57, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
 	)# -125.0
 
 species(
 	name = "S6-(e)",
 	atoms = " S:6 E:2 ",
-	thermo = const_cp(h0 = (-143.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-389.1, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/10.76e3, 'm3/mol'))
-	)#
+	)# -143.0
 
 species(
 	name = "S4-(e)",
 	atoms = " S:4 E:2 ",
-	thermo = const_cp(h0 = (-225.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-331.436, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/16.14e3, 'm3/mol'))
-	)#
+	)# -225.0
 
 species(
 	name = "S2-(e)",
 	atoms = "S:2 E:2",
-	thermo = const_cp(h0 = (-152.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-264.127, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/32.3e3, 'm3/mol'))
-	)# -162.0
+	)# -152.0
 
 species(
 	name = "S-(e)",
 	atoms = " S:1 E:2 ",
-	thermo = const_cp(h0 = (-100.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-229.024, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/64.6e3, 'm3/mol'))
 	)# -132.0
 
@@ -264,26 +266,26 @@ species(name = "(dummy)", atoms = "")
 #-------------------------------------------------------------------------------
 # Sulfur-electrolyte reactions
 #-------------------------------------------------------------------------------
-surface_reaction("S8(s) <=> S8(e)", [1.900e-3, 0.0, 0.0], id="S-E-1")
+surface_reaction("S8(s) <=> S8(e)", [1.900e-2, 0.0, 0.0], id="S-E-1")
 
 #-------------------------------------------------------------------------------
 # Carbon Electrolyte reactions
 #-------------------------------------------------------------------------------
 
-surface_reaction("S8(e) + 2 electron <=> S8-(e)", [1e3, 0.0, 0.0], id="C-E-1", beta=0.5)
+surface_reaction("S8(e) + 2 electron <=> S8-(e)", [7.725e13, 0.0, 0.0], id="C-E-1", beta=0.5)
 
-surface_reaction("3 S8-(e) + 2 electron <=> 4 S6-(e)", [1e13, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("3 S8-(e) + 2 electron <=> 4 S6-(e)", [4.331e16, 0.0, 0.0], id="C-E-2", beta=0.5)
 
-surface_reaction("2 S6-(e) + 2 electron <=> 3 S4-(e)", [1e10, 0.0, 0.0], id="C-E-3", beta=0.5)
+surface_reaction("2 S6-(e) + 2 electron <=> 3 S4-(e)", [33.2e14, 0.0, 0.0], id="C-E-3", beta=0.5)
 
-surface_reaction("S4-(e) + 2 electron <=> 2 S2-(e)", [1e-1, 0.0, 0.0], id="C-E-4", beta=0.5)
+surface_reaction("S4-(e) + 2 electron <=> 2 S2-(e)", [2.375e11, 0.0, 0.0], id="C-E-4", beta=0.5)
 
-surface_reaction("S2-(e) + 2 electron <=> 2 S-(e)", [1e1, 0.0, 0.0], id="C-E-5", beta=0.5)
+surface_reaction("S2-(e) + 2 electron <=> 2 S-(e)", [4.655e12, 0.0, 0.0], id="C-E-5", beta=0.5)
 
 #-------------------------------------------------------------------------------
 # Li2S Electrolyte reactions
 #-------------------------------------------------------------------------------
-#surface_reaction("2 Li+(e) + S-(e) <=> Li2S(s)", [1e-1, 0.0, 0.0], id="L-E-1")
+surface_reaction("2 Li+(e) + S-(e) <=> Li2S", [2.750e-5, 0.0, 0.0], id="L-E-1")
 #surface_reaction("Li2S(e) <=> Li2S(s)", [1e-10, 0.0, 0.0], id="L-E-2")
 
 #-------------------------------------------------------------------------------

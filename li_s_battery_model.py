@@ -281,6 +281,7 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L
                         
             i_Far = sdot_C[-2]*F*A_C/cat.dyInv
+#            print(sdot_S[0], sdot_L[0], '\n')
 #            print(L_el_s.delta_gibbs, '\n')
             
             """Calculate change in Sulfur"""
