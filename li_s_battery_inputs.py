@@ -114,8 +114,16 @@ class inputs():
     pct_w_S8_0 = 0.40  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 0.60   # Initial weight percent of carbon in cathode [kg_C/kg]
     
-    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 
-                         3.314e-4, 2.046e-5, 5.348e-10, 8.456e-13])
+    C_k_el_0 = np.array([1.023e1, 
+                         1.023e1, 
+                         1.024, 
+                         1.024, 
+                         1.943e-2, 
+                         1.821e-4, 
+                         3.314e-4, 
+                         2.046e-5, 
+                         5.348e-10, 
+                         8.456e-13])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 0, 0, 
 #                         0, 0, 0, 0])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 

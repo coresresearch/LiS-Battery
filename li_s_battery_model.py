@@ -47,7 +47,7 @@ def main():
     
     rate_tag = str(inputs.C_rate)+"C"
     
-    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 3)
+    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 2)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
     fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
@@ -58,40 +58,40 @@ def main():
     print('\nEquilibrating...')
     
     # Set external current to 0 for equilibration
-    cat.set_i_ext(0)
+#    cat.set_i_ext(0)
     
     # Create problem object
-    bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
-    bat_eq.external_event_detection = True
-    bat_eq.algvar = algvar
+#    bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+#    bat_eq.external_event_detection = True
+#    bat_eq.algvar = algvar
     
     # Create simulation object
-    sim_eq = IDA(bat_eq)
-    sim_eq.atol = atol
-    sim_eq.rtol = rtol
-    sim_eq.verbosity = sim_output
-    sim_eq.make_consistent('IDA_YA_YDP_INIT')
-    
-    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(t_f)
+#    sim_eq = IDA(bat_eq)
+#    sim_eq.atol = atol
+#    sim_eq.rtol = rtol
+#    sim_eq.verbosity = sim_output
+#    sim_eq.make_consistent('IDA_YA_YDP_INIT')
+#    
+#    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(t_f)
     
     # Put solution into pandas dataframe with labeled columns
-    SV_eq_df = label_columns(t_eq, SV_eq, an.npoints, sep.npoints, cat.npoints)
+#    SV_eq_df = label_columns(t_eq, SV_eq, an.npoints, sep.npoints, cat.npoints)
     
     # Obtain tag strings for dataframe columns
-    tags = tag_strings(SV_eq_df)
+#    tags = tag_strings(SV_eq_df)
     
-    plot_sim(tags, SV_eq_df, 'Equilibrating', 0, fig, axes)
-    print(SV_eq_df[tags['rho_el'][4:10]].iloc[-1])
-    
-    print('Done equilibrating\n')
+#    plot_sim(tags, SV_eq_df, 'Equilibrating', 0, fig, axes)
+#    print(SV_eq_df[tags['rho_el'][4:10]].iloc[-1])
+#    
+#    print('Done equilibrating\n')
     
     "------------Discharging-------------"
     
     print('Discharging...')
     
     # New initial conditions from previous simulation
-    SV_0 = SV_eq[-1, :]
-    SV_dot_0 = SV_dot_eq[-1, :]
+#    SV_0 = SV_eq[-1, :]
+#    SV_dot_0 = SV_dot_eq[-1, :]
     
     # Set external current
     cat.set_i_ext(cat.i_ext_amp)
@@ -115,7 +115,10 @@ def main():
         
     SV_ch_df = label_columns(t_ch, SV_ch, an.npoints, sep.npoints, cat.npoints)
     
-    plot_sim(tags, SV_ch_df, 'Discharging', 1, fig, axes)
+    # Obtain tag strings for dataframe columns
+    tags = tag_strings(SV_ch_df)
+    
+    plot_sim(tags, SV_ch_df, 'Discharging', 1-1, fig, axes)
     
     print('Done Discharging\n')
     
@@ -148,7 +151,7 @@ def main():
         
         SV_req_df = label_columns(t_req, SV_req, an.npoints, sep.npoints, cat.npoints)
         
-        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2, fig, axes)
+        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2-1, fig, axes)
     
         print('Done re-equilibrating\n')
     else:
@@ -242,6 +245,7 @@ class cc_cycling(Implicit_Problem):
             # Calculate new particle radii based on new volume fractions
             A_S = 3*(3*SV[offset + ptr['eps_S8']]*cat.V_0/2/pi/np_S)**(-1/3)
             A_L = 3*(3*SV[offset + ptr['eps_Li2S']]*cat.V_0/2/pi/np_L)**(-1/3)
+#            A_L = cat.A_L_0*(SV[offset + ptr['eps_Li2S']]/cat.eps_L_0)**1.5
             
             r_S = 3/A_S
             r_L = 3/A_L
@@ -281,14 +285,16 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L
                         
             i_Far = sdot_C[-2]*F*A_C/cat.dyInv
-#            print(sdot_S[0], sdot_L[0], '\n')
-#            print(L_el_s.delta_gibbs, '\n')
+#            print(S_el_s.forward_rate_constants, '\n')
+#            print(C_el_s.forward_rate_constants, '\n')
+#            print(L_el_s.delta_gibbs, L_el_s.forward_rate_constants, '\n')
+#            print(sdot_S[0], sdot_L[0], C_el_s.delta_gibbs, L_el_s.delta_gibbs, i_ext, '\n')
             
             """Calculate change in Sulfur"""
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
        
             """Calculate change in Li2S"""
-            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_L[0]*A_L)
+            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*abs(sdot_L[0])*A_L)
             
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']]
@@ -308,7 +314,7 @@ class cc_cycling(Implicit_Problem):
             """Calculate change in Li2S nucleation sites"""
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
             
-#        print(SV, '\n')
+#        print(res, '\n')
 #        print(t, i_ext)
         
         """==================Separator boundary conditions=================="""

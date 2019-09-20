@@ -200,7 +200,8 @@ class cathode():
     
     eps_S_0 = m_S/rho_S/H
     eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-4
+    eps_L_0 = 1e-4; A_L_0 = 1e5
+    
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
     
     r_C = (3*eps_C_0*inputs.A_cat*H/4/inputs.npoints_cathode/pi)**(1/3)
