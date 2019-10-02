@@ -97,6 +97,7 @@ class inputs():
     
     # Cell geometry
     H_cat = 40e-6               # Cathode thickness [m]
+    A_C_0 = 1.32e5              # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell

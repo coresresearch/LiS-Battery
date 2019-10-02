@@ -47,7 +47,7 @@ def main():
     
     rate_tag = str(inputs.C_rate)+"C"
     
-    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 2)
+    fig, axes = plt.subplots(sharey="row", figsize=(18,9), nrows=3, ncols = 1)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
     fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
@@ -76,6 +76,7 @@ def main():
     
     # Put solution into pandas dataframe with labeled columns
 #    SV_eq_df = label_columns(t_eq, SV_eq, an.npoints, sep.npoints, cat.npoints)
+    SV_eq_df = []
     
     # Obtain tag strings for dataframe columns
 #    tags = tag_strings(SV_eq_df)
@@ -151,7 +152,7 @@ def main():
         
         SV_req_df = label_columns(t_req, SV_req, an.npoints, sep.npoints, cat.npoints)
         
-        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2-1, fig, axes)
+#        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2-1, fig, axes)
     
         print('Done re-equilibrating\n')
     else:
@@ -250,11 +251,12 @@ class cc_cycling(Implicit_Problem):
             r_S = 3/A_S
             r_L = 3/A_L
             
-            A_C = 3*(2*cat.r_C**2 - np_S*r_S**2 - np_L*r_L**2)/2/cat.r_C**3
-            
+#            A_C = 3*(2*cat.r_C**2 - np_S*r_S**2 - np_L*r_L**2)/2/cat.r_C**3
+            A_C = inputs.A_C_0 - (np_S*pi*r_S**2 + np_L*pi*r_L**2)/cat.eps_C_0/cat.V_0
+#            print(A_S, A_L, A_C, '\n')
 #            u_Li_el = inputs.D_Li_el*eps_el/cat.tau**3
 #            D_el = inputs.D_Li_el*eps_el/cat.tau**3
-                                    
+            print('A_C:', A_C, 'A_S', A_S, 'A_L', A_L, '\n')
             # Set states
             phi_el = SV[offset + ptr['phi_el']]
             phi_dl = SV[offset + ptr['phi_dl']]
@@ -342,12 +344,12 @@ class cc_cycling(Implicit_Problem):
         event1 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event2 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event1 = 1 - y[cat.ptr_vec['eps_S8']]
-        event2 = y[cat.ptr_vec['eps_S8']]
+        event2 = y[cat.ptr_vec['eps_S8']] - 1e-4
         
         event3 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event4 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event3 = 1 - y[cat.ptr_vec['eps_Li2S']]
-        event4 = y[cat.ptr_vec['eps_Li2S']]
+        event4 = y[cat.ptr_vec['eps_Li2S']] - 1e-4
         
         events = np.concatenate((event1, event2, event3, event4))
 

@@ -16,41 +16,44 @@ import pandas as pd
 
 def plot_sim(tags, SV_df, stage, yax, fig, axes):
     
-    if stage == 'Re-Equilibrating':
+    if stage == 'Discharging':
         showlegend = 1
     else:
         showlegend = 0
     
     vol_fracs = tags['eps_S8'] + tags['eps_Li2S']
     phi = tags['phi_dl'] + tags['phi_el']
-    fontsize = 12
+    fontsize = 18
     t = SV_df['Time']
     
     # Plot potential for the electrolyte and the double layer
-    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, yax], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0], xlim=[0,t.iloc[-1]])
     SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel('Potentials [V]', fontsize = fontsize)
+    SV_plot.set_ylabel(r'$\Phi$ [V]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.05, 1), ncol=1, borderaxespad=0,
-                   frameon=False).set_visible(showlegend)
+    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                   frameon=False, fontsize = 15).set_visible(showlegend)
+    SV_plot.tick_params(axis='both', labelsize=16)
     SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot Li2S and S8 volume fractions
-    SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1, yax], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1], xlim=[0,t.iloc[-1]])
 #    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel('Solid phase volume fractions [-]', fontsize = fontsize)
+    SV_plot.set_ylabel(r'$\varepsilon_i$ [-]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.05, 1), ncol=1, borderaxespad=0,
-                   frameon=False).set_visible(showlegend)
+    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                   frameon=False, fontsize = 15).set_visible(showlegend)
+    SV_plot.tick_params(axis='both', labelsize=16)
     SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], ax=axes[2, yax], logy=True, xlim=[0,t.iloc[-1]]) #
+    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], ax=axes[2], logy=True, xlim=[0,t.iloc[-1]]) #
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(True)
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.05, 1), ncol=1, borderaxespad=0,
-                   frameon=False).set_visible(showlegend)
+    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                   frameon=False, fontsize = 15).set_visible(showlegend)
+    SV_plot.tick_params(axis='both', labelsize=16)
     SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     

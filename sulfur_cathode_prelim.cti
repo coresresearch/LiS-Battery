@@ -266,7 +266,7 @@ species(name = "(dummy)", atoms = "")
 #-------------------------------------------------------------------------------
 # Sulfur-electrolyte reactions
 #-------------------------------------------------------------------------------
-surface_reaction("S8(s) <=> S8(e)", [1.900e4, 0.0, 0.0], id="S-E-1")
+surface_reaction("S8(s) <=> S8(e)", [1.900e-2, 0.0, 0.0], id="S-E-1")
 
 #-------------------------------------------------------------------------------
 # Carbon Electrolyte reactions
@@ -274,7 +274,7 @@ surface_reaction("S8(s) <=> S8(e)", [1.900e4, 0.0, 0.0], id="S-E-1")
 
 surface_reaction("0.5 S8(e) + electron <=> 0.5 S8-(e)", [7.725e3, 0.0, 0.0], id="C-E-1", beta=0.5)
 
-surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e6, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e7, 0.0, 0.0], id="C-E-2", beta=0.5)
 
 surface_reaction("S6-(e) + electron <=> 1.5 S4-(e)", [3.193e4, 0.0, 0.0], id="C-E-3", beta=0.5)
 
