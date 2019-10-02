@@ -256,7 +256,7 @@ class cc_cycling(Implicit_Problem):
 #            print(A_S, A_L, A_C, '\n')
 #            u_Li_el = inputs.D_Li_el*eps_el/cat.tau**3
 #            D_el = inputs.D_Li_el*eps_el/cat.tau**3
-            print('A_C:', A_C, 'A_S', A_S, 'A_L', A_L, '\n')
+#            print('A_C:', A_C, 'A_S', A_S, 'A_L', A_L, '\n')
             # Set states
             phi_el = SV[offset + ptr['phi_el']]
             phi_dl = SV[offset + ptr['phi_dl']]
@@ -290,13 +290,14 @@ class cc_cycling(Implicit_Problem):
 #            print(S_el_s.forward_rate_constants, '\n')
 #            print(C_el_s.forward_rate_constants, '\n')
 #            print(L_el_s.delta_gibbs, L_el_s.forward_rate_constants, '\n')
-#            print(sdot_S[0], sdot_L[0], C_el_s.delta_gibbs, L_el_s.delta_gibbs, i_ext, '\n')
+#            print(sdot_S[0], sdot_L[0], L_el_s.delta_gibbs, i_ext, '\n')
+#            print(sdot_S, '\n', sdot_L, '\n', sdot_C, '\n', i_ext, '\n\n')
             
             """Calculate change in Sulfur"""
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
        
             """Calculate change in Li2S"""
-            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*abs(sdot_L[0])*A_L)
+            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_L[0]*A_L)
             
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']]
@@ -316,7 +317,7 @@ class cc_cycling(Implicit_Problem):
             """Calculate change in Li2S nucleation sites"""
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
             
-#        print(res, '\n')
+#        print(SV[offset + ptr['eps_Li2S']], '\n')
 #        print(t, i_ext)
         
         """==================Separator boundary conditions=================="""
@@ -344,12 +345,12 @@ class cc_cycling(Implicit_Problem):
         event1 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event2 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event1 = 1 - y[cat.ptr_vec['eps_S8']]
-        event2 = y[cat.ptr_vec['eps_S8']] - 1e-4
+        event2 = y[cat.ptr_vec['eps_S8']] - 1e-3
         
         event3 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event4 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event3 = 1 - y[cat.ptr_vec['eps_Li2S']]
-        event4 = y[cat.ptr_vec['eps_Li2S']] - 1e-4
+        event4 = y[cat.ptr_vec['eps_Li2S']] - 1e-5
         
         events = np.concatenate((event1, event2, event3, event4))
 

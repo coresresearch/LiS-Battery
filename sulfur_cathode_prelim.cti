@@ -128,7 +128,7 @@ species(
 species(
 	name = "Li2S",
 	atoms = "Li:2 S:1",
-	thermo = const_cp(h0 = (-863.05, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-1063.05, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (45.95/1.67, 'cm3/mol'))
 	)# 688.98 -154.72 755.05
 
@@ -230,28 +230,28 @@ species(
 species(
 	name = "S6-(e)",
 	atoms = " S:6 E:2 ",
-	thermo = const_cp(h0 = (-389.1, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-399.1, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/10.76e3, 'm3/mol'))
 	)# -143.0
 
 species(
 	name = "S4-(e)",
 	atoms = " S:4 E:2 ",
-	thermo = const_cp(h0 = (-351.436, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-371.436, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/16.14e3, 'm3/mol'))
 	)# -225.0
 
 species(
 	name = "S2-(e)",
 	atoms = "S:2 E:2",
-	thermo = const_cp(h0 = (-317.127, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-337.127, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/32.3e3, 'm3/mol'))
 	)# -152.0
 
 species(
 	name = "S-(e)",
 	atoms = " S:1 E:2 ",
-	thermo = const_cp(h0 = (-291.024, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-311.024, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/64.6e3, 'm3/mol'))
 	)# -132.0
 
@@ -266,27 +266,27 @@ species(name = "(dummy)", atoms = "")
 #-------------------------------------------------------------------------------
 # Sulfur-electrolyte reactions
 #-------------------------------------------------------------------------------
-surface_reaction("S8(s) <=> S8(e)", [1.900e-2, 0.0, 0.0], id="S-E-1")
+surface_reaction("S8(s) <=> S8(e)", [1.900e-1, 0.0, 0.0], id="S-E-1")
 
 #-------------------------------------------------------------------------------
 # Carbon Electrolyte reactions
 #-------------------------------------------------------------------------------
 
-surface_reaction("0.5 S8(e) + electron <=> 0.5 S8-(e)", [7.725e3, 0.0, 0.0], id="C-E-1", beta=0.5)
+surface_reaction("0.5 S8(e) + electron <=> 0.5 S8-(e)", [7.725e7, 0.0, 0.0], id="C-E-1", beta=0.5)
 
-surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e7, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e13, 0.0, 0.0], id="C-E-2", beta=0.5)
 
-surface_reaction("S6-(e) + electron <=> 1.5 S4-(e)", [3.193e4, 0.0, 0.0], id="C-E-3", beta=0.5)
+surface_reaction("S6-(e) + electron <=> 1.5 S4-(e)", [3.193e9, 0.0, 0.0], id="C-E-3", beta=0.5)
 
-surface_reaction("0.5 S4-(e) + electron <=> S2-(e)", [2.375e1, 0.0, 0.0], id="C-E-4", beta=0.5)
+surface_reaction("0.5 S4-(e) + electron <=> S2-(e)", [2.375e4, 0.0, 0.0], id="C-E-4", beta=0.5)
 
-surface_reaction("0.5 S2-(e) + electron <=> S-(e)", [4.655e-1, 0.0, 0.0], id="C-E-5", beta=0.5)
+surface_reaction("0.5 S2-(e) + electron <=> S-(e)", [4.655e5, 0.0, 0.0], id="C-E-5", beta=0.5)
 
 #-------------------------------------------------------------------------------
 # Li2S Electrolyte reactions
 #-------------------------------------------------------------------------------
 #edge_reaction("2 Li+(e) + 0.5 S2-(e) + electron <=> Li2S", [1e-1, 0.0, 0.0], id="L-E-1", beta=0.5)
-surface_reaction("2 Li+(e) + S-(e) <=> Li2S", [2.750e2, 0.0, 0.0], id="L-E-1")
+surface_reaction("2 Li+(e) + S-(e) <=> Li2S", [2.750e3, 0.0, 0.0], id="L-E-1")
 #surface_reaction("Li2S(e) <=> Li2S(s)", [1e-10, 0.0, 0.0], id="L-E-2")
 
 #-------------------------------------------------------------------------------
