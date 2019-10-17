@@ -42,7 +42,6 @@ def main():
     t_0 = 0.
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
-    
     atol = 1e-6; rtol = 1e-6; sim_output = 50
     
     rate_tag = str(inputs.C_rate)+"C"
@@ -58,7 +57,7 @@ def main():
     print('\nEquilibrating...')
     
     # Set external current to 0 for equilibration
-#    cat.set_i_ext(0)
+    cat.set_i_ext(0)
     
     # Create problem object
 #    bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
@@ -125,39 +124,39 @@ def main():
     
     "--------Re-equilibration---------"
     
-    if inputs.flag_req == 1:
-        
-        print('Re-equilibrating...')
-        
-        # New initial conditions from previous simulation
-        SV_0 = SV_ch[-1, :]
-        SV_dot_0 = SV_dot_ch[-1, :]
-        
-        # Set external current
-        cat.set_i_ext(0)
-        
-        # Update problem instance initial conditions
-        bat_req = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
-        bat_req.external_event_detection = True
-        bat_req.algvar = algvar
-        
-        # Re-initialize simulation object
-        sim_req = IDA(bat_req)
-        sim_req.atol = atol
-        sim_req.rtol = rtol
-        sim_req.verbosity = sim_output
-        sim_req.make_consistent('IDA_YA_YDP_INIT')
-        
-        t_req, SV_req, SV_dot_req = sim_req.simulate(t_f)
-        
-        SV_req_df = label_columns(t_req, SV_req, an.npoints, sep.npoints, cat.npoints)
-        
-#        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2-1, fig, axes)
-    
-        print('Done re-equilibrating\n')
-    else:
-        SV_req = SV_ch
-        SV_dot_req = SV_dot_ch
+#    if inputs.flag_req == 1:
+#        
+#        print('Re-equilibrating...')
+#        
+#        # New initial conditions from previous simulation
+#        SV_0 = SV_ch[-1, :]
+#        SV_dot_0 = SV_dot_ch[-1, :]
+#        
+#        # Set external current
+#        cat.set_i_ext(0)
+#        
+#        # Update problem instance initial conditions
+#        bat_req = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+#        bat_req.external_event_detection = True
+#        bat_req.algvar = algvar
+#        
+#        # Re-initialize simulation object
+#        sim_req = IDA(bat_req)
+#        sim_req.atol = atol
+#        sim_req.rtol = rtol
+#        sim_req.verbosity = sim_output
+#        sim_req.make_consistent('IDA_YA_YDP_INIT')
+#        
+#        t_req, SV_req, SV_dot_req = sim_req.simulate(t_f)
+#        
+#        SV_req_df = label_columns(t_req, SV_req, an.npoints, sep.npoints, cat.npoints)
+#        
+##        plot_sim(tags, SV_req_df, 'Re-Equilibrating', 2-1, fig, axes)
+#    
+#        print('Done re-equilibrating\n')
+#    else:
+#        SV_req = SV_ch
+#        SV_dot_req = SV_dot_ch
         
     "-----------Charging-----------"
     
@@ -194,7 +193,7 @@ def main():
     t_elapsed = time.time() - t_count
     print('t_cpu=', t_elapsed, '\n')
     
-    return SV_eq_df, SV_ch_df, SV_req_df #, SV_dch_df
+    return SV_ch_df #SV_eq_df, SV_req_df #, SV_dch_df
     
 "=============================================================================" 
 "===========RESIDUAL CLASSES AND HELPER FUNCTIONS BEYOND THIS POINT==========="
@@ -220,13 +219,13 @@ class cc_cycling(Implicit_Problem):
         """Cathode CC boundary"""
         j = 0; offset = cat.offsets[int(j)]
         i_ext = cat.get_i_ext()
-        s1 = {}
-        s2 = {}
+#        s1 = {}
+#        s2 = {}
         
         # Set electronic current and ionic current boundary conditions
         i_el_p = i_ext
         i_io_p = 0
-        N_io_p = 0        
+        N_io_p = 0  
         
         for j in np.arange(0, cat.npoints):
             
@@ -244,19 +243,28 @@ class cc_cycling(Implicit_Problem):
             eps_el = 1 - cat.eps_C_0 - SV[offset + ptr['eps_S8']] - SV[offset + ptr['eps_Li2S']]
             
             # Calculate new particle radii based on new volume fractions
-            A_S = 3*(3*SV[offset + ptr['eps_S8']]*cat.V_0/2/pi/np_S)**(-1/3)
-            A_L = 3*(3*SV[offset + ptr['eps_Li2S']]*cat.V_0/2/pi/np_L)**(-1/3)
-#            A_L = cat.A_L_0*(SV[offset + ptr['eps_Li2S']]/cat.eps_L_0)**1.5
+            A_S = 3*SV[offset + ptr['eps_S8']]/(3*SV[offset + ptr['eps_S8']]*cat.V_0/2/pi/np_S)**(1/3)
+            A_L = 3*SV[offset + ptr['eps_Li2S']]/(3*SV[offset + ptr['eps_Li2S']]*cat.V_0/2/pi/np_L)**(1/3)
             
-            r_S = 3/A_S
-            r_L = 3/A_L
+#            A_S = cat.A_S_0*((SV[offset + ptr['eps_S8']])/cat.eps_pore)**(1.5)
+#            A_L = cat.A_L_0*(SV[offset + ptr['eps_Li2S']]/cat.eps_pore)**(1.5)
+            
+            r_S = 3*SV[offset + ptr['eps_S8']]/A_S
+            r_L = 3*SV[offset + ptr['eps_Li2S']]/A_L
+#            r_S = 3/A_S
+#            r_L = 3/A_L
             
 #            A_C = 3*(2*cat.r_C**2 - np_S*r_S**2 - np_L*r_L**2)/2/cat.r_C**3
-            A_C = inputs.A_C_0 - (np_S*pi*r_S**2 + np_L*pi*r_L**2)/cat.eps_C_0/cat.V_0
-#            print(A_S, A_L, A_C, '\n')
+#            A_C = inputs.A_C_0 - (np_S*pi*r_S**2 + np_L*pi*r_L**2)/cat.eps_C_0/cat.V_0
+            A_C = inputs.A_C_0 - (pi*np_S*r_S**2)/cat.V_0 - (pi*np_L*r_L**2)/cat.V_0
+            
+#            print(SV[offset + ptr['eps_S8']], A_S, r_S, '\n', 
+#                  SV[offset + ptr['eps_Li2S']], A_L, r_L, '\n',
+#                  A_C, '\n\n')
+
 #            u_Li_el = inputs.D_Li_el*eps_el/cat.tau**3
 #            D_el = inputs.D_Li_el*eps_el/cat.tau**3
-#            print('A_C:', A_C, 'A_S', A_S, 'A_L', A_L, '\n')
+
             # Set states
             phi_el = SV[offset + ptr['phi_el']]
             phi_dl = SV[offset + ptr['phi_dl']]
@@ -274,6 +282,8 @@ class cc_cycling(Implicit_Problem):
             sdot_S = S_el_s.net_production_rates
             sdot_L = L_el_s.net_production_rates 
             
+#            print(sdot_L[0], '\n')
+            
             # Calculate respective changes in species for each interface. This
             #   is done separately due to some species being produced/consumed
             #   at two separate interfaces - i.e. S^2- is produced at the C-el
@@ -287,12 +297,7 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L
                         
             i_Far = sdot_C[-2]*F*A_C/cat.dyInv
-#            print(S_el_s.forward_rate_constants, '\n')
-#            print(C_el_s.forward_rate_constants, '\n')
-#            print(L_el_s.delta_gibbs, L_el_s.forward_rate_constants, '\n')
-#            print(sdot_S[0], sdot_L[0], L_el_s.delta_gibbs, i_ext, '\n')
-#            print(sdot_S, '\n', sdot_L, '\n', sdot_C, '\n', i_ext, '\n\n')
-            
+                        
             """Calculate change in Sulfur"""
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
        
@@ -316,9 +321,6 @@ class cc_cycling(Implicit_Problem):
             
             """Calculate change in Li2S nucleation sites"""
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
-            
-#        print(SV[offset + ptr['eps_Li2S']], '\n')
-#        print(t, i_ext)
         
         """==================Separator boundary conditions=================="""
             
@@ -330,6 +332,10 @@ class cc_cycling(Implicit_Problem):
 #        i_el_p = 0
 #        i_io_p = i_ext
 #        N_io_p = i_ext/F
+        
+#        print(SV)
+#        print(res)
+#        print(t, i_ext)
         
         return res  
       
@@ -345,12 +351,12 @@ class cc_cycling(Implicit_Problem):
         event1 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event2 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event1 = 1 - y[cat.ptr_vec['eps_S8']]
-        event2 = y[cat.ptr_vec['eps_S8']] - 1e-3
+        event2 = y[cat.ptr_vec['eps_S8']] - 1e-5
         
         event3 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event4 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event3 = 1 - y[cat.ptr_vec['eps_Li2S']]
-        event4 = y[cat.ptr_vec['eps_Li2S']] - 1e-5
+        event4 = y[cat.ptr_vec['eps_Li2S']]
         
         events = np.concatenate((event1, event2, event3, event4))
 
@@ -397,6 +403,7 @@ class cc_cycling(Implicit_Problem):
     
     
 if __name__ == "__main__":
-    SV_eq_df, SV_ch_df, SV_req_df = main()
+    SV_dch = main()
+#    SV_eq_df, SV_ch_df, SV_req_df = main()
 #    SV_eq, SV_ch, SV_req, SV_dch = main()
 

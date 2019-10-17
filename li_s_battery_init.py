@@ -200,16 +200,24 @@ class cathode():
     
     eps_S_0 = m_S/rho_S/H
     eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-4; #A_L_0 = 1e5
+    eps_L_0 = 1e-5; #A_L_0 = 1e5
+    
+    A_S_0 = (3*eps_S_0)/((3*eps_S_0*V_0)/(2*pi*inputs.np_S8_init))**(1/3)
+    A_L_0 = (3*eps_L_0)/(3*eps_L_0*V_0/2/inputs.np_Li2S_init/pi)**(1/3)
+    
+#    A_S_0 = 3*(3*eps_S_0*V_0/2/pi/inputs.np_S8_init)**(-1/3)
+#    A_L_0 = 3*(3*eps_L_0*V_0/2/pi/inputs.np_Li2S_init)**(-1/3)
     
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
+    eps_pore = 1 - eps_C_0
     
 #    r_C = (3*eps_C_0*inputs.A_cat*H/4/inputs.npoints_cathode/pi)**(1/3)
     r_C = 3*eps_C_0/inputs.A_C_0
 #    r_C = inputs.H_cat
 #    A_C_0 = 3*eps_C_0/r_C
     
-    oneC = 2*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
+#    oneC = 16*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
+    oneC = eps_S_0*H*sulfur_obj.density_mass*1675
     
     def get_i_ext():
         return cathode.i_ext
@@ -218,8 +226,8 @@ class cathode():
         cathode.i_ext = value
             
     # Calculate the actual current density. 
-    if inputs.flag_cathode == 1:
-        i_ext_amp = -inputs.C_rate*oneC
+#    if inputs.flag_cathode == 1:
+    i_ext_amp = -inputs.C_rate*oneC
     
     sigma_eff = inputs.sigma_cat*eps_C_0/tau**3
     
