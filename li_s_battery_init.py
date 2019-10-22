@@ -26,6 +26,7 @@ sulfur_obj = ct.Solution(inputs.ctifile, inputs.cat_phase1)
 Li2S_obj = ct.Solution(inputs.ctifile, inputs.cat_phase2)
 carbon_obj = ct.Solution(inputs.ctifile, inputs.cat_phase3)
 conductor_obj = ct.Solution(inputs.ctifile, inputs.metal_phase)
+lithium_obj = ct.Solution(inputs.ctifile, inputs.an_phase)
 
 #anode_s_obj = ct.Interface(inputs.ctifile, inputs.anode_surf_phase,
 #                           [anode_obj, elyte_obj, conductor_obj])
@@ -35,10 +36,12 @@ Li2S_el_s = ct.Interface(inputs.ctifile, inputs.Li2S_elyte_phase,
                              [Li2S_obj, elyte_obj, conductor_obj])
 carbon_el_s = ct.Interface(inputs.ctifile, inputs.graphite_elyte_phase,
                              [carbon_obj, elyte_obj, conductor_obj])
+lithium_el_s = ct.Interface(inputs.ctifile, inputs.anode_elyte_phase,
+                             [lithium_obj, elyte_obj, conductor_obj])
 #Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [Li2S_obj, Li2S_el_s, ])
 
-if hasattr(inputs, 'X_elyte_init'):
-    elyte_obj.X = inputs.X_elyte_init
+if hasattr(inputs, 'C_k_el_0'):
+    elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
 
 # Set initial conditions of cantera objects
 #Li2_S = inputs.Li_cat_max - inputs.SOC_0*(inputs.Li_cat_max - inputs.Li_cat_min)
@@ -70,66 +73,7 @@ F = ct.faraday
     # Calculate the actual current density. 
 #    if inputs.flag_cathode == 1:
 #        i_ext_amp = -inputs.C_rate*oneC_cat
-    
-    
-class anode():
-    flag = inputs.flag_anode
-    
-    npoints = inputs.npoints_anode
-    
-    nshells = inputs.nshells_anode
-    
-    nVars = nshells + 2 + elyte_obj.n_species
-    
-    # Pointers
-    
-    # Set length of solution vector for anode
-    nSV = npoints*nVars
-    
-    offsets = np.arange(0, int(nSV), int(nVars))
-        
-"============================================================================="        
-        
-class sep():
-    # Set a flag to let the solver know whether to implement this class
-    flag = inputs.flag_sep
-    
-    # Number of nodes in the y-direction
-    npoints = inputs.npoints_sep
-    
-    # Number of variables per node
-    nVars = 1 + elyte_obj.n_species
-    
-    H = inputs.H_elyte  # Separator thickness [m]
-    
-    tau = inputs.tau_sep  # Tortuosity of separator
-    
-    # Geometric parameters
-    epsilon = inputs.epsilon_sep  # Volume fraction of separator material [-]
-    epsilon_el = 1 - epsilon      # Volume fraction of electrolyte [-]
-    dyInv = npoints/H             # Inverse of y-direction discretization [1/m]
-    
-    # Mobility of electrolyte species
-    u_Li_el = inputs.D_Li_el*epsilon_el/ct.gas_constant/inputs.T/tau**3
-    
-    ptr = {}
-    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
-    ptr['phi'] = elyte_obj.n_species
-    
-    ptr_vec = {}
-    ptr_vec['rho_k_el'] = anode.nSV + ptr['rho_k_el']
-    ptr_vec['phi'] = anode.nSV + ptr['phi']
-    
-    for i in np.arange(1, npoints):
-        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'], 
-                                      anode.nSV + ptr['rho_k_el'] + i*nVars)
-        ptr_vec['phi'] = np.append(ptr_vec['phi'], 
-                                   anode.nSV + ptr['phi'] + i*nVars)
-        
-    # Set the length of the solution vector for the separator
-    nSV = npoints*nVars
-    
-    offsets = np.arange(int(anode.nSV), int(anode.nSV) + int(nSV), int(nVars))
+       
        
 "============================================================================="
 
@@ -155,13 +99,12 @@ class cathode():
     ptr['eps_Li2S'] = 1
     ptr['rho_k_el'] = 2 + np.arange(0, elyte_obj.n_species)
     ptr['phi_dl'] = ptr['rho_k_el'][-1] + 1
-    ptr['phi_el'] = ptr['rho_k_el'][-1] + 2
+    ptr['phi_ed'] = ptr['rho_k_el'][-1] + 2
     ptr['np_S8'] = ptr['rho_k_el'][-1] + 3
     ptr['np_Li2S'] = ptr['rho_k_el'][-1] + 4
     
     nSV = npoints*nVars
-    offsets = np.arange(int(anode.nSV + sep.nSV), 
-                        int(anode.nSV + sep.nSV) + int(nSV), int(nVars))
+    offsets = np.arange(0, int(nSV), int(nVars))
     
     ptr_vec = {}
     ptr_vec['eps_S8']   = ptr['eps_S8']   + offsets
@@ -170,7 +113,7 @@ class cathode():
     for i in offsets[1:]:
         ptr_vec['rho_k_el'] = np.hstack((ptr_vec['rho_k_el'],i+ptr['rho_k_el']))
     ptr_vec['phi_dl']  = ptr['phi_dl'] + offsets
-    ptr_vec['phi_el']  = ptr['phi_el']   + offsets
+    ptr_vec['phi_ed']  = ptr['phi_ed']   + offsets
     ptr_vec['np_S8']   = ptr['np_S8']   + offsets
     ptr_vec['np_Li2S'] = ptr['np_Li2S'] + offsets
     
@@ -183,7 +126,7 @@ class cathode():
     r_p = inputs.r_p_cat
     d_p = inputs.d_p_cat
     dyInv = npoints/inputs.H_cat
-    dy = inputs.H_cat
+    dy = inputs.H_cat/npoints
     H = inputs.H_cat
     V_0 = inputs.H_cat*inputs.A_cat
     
@@ -216,8 +159,8 @@ class cathode():
 #    r_C = inputs.H_cat
 #    A_C_0 = 3*eps_C_0/r_C
     
-#    oneC = 16*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
-    oneC = eps_S_0*H*sulfur_obj.density_mass*1675
+    oneC = 16*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
+#    oneC = eps_S_0*H*sulfur_obj.density_mass*1675
     
     def get_i_ext():
         return cathode.i_ext
@@ -233,13 +176,100 @@ class cathode():
     
     u_Li_el = inputs.D_Li_el*eps_el_0/tau**3
     
-    D_el = inputs.D_Li_el*eps_el_0/tau**3
+#    D_el = inputs.D_Li_el*eps_el_0/tau**3
+    D_el = inputs.D_Li_el/tau**3
     
     def get_tflag():
         return cathode.t_flag
     
     def set_tflag(value):
         cathode.t_flag = value
+    
+"============================================================================="        
+        
+class sep():
+    # Set a flag to let the solver know whether to implement this class
+    flag = inputs.flag_sep
+    
+    # Number of nodes in the y-direction
+    npoints = inputs.npoints_sep
+    
+    # Number of variables per node
+    nVars = 1 + elyte_obj.n_species
+    
+    H = inputs.H_elyte  # Separator thickness [m]
+    
+    tau = inputs.tau_sep  # Tortuosity of separator
+    
+    # Geometric parameters
+    epsilon = inputs.epsilon_sep  # Volume fraction of separator material [-]
+    epsilon_el = 1 - epsilon      # Volume fraction of electrolyte [-]
+    dyInv = npoints/H             # Inverse of y-direction discretization [1/m]
+    dy = H/npoints
+    
+    # Mobility of electrolyte species
+    u_Li_el = inputs.D_Li_el*epsilon_el/ct.gas_constant/inputs.T/tau**3
+    
+    ptr = {}
+    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
+    ptr['phi'] = elyte_obj.n_species
+    
+    ptr_vec = {}
+    ptr_vec['rho_k_el'] = cathode.nSV + ptr['rho_k_el']
+    ptr_vec['phi'] = cathode.nSV + ptr['phi']
+    
+    for i in np.arange(1, npoints):
+        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'], 
+                                      cathode.nSV + ptr['rho_k_el'] + i*nVars)
+        ptr_vec['phi'] = np.append(ptr_vec['phi'], 
+                                   cathode.nSV + ptr['phi'] + i*nVars)
+        
+    # Set the length of the solution vector for the separator
+    nSV = npoints*nVars
+    
+    D_el = inputs.D_Li_el*epsilon_el/tau**3
+    
+    offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
+    
+"============================================================================="
+
+class anode():
+    flag = inputs.flag_anode
+    
+    npoints = inputs.npoints_anode
+#    
+#    nshells = inputs.nshells_anode
+    
+    nVars = 2 + elyte_obj.n_species
+    
+    # Pointers
+    ptr = {}
+    ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
+    
+    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
+    ptr['phi_dl'] = ptr['rho_k_el'][-1] + 1
+    ptr['phi_ed'] = ptr['rho_k_el'][-1] + 2
+    
+    # Set length of solution vector for anode
+    nSV = npoints*nVars
+    offsets = np.arange(int(cathode.nSV + sep.nSV), 
+                        int(cathode.nSV + sep.nSV) + int(nSV), int(nVars))
+    
+    # Geometric parameters
+    eps_el = 1 - inputs.epsilon_an
+    tau = inputs.tau_an
+    r_p = inputs.r_p_cat
+    dyInv = npoints/inputs.H_an
+    dy = inputs.H_an/npoints
+    H = inputs.H_an
+    
+    C_dl = inputs.C_dl_an
+    A_Li = 1e5
+    sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
+    
+    u_Li_el = inputs.D_Li_el*eps_el/tau**3
+    
+    D_el = inputs.D_Li_el*eps_el/tau**3
     
 "============================================================================="
 
@@ -250,16 +280,8 @@ class sol_init():
     
     # Set up algebraic variable vector
     algvar = np.zeros_like(SV_0)
-    
-    offsets = sep.offsets
-    ptr = sep.offsets
-    for j in np.arange(0, sep.npoints):
-        
-        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
-        algvar[offsets[j] + ptr['rho_k_el']] = 1
-        
-        SV_0[offsets[j] + ptr['phi']] = inputs.Phi_elyte_init
-        
+     
+    # Cathode
     offsets = cathode.offsets
     ptr = cathode.ptr
     for j in np.arange(0, cathode.npoints):
@@ -276,13 +298,38 @@ class sol_init():
         SV_0[offsets[j]+ptr['phi_dl']] = inputs.Cell_voltage - inputs.Phi_el_init
         algvar[offsets[j] + ptr['phi_dl']] = 1
                                            
-        SV_0[offsets[j]+ptr['phi_el']] = inputs.Phi_el_init
+        SV_0[offsets[j]+ptr['phi_ed']] = inputs.Cell_voltage
+#        algvar[offsets[j] + ptr['phi_ed']] = 1
         
         SV_0[offsets[j]+ptr['np_S8']]=inputs.np_S8_init
         algvar[offsets[j] + ptr['np_S8']] = 1
         
         SV_0[offsets[j]+ptr['np_Li2S']] = inputs.np_Li2S_init
         algvar[offsets[j] + ptr['np_Li2S']] = 1
+     
+    # Separator
+    offsets = sep.offsets
+    ptr = sep.ptr
+    for j in np.arange(0, sep.npoints):
+        
+        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
+        algvar[offsets[j] + ptr['rho_k_el']] = 1
+        
+        SV_0[offsets[j] + ptr['phi']] = inputs.Phi_el_init
+     
+    # Anode
+    offsets = anode.offsets
+    ptr = anode.ptr
+    for j in np.arange(0, anode.npoints):
+        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
+        algvar[offsets[j] + ptr['rho_k_el']] = 1
+        
+        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
+        algvar[offsets[j] + ptr['phi_dl']] = 1
+        
+        SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init
+        
+    
                                            
 "============================================================================="
 

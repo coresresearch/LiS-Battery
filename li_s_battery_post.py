@@ -21,8 +21,12 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
     else:
         showlegend = 0
     
+#    SV_df = SV_df_orig.copy()
+#    SV_df['phi_dl'] = SV_df['phi_dl'] + SV_df['phi_el']
+    
     vol_fracs = tags['eps_S8'] + tags['eps_Li2S']
-    phi = tags['phi_dl'] + tags['phi_el']
+#    phi = tags['phi_dl'] + tags['phi_ed']
+    phi = tags['phi_ed']
     fontsize = 18
     t = SV_df['Time']
     
@@ -79,20 +83,20 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
     for j in np.arange(0, an_np):
         offset = anode.offsets[j]  # Set node offset value for loop
         
-        # Loop over number of shells in anode
-        for k in np.arange(0, anode.nshells):
-            newcols_an = {k + offset: 'X_an'+str(j+1)+str(k+1)}
-            newcols.update(newcols_an)
+#        # Loop over number of shells in anode
+#        for k in np.arange(0, anode.nshells):
+#            newcols_an = {k + offset: 'X_an'+str(j+1)+str(k+1)}
+#            newcols.update(newcols_an)
             
         # Loop over number of species in electrolyte
         for k in np.arange(0, elyte_obj.n_species):
             species = elyte_obj.species_names[k]
-            newcols_el = {k + anode.nshells + offset: 'X_'+species+'_an'+str(j+1)}
+            newcols_el = {k + offset: 'X_'+species+'_an'+str(j+1)}
             newcols.update(newcols_el)
             
         # Add tags for electrod and double layer potentials
-        newcols_phi = {0+anode.nshells+elyte_obj.n_species+offset: 'Phi_an'+str(j+1),
-                       1+anode.nshells+elyte_obj.n_species+offset: 'Phi_an_dl'+str(j+1)}
+        newcols_phi = {0+elyte_obj.n_species+offset: 'Phi_an'+str(j+1),
+                       1+elyte_obj.n_species+offset: 'Phi_an_dl'+str(j+1)}
         newcols.update(newcols_phi)
         
         SV_df.rename(columns=newcols, inplace = True)
@@ -132,7 +136,7 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
             
         # Add tags for double layer and electrolyte potentials
         newcols_phi = {2 + elyte_obj.n_species + offset: 'Phi_dl'+str(j+1),
-                       3 + elyte_obj.n_species + offset: 'Phi_el'+str(j+1)}
+                       3 + elyte_obj.n_species + offset: 'Phi_ed'+str(j+1)}
         newcols.update(newcols_phi)
         
         SV_df.rename(columns = newcols, inplace = True)
@@ -159,7 +163,7 @@ def tag_strings(SV):
     r_S8 = np.array([])
     rho_el = []
     phi_dl = np.array([])
-    phi_el = np.array([])
+    phi_ed = np.array([])
     np_S8 = np.array([])
     np_Li2S = np.array([])
     
@@ -174,20 +178,20 @@ def tag_strings(SV):
             SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
             
         phi_dl = np.append(phi_dl, SV_labels[ptr['phi_dl'] + offset])
-        phi_el = np.append(phi_el, SV_labels[ptr['phi_el'] + offset])
+        phi_ed = np.append(phi_ed, SV_labels[ptr['phi_ed'] + offset])
         np_S8 = np.append(np_S8, SV_labels[ptr['np_S8'] + offset])
         np_Li2S = np.append(np_Li2S, SV_labels[ptr['np_Li2S'] + offset])
         
     r_Li2S = r_Li2S.tolist()
     r_S8 = r_S8.tolist()
     phi_dl = phi_dl.tolist()
-    phi_el = phi_el.tolist()
+    phi_ed = phi_ed.tolist()
     np_S8 = np_S8.tolist()
     np_Li2S = np_Li2S.tolist()
     
     tags = {}
     tags['eps_Li2S'] = r_Li2S; tags['eps_S8'] = r_S8; tags['rho_el'] = rho_el
-    tags['phi_dl'] = phi_dl; tags['phi_el'] = phi_el; tags['np_S8'] = np_S8
+    tags['phi_dl'] = phi_dl; tags['phi_ed'] = phi_ed; tags['np_S8'] = np_S8
     tags['np_Li2S'] = np_Li2S
     
     return tags

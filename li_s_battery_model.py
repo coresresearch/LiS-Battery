@@ -42,7 +42,12 @@ def main():
     t_0 = 0.
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
-    atol = 1e-6; rtol = 1e-6; sim_output = 50
+    atol = np.ones_like(SV_0)*1e-30
+#    atol[cat.ptr_vec['eps_S8']] = 1e-30
+#    atol[cat.ptr_vec['eps_Li2S']] = 1e-15
+#    atol[cat.ptr_vec['rho_k_el']] = 1e-20
+#    atol = 1e-30; 
+    rtol = 1e-6; sim_output = 50
     
     rate_tag = str(inputs.C_rate)+"C"
     
@@ -207,6 +212,8 @@ from li_s_battery_init import carbon_obj as carbon
 from li_s_battery_init import sulfur_el_s as S_el_s
 from li_s_battery_init import Li2S_el_s as L_el_s
 from li_s_battery_init import carbon_el_s as C_el_s
+from li_s_battery_init import lithium_obj as lithium
+from li_s_battery_init import lithium_el_s as lithium_s
 from li_s_battery_init import conductor_obj as conductor
 from li_s_battery_init import elyte_obj as elyte
 from math import pi, exp
@@ -215,7 +222,7 @@ class cc_cycling(Implicit_Problem):
     def res_fun(t, SV, SV_dot):
         
         res = np.zeros_like(SV)
-        ptr = cat.ptr; F = ct.faraday; R = ct.gas_constant
+        ptr = cat.ptr; F = ct.faraday; R = ct.gas_constant; T = inputs.T
         """Cathode CC boundary"""
         j = 0; offset = cat.offsets[int(j)]
         i_ext = cat.get_i_ext()
@@ -229,15 +236,15 @@ class cc_cycling(Implicit_Problem):
         
         for j in np.arange(0, cat.npoints):
             
+            # Set previous outlet fluxes to new inlet fluxes
             i_el_m = i_el_p
             i_io_m = i_io_p
             N_io_m = N_io_p
             
-            i_el_p = 0
-            i_io_p = i_ext
-            N_io_p = np.zeros_like(SV[offset + ptr['rho_k_el']])
-            N_io_p[2] = i_ext/F
+            # Update offset to current node
+            offset = cat.offsets[int(j)]
             
+            # Set variables to loop value
             np_S = SV[offset + ptr['np_S8']]
             np_L = SV[offset + ptr['np_Li2S']]
             eps_el = 1 - cat.eps_C_0 - SV[offset + ptr['eps_S8']] - SV[offset + ptr['eps_Li2S']]
@@ -246,43 +253,55 @@ class cc_cycling(Implicit_Problem):
             A_S = 3*SV[offset + ptr['eps_S8']]/(3*SV[offset + ptr['eps_S8']]*cat.V_0/2/pi/np_S)**(1/3)
             A_L = 3*SV[offset + ptr['eps_Li2S']]/(3*SV[offset + ptr['eps_Li2S']]*cat.V_0/2/pi/np_L)**(1/3)
             
-#            A_S = cat.A_S_0*((SV[offset + ptr['eps_S8']])/cat.eps_pore)**(1.5)
-#            A_L = cat.A_L_0*(SV[offset + ptr['eps_Li2S']]/cat.eps_pore)**(1.5)
-            
             r_S = 3*SV[offset + ptr['eps_S8']]/A_S
             r_L = 3*SV[offset + ptr['eps_Li2S']]/A_L
-#            r_S = 3/A_S
-#            r_L = 3/A_L
             
-#            A_C = 3*(2*cat.r_C**2 - np_S*r_S**2 - np_L*r_L**2)/2/cat.r_C**3
-#            A_C = inputs.A_C_0 - (np_S*pi*r_S**2 + np_L*pi*r_L**2)/cat.eps_C_0/cat.V_0
             A_C = inputs.A_C_0 - (pi*np_S*r_S**2)/cat.V_0 - (pi*np_L*r_L**2)/cat.V_0
             
-#            print(SV[offset + ptr['eps_S8']], A_S, r_S, '\n', 
-#                  SV[offset + ptr['eps_Li2S']], A_L, r_L, '\n',
-#                  A_C, '\n\n')
+            print(SV[offset + ptr['eps_S8']], A_S, r_S, '\n', 
+                  SV[offset + ptr['eps_Li2S']], A_L, r_L, '\n',
+                  A_C, t, '\n\n')
 
-#            u_Li_el = inputs.D_Li_el*eps_el/cat.tau**3
-#            D_el = inputs.D_Li_el*eps_el/cat.tau**3
-
-            # Set states
-            phi_el = SV[offset + ptr['phi_el']]
+            # Set states for THIS node
+            phi_ed = SV[offset + ptr['phi_ed']]
             phi_dl = SV[offset + ptr['phi_dl']]
+            phi_el = phi_ed - phi_dl
             
-            carbon.electric_potential = phi_dl + phi_el
-            elyte.electric_potential = phi_el
-            conductor.electric_potential = phi_dl + phi_el
+            carbon.electric_potential = phi_ed
+            elyte.electric_potential = phi_ed - phi_dl
+            conductor.electric_potential = phi_ed
             
-#            rho = sum(SV[offset + ptr['rho_k_el']])
+            C = sum(SV[offset + ptr['rho_k_el']])
             X = SV[offset + ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
 
             elyte.X = X
             
+            # Shift forward to NEXT node
+            offset = sep.offsets[int(j)]
+            
+            phi_el_2 = SV[offset + sep.ptr['phi']]
+            X_2 = SV[offset + sep.ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
+            C_2 = sum(SV[offset + sep.ptr['rho_k_el']])
+            dyInv_boundary = 1/(0.5*(cat.dy + sep.dy))
+            
+            # Shift back to THIS node
+            offset = cat.offsets[int(j)]
+            
+            D_el = cat.D_el*eps_el
+            C_0 = (C + C_2)*0.5
+            C_k = (X_2*C_2 + C*X)*0.5
+            
+            # Current node plus face boundary fluxes
+            i_el_p = 0
+            N_io_p = np.zeros_like(SV[offset + ptr['rho_k_el']])
+            N_io_p = (-D_el*C_0*(X_2 - X)*dyInv_boundary
+                      -D_el*C_k*(inputs.z_k_el*F/R/T)*(phi_el_2 - phi_el)*dyInv_boundary)
+            
+            i_io_p = np.dot(N_io_p, inputs.z_k_el)*F
+            
             sdot_C = C_el_s.net_production_rates
             sdot_S = S_el_s.net_production_rates
             sdot_L = L_el_s.net_production_rates 
-            
-#            print(sdot_L[0], '\n')
             
             # Calculate respective changes in species for each interface. This
             #   is done separately due to some species being produced/consumed
@@ -314,7 +333,8 @@ class cc_cycling(Implicit_Problem):
             res[offset + ptr['phi_dl']] = SV_dot[offset + ptr['phi_dl']] - (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C
             
             """Algebraic expression for charge neutrality in all phases"""
-            res[offset + ptr['phi_el']] = SV[offset + ptr['phi_el']]  #i_el_m - i_el_p + i_io_m - i_io_p
+            res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
+#            SV[offset + ptr['phi_el']]
             
             """Calculate change in S8 nucleation sites"""
             res[offset + ptr['np_S8']] = SV_dot[offset + ptr['np_S8']]
@@ -323,7 +343,74 @@ class cc_cycling(Implicit_Problem):
             res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
         
         """==================Separator boundary conditions=================="""
-            
+        
+        i_io_m = i_io_p
+        N_io_m = N_io_p
+        phi_el = phi_el_2
+        X = X_2
+        C = C_2
+        
+        # Shift forward to NEXT node
+        j = 0; offset = an.offsets[int(j)]
+        
+        phi_el_2 = SV[offset + an.ptr['phi_ed']] - SV[offset + an.ptr['phi_dl']]
+        X_2 = SV[offset + an.ptr['rho_k_el']]/sum(SV[offset + an.ptr['rho_k_el']])
+        C_2 = sum(SV[offset + an.ptr['rho_k_el']])
+        dyInv_boundary = 1/(0.5*(sep.dy + an.dy))
+        
+        # Shift back to THIS node
+        offset = sep.offsets[int(j)]
+        
+        D_el = sep.D_el
+        C_0 = (C + C_2)*0.5
+        C_k = (X_2*C_2 + X*C)*0.5
+        
+        # Current node plus face boundary conditions
+        N_io_p = np.zeros_like(SV[offset + ptr['rho_k_el']])
+        N_io_p = (-D_el*C_0*(X_2 - X)*dyInv_boundary
+                  -D_el*C_k*(inputs.z_k_el*F/R/T)*(phi_el_2 - phi_el)*dyInv_boundary)
+        
+        i_io_p = np.dot(N_io_p, inputs.z_k_el)*F
+        
+        res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
+        - (N_io_m - N_io_p)*sep.dyInv)/sep.epsilon_el
+        
+        res[offset + sep.ptr['phi']] = i_io_m - i_io_p
+        
+        """====================Anode boundary conditions===================="""
+          
+        i_io_m = i_io_p
+        N_io_m = N_io_p
+        phi_el = phi_el_2
+        i_el_m = 0
+        X = X_2
+        C = C_2
+        
+        offset = an.offsets[int(j)]
+        
+        i_el_p = i_ext
+        i_io_p = 0
+        N_io_p = 0
+        
+        elyte.X = X
+        elyte.electric_potential = phi_el
+        lithium.electric_potential = SV[offset + an.ptr['phi_ed']]
+        conductor.electric_potential = SV[offset + an.ptr['phi_ed']]
+        
+        sdot_Li = lithium_s.net_production_rates
+        
+        R_net = sdot_Li[2]*an.A_Li
+        i_Far = sdot_Li[-2]
+        
+        res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
+        - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
+        
+        res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']] 
+        - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
+        
+        res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
+#        i_el_m - i_el_p + i_io_m - i_io_p
+        
 #        i_el_m = i_el_p
 #        i_io_m = i_io_p
 #        N_io_m = N_io_p
@@ -333,7 +420,7 @@ class cc_cycling(Implicit_Problem):
 #        i_io_p = i_ext
 #        N_io_p = i_ext/F
         
-#        print(SV)
+#        print(SV, '\n', res, '\n\n')
 #        print(res)
 #        print(t, i_ext)
         
@@ -351,7 +438,7 @@ class cc_cycling(Implicit_Problem):
         event1 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event2 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_S8']])])
         event1 = 1 - y[cat.ptr_vec['eps_S8']]
-        event2 = y[cat.ptr_vec['eps_S8']] - 1e-5
+        event2 = y[cat.ptr_vec['eps_S8']] - 1e-10
         
         event3 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
         event4 = np.zeros([cat.npoints*int(y[cat.ptr_vec['np_Li2S']])])
@@ -374,26 +461,26 @@ class cc_cycling(Implicit_Problem):
 #        while True:
 #            self.event_switch(solver, event_info)
 #            self.init_mode(solver)
-            
+#            
 #            if not True in event_info:
 #                break
     
     "========================================================================="
     
-    def event_switch(self, solver, event_info):
-        if not all(event_info):
-            solver.sw = [not solver.sw]
-            
-        return solver.sw
+#    def event_switch(self, solver, event_info):
+#        if not all(event_info):
+#            solver.sw = [not solver.sw]
+#            
+#        return solver.sw
     
     "========================================================================="
     
-    def init_mode(self, solver):
-        cat.set_tflag(solver.t)
-        solver.make_consistent('IDA_YA_YDP_INIT')
-        
-        if battery.get_i_ext() != 0:
-            battery.set_i_ext(0)
+#    def init_mode(self, solver):
+#        cat.set_tflag(solver.t)
+#        solver.make_consistent('IDA_YA_YDP_INIT')
+#        
+#        if battery.get_i_ext() != 0:
+#            battery.set_i_ext(0)
     
     "========================================================================="
     

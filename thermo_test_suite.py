@@ -29,10 +29,11 @@ plt.close('all')
 N = 100
 
 
-elyte.electric_potential = 0.0
-carbon.electric_potential = 1.5
-conductor.electric_potential = 1.5
-carbon_el_s.electric_potential = 1.5
+elyte.electric_potential = 1.0
+V_cell = 2.35
+carbon.electric_potential = V_cell
+conductor.electric_potential = V_cell
+#carbon_el_s.electric_potential = 2.5
 
 C_k_0 = np.array([1.023e1, 
                   1.023e1, 
@@ -86,13 +87,13 @@ for j in np.arange(4, elyte.n_species):
         
 #        print(carbon_el_s.forward_rates_of_progress, '\n', carbon_el_s.reverse_rates_of_progress, '\n\n')
     
-    plt.figure(1)
-    plt.plot(C_k_mat[j, :], G_elyte[j, :], label=labels[j-4])
-    plt.legend()
-    plt.title('Electrolyte Gibbs Free Energy \n as a function of species concentration')
-    plt.xlabel(r'$C_k$')
-    ax = plt.gca()
-    ax.set_xscale('log')
+#    plt.figure(1)
+#    plt.plot(C_k_mat[j, :], G_elyte[j, :], label=labels[j-4])
+#    plt.legend()
+#    plt.title('Electrolyte Gibbs Free Energy \n as a function of species concentration')
+#    plt.xlabel(r'$C_k$')
+#    ax = plt.gca()
+#    ax.set_xscale('log')
     
 #    plt.figure(18)
 #    plt.plot(C_k_mat[j, :], dG_global[j, :], label=labels[j-4])
@@ -102,23 +103,23 @@ for j in np.arange(4, elyte.n_species):
 #    ax = plt.gca()
 #    ax.set_xscale('log')
     
-plt.figure(2)
-plt.plot(C_k_mat[-1, :], dG_L[-1, :], label=labels[-1])
-plt.title(r'$\Delta G_{rxn}$ at $Li_2S$-Elyte over $S^{2-}$ concentration')
-
-plt.figure(3)
-plt.plot(C_k_mat[4, :], dG_S[4, :], label=labels[0])
-plt.title(r'$\Delta G_{rxn}$ at S-Elyte over $S_8(l)$ concentration')
-
-plt.figure(4)
-plt.plot(C_k_mat[-1, :], k_f_L[-1, :], label=labels[-1])
-plt.title(r'Net rate of progress at $Li_2S$-Elyte over $S^{2-}$ concentration')
-ax = plt.gca()
-ax.set_yscale('log')
-
-plt.figure(5)
-plt.plot(C_k_mat[4, :], k_f_S[4, :], label=labels[0])
-plt.title(r'Net rate of progress at S-Elyte over $S_8(l)$ concentration')
+#plt.figure(2)
+#plt.plot(C_k_mat[-1, :], dG_L[-1, :], label=labels[-1])
+#plt.title(r'$\Delta G_{rxn}$ at $Li_2S$-Elyte over $S^{2-}$ concentration')
+#
+#plt.figure(3)
+#plt.plot(C_k_mat[4, :], dG_S[4, :], label=labels[0])
+#plt.title(r'$\Delta G_{rxn}$ at S-Elyte over $S_8(l)$ concentration')
+#
+#plt.figure(4)
+#plt.plot(C_k_mat[-1, :], k_f_L[-1, :], label=labels[-1])
+#plt.title(r'Net rate of progress at $Li_2S$-Elyte over $S^{2-}$ concentration')
+#ax = plt.gca()
+#ax.set_yscale('log')
+#
+#plt.figure(5)
+#plt.plot(C_k_mat[4, :], k_f_S[4, :], label=labels[0])
+#plt.title(r'Net rate of progress at S-Elyte over $S_8(l)$ concentration')
 #ax = plt.gca()
 #ax.set_yscale('log')
 
@@ -127,21 +128,59 @@ rxn_labels = ['$S_8(l) <-> S_8^{2-}$',
               '$S_6^{2-} <-> S_4^{2-}$', 
               '$S_4^{2-} <-> S_2^{2-}$', 
               '$S_2^{2-} <-> S^{2-}$']
-for j in np.arange(4, elyte.n_species):
-    for k in np.arange(0, carbon_el_s.n_reactions):
-        plt.figure(j+2)
-        plt.plot(C_k_mat[j, :], dG_C[j, :, k], label=rxn_labels[k])
-        plt.title(r'$\Delta G_{rxn}$ at the carbon interface over ' + labels[j-4])
-        plt.legend()
+#for j in np.arange(4, elyte.n_species):
+#    for k in np.arange(0, carbon_el_s.n_reactions):
+#        plt.figure(j+2)
+#        plt.plot(C_k_mat[j, :], dG_C[j, :, k], label=rxn_labels[k])
+#        plt.title(r'$\Delta G_{rxn}$ at the carbon interface over ' + labels[j-4])
+#        plt.legend()
         
-for j in np.arange(4, elyte.n_species):
-    for k in np.array((0, 1, 2, 3, 4)):  #np.arange(0, carbon_el_s.n_reactions):
-        plt.figure(j+8)
-        plt.plot(C_k_mat[j, :], k_f_C[j, :, k], label=rxn_labels[k])
-        plt.title(r'Net rate of progress at the carbon interface over ' + labels[j-4])
-        ax = plt.gca()
-        ax.set_yscale('log')
-        plt.legend()
+rxn_labels = ['$S_8(s) <-> S_8(l)$',
+              '$S_8(l) <-> S_8^{2-}$', 
+              '$S_8^{2-} <-> S_6^{2-}$', 
+              '$S_6^{2-} <-> S_4^{2-}$', 
+              '$S_4^{2-} <-> S_2^{2-}$', 
+              '$S_2^{2-} <-> S^{2-}$',
+              '$2 Li^{+} + S^{2-} <-> Li_2S$']
+
+q_f = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
+q_r = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
+
+C_k = np.copy(C_k_0)
+#C_k[-1] = 1e-13
+elyte.X = C_k/np.sum(C_k)
+
+q_f[0] = sulfur_el_s.forward_rates_of_progress
+q_r[0] = sulfur_el_s.reverse_rates_of_progress
+
+q_f[1:carbon_el_s.n_reactions+1] = carbon_el_s.forward_rates_of_progress
+q_r[1:carbon_el_s.n_reactions+1] = carbon_el_s.reverse_rates_of_progress
+
+q_f[-1] = Li2S_el_s.forward_rates_of_progress
+q_r[-1] = Li2S_el_s.reverse_rates_of_progress
+
+x = np.arange(0, len(q_f))
+width = 0.35
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width/2, q_f, width, label='forward progress')
+rects2 = ax.bar(x + width/2, q_r, width, label='reverse progress')
+
+ax.legend()
+ax.set_xticks(x)
+ax.set_xticklabels(rxn_labels)
+ax.set_yscale('log')
+plt.show()
+
+        
+#for j in np.arange(4, elyte.n_species):
+#    for k in np.array((0, 1, 2, 3, 4)):  #np.arange(0, carbon_el_s.n_reactions):
+#        plt.figure(j+8)
+#        plt.plot(C_k_mat[j, :], k_f_C[j, :, k], label=rxn_labels[k])
+#        plt.title(r'Net rate of progress at the carbon interface over ' + labels[j-4])
+#        ax = plt.gca()
+#        ax.set_yscale('log')
+#        plt.legend()
         
     
 plt.show()

@@ -20,19 +20,19 @@ import numpy as np
 class inputs():
     
     # The following flags set which components to include in the simulation 
-    flag_anode = 0
-    flag_sep = 0
+    flag_anode = 1
+    flag_sep = 1
     flag_cathode = 1
     
     n_comps = flag_anode + flag_sep + flag_cathode
     
     # Set number of discretized nodes in each component's y-direction
-    npoints_anode = 5*flag_anode
+    npoints_anode = 1*flag_anode
     npoints_sep = 1*flag_sep
     npoints_cathode = 1*flag_cathode
     
     # Set number of discretized shells in each particle
-    nshells_anode = 5*flag_anode
+#    nshells_anode = 5*flag_anode
     
     flag_req = 1
     
@@ -68,6 +68,7 @@ class inputs():
     cat_phase3 = 'carbon'
     metal_phase = 'electron'
     elyte_phase = 'electrolyte'
+    an_phase = 'lithium'
     
 #    anode_phase = 'anode'
 #    anode_surf_phase = 'edge_anode_electrolyte'
@@ -75,6 +76,7 @@ class inputs():
     graphite_elyte_phase = 'carbon_surf'
     Li2S_elyte_phase = 'lithium_sulfide_surf'
     tpb_phase = 'tpb'
+    anode_elyte_phase = 'lithium_surf'
     
     Li_species_elyte = 'Li+(e)'
     
@@ -83,8 +85,8 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    Phi_el_init = 0.0
-    Cell_voltage = 1.0
+    Phi_el_init = 1.0
+    Cell_voltage = 2.5
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
@@ -97,7 +99,7 @@ class inputs():
     
     # Cell geometry
     H_cat = 40e-6               # Cathode thickness [m]
-    A_C_0 = 1.32e5              # Initial volume specific area of carbon [1/m]
+    A_C_0 = 1.32e3              # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
