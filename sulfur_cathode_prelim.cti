@@ -152,7 +152,7 @@ species(
 species(
 	name = "Li2S",
 	atoms = "Li:2 S:1",
-	thermo = const_cp(h0 = (-1100, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-920, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (45.95/1.67, 'cm3/mol'))
 	)# -1063.05 -1196.3
 
@@ -181,7 +181,7 @@ species(
 species(
 	name 		= "Li+(e)",
 	atoms 		= " Li:1 E:-1 ",
-	thermo 		= const_cp(h0 = (-278.49, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo 		= const_cp(h0 = (-278.49, 'kJ/mol'), s0 = (13.4, 'J/mol/K')),
 	standardState	= constantIncompressible(molarVolume = (6.940455/1.260, 'cm3/mol'))
 	)# -278.49 13.4 153.085
 
@@ -240,42 +240,42 @@ species(
 species(
 	name = "S8(e)",
 	atoms = "S:8",
-	thermo = const_cp(h0 = (10, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (11.6, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
 	)# 17.6 18.9 42.0
 
 species(
 	name = "S8-(e)",
 	atoms = "S:8 E:2",
-	thermo = const_cp(h0 = (-337.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-144, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
 	)# -125.0 -425.6 317.4 -337.0
 
 species(
 	name = "S6-(e)",
 	atoms = " S:6 E:2 ",
-	thermo = const_cp(h0 = (-327.6, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-335.6, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/10.76e3, 'm3/mol'))
 	)# -399.1 -327.6
 
 species(
 	name = "S4-(e)",
 	atoms = " S:4 E:2 ",
-	thermo = const_cp(h0 = (-331.5, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-261.5, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/16.14e3, 'm3/mol'))
 	)# -371.436 -331.5
 
 species(
 	name = "S2-(e)",
 	atoms = "S:2 E:2",
-	thermo = const_cp(h0 = (-305, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-185, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/32.3e3, 'm3/mol'))
 	)# -337.127 -305
 
 species(
 	name = "S-(e)",
 	atoms = " S:1 E:2 ",
-	thermo = const_cp(h0 = (-399.9, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-143.9, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/64.6e3, 'm3/mol'))
 	)# -311.024 -399.9
 
@@ -302,20 +302,20 @@ surface_reaction("S8(s) <=> S8(e)", [1.900e-1, 0.0, 0.0], id="S-E-1")
 # Carbon Electrolyte reactions
 #-------------------------------------------------------------------------------
 
-surface_reaction("0.5 S8(e) + electron <=> 0.5 S8-(e)", [7.725e3, 0.0, 0.0], id="C-E-1", beta=0.5)
+surface_reaction("0.5 S8(e) + electron <=> 0.5 S8-(e)", [7.725e1, 0.0, 0.0], id="C-E-1", beta=0.5)
 
-surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e6, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("1.5 S8-(e) + electron <=> 2 S6-(e)", [4.331e4, 0.0, 0.0], id="C-E-2", beta=0.5)
 
-surface_reaction("S6-(e) + electron <=> 1.5 S4-(e)", [3.193e4, 0.0, 0.0], id="C-E-3", beta=0.5)
+surface_reaction("S6-(e) + electron <=> 1.5 S4-(e)", [3.193e3, 0.0, 0.0], id="C-E-3", beta=0.5)
 
-surface_reaction("0.5 S4-(e) + electron <=> S2-(e)", [2.375e2, 0.0, 0.0], id="C-E-4", beta=0.5)
+surface_reaction("0.5 S4-(e) + electron <=> S2-(e)", [2.375e0, 0.0, 0.0], id="C-E-4", beta=0.5)
 
-surface_reaction("0.5 S2-(e) + electron <=> S-(e)", [4.655e1, 0.0, 0.0], id="C-E-5", beta=0.5)
+surface_reaction("0.5 S2-(e) + electron <=> S-(e)", [4.655e-1, 0.0, 0.0], id="C-E-5", beta=0.5)
 
 #-------------------------------------------------------------------------------
 # Li2S Electrolyte reactions
 #-------------------------------------------------------------------------------
-surface_reaction("2 Li+(e) + S-(e) <=> Li2S", [2.750e-5, 0.0, 0.0], id="L-E-1")
+surface_reaction("2 Li+(e) + S-(e) <=> Li2S", [2.750e-1, 0.0, 0.0], id="L-E-1")
 
 #edge_reaction("2 Li+(e) + 0.5 S2-(e) + electron <=> Li2S", [1e-1, 0.0, 0.0], id="L-E-1", beta=0.5)
 #surface_reaction("Li2S(e) <=> Li2S(s)", [1e-10, 0.0, 0.0], id="L-E-2")

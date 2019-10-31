@@ -130,10 +130,14 @@ class cathode():
     H = inputs.H_cat
     V_0 = inputs.H_cat*inputs.A_cat
     
+    
     if inputs.sulfur_method == 'bulk':
         m_S = inputs.m_S_0/inputs.A_cat
+        m_S_0 = inputs.m_S_0
     elif inputs.sulfur_method == 'loading':
         m_S = inputs.m_S_0
+        m_S_0 = inputs.m_S_0*inputs.A_cat
+        
         
     omega_S = inputs.pct_w_S8_0/inputs.A_cat
     omega_C = inputs.pct_w_C_0/inputs.A_cat
@@ -157,7 +161,7 @@ class cathode():
 #    r_C = (3*eps_C_0*inputs.A_cat*H/4/inputs.npoints_cathode/pi)**(1/3)
     r_C = 3*eps_C_0/inputs.A_C_0
 #    r_C = inputs.H_cat
-#    A_C_0 = 3*eps_C_0/r_C
+#    A_C_0 = 3*eps_C_0/(H/2)
     
     oneC = 16*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
 #    oneC = eps_S_0*H*sulfur_obj.density_mass*1675
@@ -250,6 +254,13 @@ class anode():
     ptr['phi_dl'] = ptr['rho_k_el'][-1] + 1
     ptr['phi_ed'] = ptr['rho_k_el'][-1] + 2
     
+    ptr_vec = {}
+    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
+    
+    for i in np.arange(1, npoints):
+        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'],
+                                       cathode.nSV + sep.nSV + ptr['rho_k_el'] + i*nVars)
+    
     # Set length of solution vector for anode
     nSV = npoints*nVars
     offsets = np.arange(int(cathode.nSV + sep.nSV), 
@@ -264,7 +275,7 @@ class anode():
     H = inputs.H_an
     
     C_dl = inputs.C_dl_an
-    A_Li = 1e5
+    A_Li = 1e3
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3

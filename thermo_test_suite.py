@@ -30,7 +30,7 @@ N = 100
 
 
 elyte.electric_potential = 1.0
-V_cell = 2.35
+V_cell = 2.4
 carbon.electric_potential = V_cell
 conductor.electric_potential = V_cell
 #carbon_el_s.electric_potential = 2.5
@@ -38,7 +38,7 @@ conductor.electric_potential = V_cell
 C_k_0 = np.array([1.023e1, 
                   1.023e1, 
                   1.024, 
-                  1.024, 
+                  1.0229, 
                   1.943e-2, 
                   1.821e-4, 
                   3.314e-4, 
@@ -143,6 +143,7 @@ rxn_labels = ['$S_8(s) <-> S_8(l)$',
               '$S_2^{2-} <-> S^{2-}$',
               '$2 Li^{+} + S^{2-} <-> Li_2S$']
 
+dG = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
 q_f = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
 q_r = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
 
@@ -152,19 +153,26 @@ elyte.X = C_k/np.sum(C_k)
 
 q_f[0] = sulfur_el_s.forward_rates_of_progress
 q_r[0] = sulfur_el_s.reverse_rates_of_progress
+dG[0] = sulfur_el_s.delta_gibbs
 
 q_f[1:carbon_el_s.n_reactions+1] = carbon_el_s.forward_rates_of_progress
 q_r[1:carbon_el_s.n_reactions+1] = carbon_el_s.reverse_rates_of_progress
+dG[1:carbon_el_s.n_reactions+1] = carbon_el_s.delta_gibbs
 
 q_f[-1] = Li2S_el_s.forward_rates_of_progress
 q_r[-1] = Li2S_el_s.reverse_rates_of_progress
+dG[-1] = Li2S_el_s.delta_gibbs
 
 x = np.arange(0, len(q_f))
-width = 0.35
+width = 0.25
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(12,6))
 rects1 = ax.bar(x - width/2, q_f, width, label='forward progress')
 rects2 = ax.bar(x + width/2, q_r, width, label='reverse progress')
+
+
+#fig2, ax2 = plt.subplots()
+#rects3 = ax2.bar(x + width, dG, width, color='green', label='$\Delta G$')
 
 ax.legend()
 ax.set_xticks(x)

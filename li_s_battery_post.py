@@ -4,7 +4,7 @@ Created on Tue Jun 25 14:35:17 2019
 
 @author: dkorff
 """
-
+from li_s_battery_inputs import inputs
 from li_s_battery_init import anode
 from li_s_battery_init import cathode
 from li_s_battery_init import sep
@@ -28,17 +28,18 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
 #    phi = tags['phi_dl'] + tags['phi_ed']
     phi = tags['phi_ed']
     fontsize = 18
+   
+    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/cathode.m_S_0
     t = SV_df['Time']
-    
     # Plot potential for the electrolyte and the double layer
-    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0], xlim=[0,t.iloc[-1]])
-    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel(r'$\Phi$ [V]', fontsize = fontsize)
-    SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
+    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0],  xlim=[0,t.iloc[-1]])
+    SV_plot.set_title('Cell voltage at C/50', fontsize = fontsize)
+    SV_plot.set_ylabel(r'$V_{cell}$ [V]', fontsize = fontsize)
+    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
-                   frameon=False, fontsize = 15).set_visible(showlegend)
+                   frameon=False, fontsize = 15).set_visible(False)
     SV_plot.tick_params(axis='both', labelsize=16)
-    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot Li2S and S8 volume fractions
     SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1], xlim=[0,t.iloc[-1]])
@@ -48,17 +49,37 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
-    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], ax=axes[2], logy=True, xlim=[0,t.iloc[-1]]) #
+    SV_plot = SV_df.plot(x='Time', y=tags['rho_el'][4:], logy=True, ax=axes[2], xlim=[0,t.iloc[-1]]) #
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
-    SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(True)
+    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
-    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    
+    # Plot species densities in separator electrolyte
+    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_sep'][4:], logy=True, ax=axes[3], xlim=[0,t.iloc[-1]]) #
+#    SV_plot.set_title(stage, fontsize = fontsize)
+    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
+    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                   frameon=False, fontsize = 15).set_visible(showlegend)
+    SV_plot.tick_params(axis='both', labelsize=16)
+#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    
+    # Plot species densities in anode electrolyte
+    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_an'][4:], logy=True, ax=axes[4], xlim=[0,t.iloc[-1]]) #
+#    SV_plot.set_title(stage, fontsize = fontsize)
+    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
+    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                   frameon=False, fontsize = 15).set_visible(showlegend)
+    SV_plot.tick_params(axis='both', labelsize=16)
+#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     
     return
@@ -95,8 +116,8 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
             newcols.update(newcols_el)
             
         # Add tags for electrod and double layer potentials
-        newcols_phi = {0+elyte_obj.n_species+offset: 'Phi_an'+str(j+1),
-                       1+elyte_obj.n_species+offset: 'Phi_an_dl'+str(j+1)}
+        newcols_phi = {0+elyte_obj.n_species+offset: 'Phi_an_dl'+str(j+1),
+                       1+elyte_obj.n_species+offset: 'Phi_an'+str(j+1)}
         newcols.update(newcols_phi)
         
         SV_df.rename(columns=newcols, inplace = True)
@@ -167,6 +188,13 @@ def tag_strings(SV):
     np_S8 = np.array([])
     np_Li2S = np.array([])
     
+    rho_el_sep = []
+    phi_sep = np.array([])
+    
+    rho_el_an = []
+    phi_dl_an = np.array([])
+    phi_an = np.array([])
+    
     ptr = cathode.ptr
     for j in np.arange(0, cathode.npoints):
         offset = int(cathode.offsets[j])
@@ -182,6 +210,29 @@ def tag_strings(SV):
         np_S8 = np.append(np_S8, SV_labels[ptr['np_S8'] + offset])
         np_Li2S = np.append(np_Li2S, SV_labels[ptr['np_Li2S'] + offset])
         
+    ptr = sep.ptr
+    for j in np.arange(0, sep.npoints):
+        offset = int(sep.offsets[j])
+        
+        rho_el_sep[0 + offset:elyte_obj.n_species + offset] = \
+            SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
+            
+        phi_sep = np.append(phi_sep, SV_labels[ptr['phi'] + offset])
+        
+    ptr = anode.ptr
+    for j in np.arange(0, anode.npoints):
+        offset = int(anode.offsets[j])
+        
+        rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
+            SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
+            
+        phi_dl_an = np.append(phi_dl_an, SV_labels[ptr['phi_dl'] + offset])
+        phi_an = np.append(phi_an, SV_labels[ptr['phi_ed'] + offset])
+        
+    phi_sep = phi_sep.tolist()
+    phi_dl_an = phi_dl_an.tolist()
+    phi_an = phi_an.tolist()
+        
     r_Li2S = r_Li2S.tolist()
     r_S8 = r_S8.tolist()
     phi_dl = phi_dl.tolist()
@@ -192,7 +243,8 @@ def tag_strings(SV):
     tags = {}
     tags['eps_Li2S'] = r_Li2S; tags['eps_S8'] = r_S8; tags['rho_el'] = rho_el
     tags['phi_dl'] = phi_dl; tags['phi_ed'] = phi_ed; tags['np_S8'] = np_S8
-    tags['np_Li2S'] = np_Li2S
+    tags['np_Li2S'] = np_Li2S; tags['rho_el_sep'] = rho_el_sep; tags['phi_sep'] = phi_sep
+    tags['rho_el_an'] = rho_el_an; tags['phi_dl_an'] = phi_dl_an; tags['phi_an'] = phi_an
     
     return tags
     

@@ -99,7 +99,7 @@ class inputs():
     
     # Cell geometry
     H_cat = 40e-6               # Cathode thickness [m]
-    A_C_0 = 1.32e3              # Initial volume specific area of carbon [1/m]
+    A_C_0 = 1.32e5              # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
@@ -120,13 +120,14 @@ class inputs():
     C_k_el_0 = np.array([1.023e1, 
                          1.023e1, 
                          1.024, 
-                         1.024, 
+                         1.0229, 
                          1.943e-2, 
                          1.821e-4, 
                          3.314e-4, 
                          2.046e-5, 
                          5.348e-10, 
                          8.456e-13])
+#    C_k_el_0 = np.array([1.021e1, 1.023e1, 1.024, 1.023, 1.943e-2, 2.046e-5, 8.456e-13])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 0, 0, 
 #                         0, 0, 0, 0])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 
@@ -170,6 +171,8 @@ class inputs():
     #                                  S4_2-, S2_2-, S_2-]
     D_Li_el = np.array([1e-12, 1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
                         1e-10, 1e-10])
+#    D_Li_el = np.array([1e-12, 1e-12, 1e-10, 4e-10, 0, 0, 0, 0,
+#                        0, 0])
     z_k_el = np.array([0., 0., 1., -1., 0., -2., -2., -2., -2., -2.])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
