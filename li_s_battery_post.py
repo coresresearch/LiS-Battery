@@ -61,25 +61,25 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
     SV_plot.tick_params(axis='both', labelsize=16)
 #    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
-    # Plot species densities in separator electrolyte
-    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_sep'][4:], logy=True, ax=axes[3], xlim=[0,t.iloc[-1]]) #
-#    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
-    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
-                   frameon=False, fontsize = 15).set_visible(showlegend)
-    SV_plot.tick_params(axis='both', labelsize=16)
-#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    
-    # Plot species densities in anode electrolyte
-    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_an'][4:], logy=True, ax=axes[4], xlim=[0,t.iloc[-1]]) #
-#    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
-    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
-                   frameon=False, fontsize = 15).set_visible(showlegend)
-    SV_plot.tick_params(axis='both', labelsize=16)
-#    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+#    # Plot species densities in separator electrolyte
+#    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_sep'][4:], logy=True, ax=axes[3], xlim=[0,t.iloc[-1]]) #
+##    SV_plot.set_title(stage, fontsize = fontsize)
+#    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
+#    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+#    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+#                   frameon=False, fontsize = 15).set_visible(showlegend)
+#    SV_plot.tick_params(axis='both', labelsize=16)
+##    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+#    
+#    # Plot species densities in anode electrolyte
+#    SV_plot = SV_df.plot(x='Time', y=tags['rho_el_an'][4:], logy=True, ax=axes[4], xlim=[0,t.iloc[-1]]) #
+##    SV_plot.set_title(stage, fontsize = fontsize)
+#    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
+#    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+#    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+#                   frameon=False, fontsize = 15).set_visible(showlegend)
+#    SV_plot.tick_params(axis='both', labelsize=16)
+##    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     
     return

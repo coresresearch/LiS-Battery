@@ -51,7 +51,7 @@ def main():
     
     rate_tag = str(inputs.C_rate)+"C"
     
-    fig, axes = plt.subplots(sharey="row", figsize=(9,20), nrows=5, ncols = 1)
+    fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = 1)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
     fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
