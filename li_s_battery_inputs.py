@@ -62,7 +62,7 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_prelim.cti'
+    ctifile = 'sulfur_cathode_tune.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -86,7 +86,7 @@ class inputs():
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
     Phi_el_init = 1.0
-    Cell_voltage = 2.5
+    Cell_voltage = 2.2
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
@@ -128,8 +128,8 @@ class inputs():
                          5.348e-10, 
                          8.456e-13])
 #    C_k_el_0 = np.array([1.021e1, 1.023e1, 1.024, 1.023, 1.943e-2, 2.046e-5, 8.456e-13])
-#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 0, 0, 
-#                         0, 0, 0, 0])
+#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024 - 5*1e-12, 1.943e-2, 1e-12, 
+#                         1e-12, 1e-12, 1e-12, 1e-12])
 #    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 
 #                         2.046e-5, 8.456e-13])
     

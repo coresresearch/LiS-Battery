@@ -33,9 +33,11 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
     SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0],  xlim=[0,t.iloc[-1]])
-    SV_plot.set_title('Cell voltage at C/50', fontsize = fontsize)
+    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$V_{cell}$ [V]', fontsize = fontsize)
-    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(False)
+    SV_plot.set_xlim((0, 1750))
+#    SV_plot.set_ylim((2.25, 2.5))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(False)
     SV_plot.tick_params(axis='both', labelsize=16)
@@ -46,6 +48,7 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\varepsilon_i$ [-]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
+    SV_plot.set_xlim((0, 1750))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
@@ -56,6 +59,8 @@ def plot_sim(tags, SV_df, stage, yax, fig, axes):
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+    SV_plot.set_ylim((1e-12, 1e2))
+    SV_plot.set_xlim((0, 1750))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
