@@ -247,7 +247,7 @@ species(
 species(
 	name = "S8-(e)",
 	atoms = "S:8 E:2",
-	thermo = const_cp(h0 = (-124, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	thermo = const_cp(h0 = (-114, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
 	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
 	)
 
@@ -291,7 +291,7 @@ species(name = "(dummy)", atoms = "")
 #-------------------------------------------------------------------------------
 # Anode reactions
 #-------------------------------------------------------------------------------
-surface_reaction("Li(s) <=> Li+(e) + electron", [9e12, 0.0, 0.0], id="Anode-1", beta=0.5)
+surface_reaction("Li(s) <=> Li+(e) + electron", [9e5, 0.0, 0.0], id="Anode-1", beta=0.5)
 
 #-------------------------------------------------------------------------------
 # Sulfur-electrolyte reactions
