@@ -241,7 +241,6 @@ class cc_cycling(Implicit_Problem):
         """Cathode CC boundary"""
         j = 0; offset = cat.offsets[int(j)]
         i_ext = cat.get_i_ext()
-#        s1 = {}
         s2 = {}
         
         # Set electronic current and ionic current boundary conditions
@@ -265,7 +264,7 @@ class cc_cycling(Implicit_Problem):
             np_L = SV[offset + ptr['np_Li2S']]
             eps_S8 = max(SV[offset + ptr['eps_S8']], 1e-25)
             eps_Li2S = max(SV[offset + ptr['eps_Li2S']], 1e-25)
-            eps_el = 1 - cat.eps_C_0 - eps_S8 - eps_Li2S  #SV[offset + ptr['eps_Li2S']]
+            eps_el = 1 - cat.eps_C_0 - eps_S8 - eps_Li2S  
             
             
             # Calculate new particle radii based on new volume fractions
@@ -304,37 +303,37 @@ class cc_cycling(Implicit_Problem):
             i_el_p = 0
             N_io_p, i_io_p = dst(s1, s2, D_el, dyInv_boundary)
             
-            sdot_C = C_el_s.net_production_rates
-            sdot_S = S_el_s.net_production_rates
-            sdot_L = L_el_s.net_production_rates 
+            sdot_C = C_el_s.get_net_production_rates(elyte)
+            sdot_L = L_el_s.get_net_production_rates(elyte) 
             
             # Calculate respective changes in species for each interface. This
             #   is done separately due to some species being produced/consumed
             #   at two separate interfaces - i.e. S^2- is produced at the C-el
             #   interface and consumed at the Li2S-el interface which will have
             #   different areas
-            R_C = sdot_C[1:-2]*A_C
-#            R_S = sdot_S[1:-2]*A_S
-            R_L = sdot_L[1:-2]*A_L
-                        
-            i_Far = sdot_C[-2]*F*A_C/cat.dyInv
-            
-            """Calculate change in Sulfur"""
+            R_C = sdot_C*A_C
+            R_L = sdot_L*A_L
             if SV[offset + ptr['eps_S8']] < 0:
-                sdot_S = S_el_s.net_production_rates
-                R_S = 0*sdot_S[1:-2]*A_S
+                sdot_S = S_el_s.get_net_production_rates(elyte)
+                R_S = 0*sdot_S*A_S
             else:
-                sdot_S = S_el_s.net_production_rates
-                R_S = sdot_S[1:-2]*A_S
-               
+                sdot_S = S_el_s.get_net_production_rates(elyte)
+                R_S = sdot_S*A_S
+            
+            i_Far = C_el_s.get_net_production_rates(conductor)*F*A_C/cat.dyInv
+            
             # Net rate of formation
             R_net = R_C + R_S + R_L
-            R_net[2] -= (-i_Far + i_el_m - i_el_p)*A_C/F
-                
-            res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S[0]*A_S)
+            R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)*A_C/F
+            
+            sdot_S8 = S_el_s.get_net_production_rates(sulfur)
+            sdot_Li2S = L_el_s.get_net_production_rates(Li2S)
+            
+            """Calculate change in Sulfur"""                
+            res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S8*A_S)
        
             """Calculate change in Li2S"""
-            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_L[0]*A_L)
+            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_Li2S*A_L)
             
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']]
@@ -347,7 +346,6 @@ class cc_cycling(Implicit_Problem):
             
             """Algebraic expression for charge neutrality in all phases"""
             res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
-#            SV[offset + ptr['phi_el']]
             
             """Calculate change in S8 nucleation sites"""
             res[offset + ptr['np_S8']] = SV_dot[offset + ptr['np_S8']]
@@ -398,10 +396,11 @@ class cc_cycling(Implicit_Problem):
         lithium.electric_potential = s1['phi_ed']
         conductor.electric_potential = s1['phi_ed']
         
-        sdot_Li = lithium_s.net_production_rates
+        sdot_Li = lithium_s.get_net_production_rates(elyte)
+        sdot_Far = lithium_s.get_net_production_rates(conductor)
         
-        R_net = sdot_Li[1:-2]*an.A_Li
-        i_Far = sdot_Li[-2]*an.A_Li*F*an.dy
+        R_net = sdot_Li*an.A_Li
+        i_Far = sdot_Far*an.A_Li*F*an.dy
         
         res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
@@ -410,25 +409,6 @@ class cc_cycling(Implicit_Problem):
         - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
         
         res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
-#        SV[offset + an.ptr['phi_ed']]
-#        i_el_m - i_el_p + i_io_m - i_io_p
-        
-#        i_el_m = i_el_p
-#        i_io_m = i_io_p
-#        N_io_m = N_io_p
-            
-        # Set ionic current and flux at the separator boundary
-#        i_el_p = 0
-#        i_io_p = i_ext
-#        N_io_p = i_ext/F
-        
-#        print(SV, '\n')
-#        print(res, '\n')
-#        print(SV[cat.ptr_vec['phi_ed']], t, '\n')
-#        print(res)
-#        print(SV[cat.ptr_vec['rho_k_el'][4:]], '\n')
-#        print(t)
-#        print(res, '\n', t, '\n\n')
         
         return res  
       
