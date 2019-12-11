@@ -154,10 +154,24 @@ class cathode():
     
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
     eps_pore = 1 - eps_C_0
+    print(eps_el_0/eps_S_0)
     
     r_C = 3*eps_C_0/inputs.A_C_0
     
-    oneC = 16*(eps_S_0)*sulfur_obj.density_mole*H*F/3600
+    i_S8 = elyte_obj.species_index(inputs.Max_sulfide)
+    n_S_atoms = np.zeros([len(elyte_obj.species_names[i_S8:])])    
+    for i, species in enumerate(elyte_obj.species_names[i_S8:]):
+        n_S_atoms[i] = elyte_obj.n_atoms(species, 'S')  
+        
+    n_S_0 = eps_el_0*H*np.dot(n_S_atoms, inputs.C_k_el_0[i_S8:]) \
+          + 8*sulfur_obj.density_mole*eps_S_0*H \
+          + Li2S_obj.density_mole*eps_L_0*H
+              
+    W_S_k = elyte_obj.molecular_weights[i_S8:]
+    m_S_el = inputs.A_cat*eps_el_0*H*np.dot(W_S_k, inputs.C_k_el_0[i_S8:])
+    
+    oneC = (2*eps_el_0*np.dot(n_S_atoms, inputs.C_k_el_0[i_S8:]) + \
+           16*(eps_S_0)*sulfur_obj.density_mole)*H*F/3600
 #    oneC_alt = eps_S_0*H*sulfur_obj.density_mass*1675
     
     def get_i_ext():
@@ -229,6 +243,8 @@ class sep():
     
     offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
     
+    n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0[cathode.i_S8:])
+    
 "============================================================================="
 
 class anode():
@@ -275,6 +291,10 @@ class anode():
     u_Li_el = inputs.D_Li_el*eps_el/tau**3
     
     D_el = inputs.D_Li_el*eps_el/tau**3
+    
+    n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0[cathode.i_S8:])
+    
+    print(cathode.n_S_0 + sep.n_S_0 + n_S_0)
     
 "============================================================================="
 

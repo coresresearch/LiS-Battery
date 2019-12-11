@@ -79,6 +79,7 @@ class inputs():
     anode_elyte_phase = 'lithium_surf'
     
     Li_species_elyte = 'Li+(e)'
+    Max_sulfide = 'S8(e)'
     
 #    # Set initial SOC 
 #    SOC_0 = 0.1
@@ -86,7 +87,7 @@ class inputs():
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
     Phi_el_init = 1.0
-    Cell_voltage = 2.2
+    Cell_voltage = 2.3
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
@@ -116,11 +117,11 @@ class inputs():
     #   sulfur means 60 wt% carbon.
     pct_w_S8_0 = 0.40  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 0.60   # Initial weight percent of carbon in cathode [kg_C/kg]
-    
+    C_counter_n = 1.024 - 1.832e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-13*2
     C_k_el_0 = np.array([1.023e1, 
                          1.023e1, 
                          1.024, 
-                         1.0229, 
+                         C_counter_n, 
                          1.943e-2, 
                          1.821e-4, 
                          3.314e-4, 
@@ -173,6 +174,7 @@ class inputs():
                         1e-10, 1e-10])
 #    D_Li_el = np.array([1e-12, 1e-12, 1e-10, 4e-10, 0, 0, 0, 0,
 #                        0, 0])
+
     z_k_el = np.array([0., 0., 1., -1., 0., -2., -2., -2., -2., -2.])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
