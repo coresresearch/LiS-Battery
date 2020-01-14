@@ -147,7 +147,7 @@ class cathode():
     
     eps_S_0 = m_S/rho_S/H
     eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-5; 
+    eps_L_0 = 1e-10; 
     
     A_S_0 = (3*eps_S_0)/((3*eps_S_0*V_0)/(2*pi*inputs.np_S8_init))**(1/3)
     A_L_0 = (3*eps_L_0)/(3*eps_L_0*V_0/2/inputs.np_Li2S_init/pi)**(1/3)
@@ -186,10 +186,10 @@ class cathode():
     
     sigma_eff = inputs.sigma_cat*eps_C_0/tau**3
     
-    u_Li_el = inputs.D_Li_el*eps_el_0/tau**3
+#    u_Li_el = inputs.D_Li_el*eps_el_0/tau**3
     
 #    D_el = inputs.D_Li_el*eps_el_0/tau**3
-    D_el = inputs.D_Li_el/tau**3
+    D_el = inputs.D_Li_el  #/tau**3
     
     def get_tflag():
         return cathode.t_flag
@@ -239,7 +239,7 @@ class sep():
     # Set the length of the solution vector for the separator
     nSV = npoints*nVars
     
-    D_el = inputs.D_Li_el*epsilon_el/tau**3
+    D_el = inputs.D_Li_el*epsilon_el**(1.)/tau**3
     
     offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
     
@@ -290,7 +290,7 @@ class anode():
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3
     
-    D_el = inputs.D_Li_el*eps_el/tau**3
+    D_el = inputs.D_Li_el*eps_el**(1.)/tau**3
     
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0[cathode.i_S8:])
     

@@ -43,12 +43,12 @@ def main():
     t_0 = 0.
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
-    atol = np.ones_like(SV_0)*1e-6
+    atol = np.ones_like(SV_0)*1e-5
     atol[cat.ptr_vec['eps_S8']] = 1e-25
-    atol[cat.ptr_vec['eps_Li2S']] = 1e-20
+    atol[cat.ptr_vec['eps_Li2S']] = 1e-25
     atol[cat.ptr_vec['rho_k_el']] = 1e-25
 #    atol = 1e-30; 
-    rtol = 1e-5; sim_output = 50
+    rtol = 1e-4; sim_output = 50
     
     rate_tag = str(inputs.C_rate)+"C"
     
@@ -101,17 +101,17 @@ def main():
     
     # Set external current
     cat.set_i_ext(cat.i_ext_amp)
-    cc_cycling.set_Q_dl(0)
     
     # Update problem instance initial conditions
     bat_dch = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
     bat_dch.external_event_detection = True
     bat_dch.algvar = algvar
-    
+        
     # Re-initialize simulation object
     sim_dch = IDA(bat_dch)
     sim_dch.atol = atol
     sim_dch.rtol = rtol
+    sim_dch.maxh = 5
     sim_dch.verbosity = sim_output
     sim_dch.make_consistent('IDA_YA_YDP_INIT')
     
@@ -225,15 +225,7 @@ from li_s_battery_functions import set_state_sep
 from li_s_battery_functions import dst
 from math import pi
 
-class cc_cycling(Implicit_Problem):
-    
-    
-    def get_Q_dl():
-        return cc_cycling.Q_dl
-    
-    def set_Q_dl(value):
-        cc_cycling.Q_dl = value
-    
+class cc_cycling(Implicit_Problem):    
     def res_fun(t, SV, SV_dot):
         
         res = np.zeros_like(SV)
@@ -266,9 +258,8 @@ class cc_cycling(Implicit_Problem):
             eps_Li2S = max(SV[offset + ptr['eps_Li2S']], 1e-25)
             eps_el = 1 - cat.eps_C_0 - eps_S8 - eps_Li2S  
             
-            
             # Calculate new particle radii based on new volume fractions
-            A_S = 3*eps_S8/(3*eps_S8*cat.V_0/2/pi/np_S)**(1/3)
+            A_S = 3*eps_S8**(2/3)/(3*cat.V_0/2/pi/np_S)**(1/3)
             A_L = 3*eps_Li2S/(3*eps_Li2S*cat.V_0/2/pi/np_L)**(1/3)
             
             r_S = 3*eps_S8/A_S
@@ -279,12 +270,9 @@ class cc_cycling(Implicit_Problem):
             # Set states for THIS node
             s1 = set_state(SV, offset, cat.ptr)
             
-            phi_ed = s1['phi_ed']
-            phi_el = s1['phi_el']
-            
-            carbon.electric_potential = phi_ed
-            elyte.electric_potential = phi_el 
-            conductor.electric_potential = phi_ed
+            carbon.electric_potential = s1['phi_ed']
+            elyte.electric_potential = s1['phi_el'] 
+            conductor.electric_potential = s1['phi_ed']
             
             elyte.X = s1['X_k']
             
@@ -297,7 +285,7 @@ class cc_cycling(Implicit_Problem):
             # Shift back to THIS node
             offset = cat.offsets[int(j)]
             
-            D_el = cat.D_el*eps_el
+            D_el = cat.D_el*eps_el**(1.5)
 
             # Current node plus face boundary fluxes
             i_el_p = 0
@@ -313,21 +301,23 @@ class cc_cycling(Implicit_Problem):
             #   different areas
             R_C = sdot_C*A_C
             R_L = sdot_L*A_L
-            if SV[offset + ptr['eps_S8']] < 0:
-                sdot_S = S_el_s.get_net_production_rates(elyte)
-                R_S = 0*sdot_S*A_S
+            if SV[offset + ptr['eps_S8']] < 1e-25:
+#                sdot_S8 = 0*S_el_s.get_net_production_rates(sulfur)
+                sdot_S = 0*S_el_s.get_net_production_rates(elyte)
+                R_S = sdot_S*A_S
             else:
+#                sdot_S8 = S_el_s.get_net_production_rates(sulfur)
                 sdot_S = S_el_s.get_net_production_rates(elyte)
                 R_S = sdot_S*A_S
-            
+                            
             i_Far = C_el_s.get_net_production_rates(conductor)*F*A_C/cat.dyInv
             
             # Net rate of formation
             R_net = R_C + R_S + R_L
-            R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)*A_C/F
+            R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/cat.H/F
             
             sdot_S8 = S_el_s.get_net_production_rates(sulfur)
-            sdot_Li2S = L_el_s.get_net_production_rates(Li2S)
+            sdot_Li2S = L_el_s.get_net_production_rates(Li2S)            
             
             """Calculate change in Sulfur"""                
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] - sulfur.volume_mole*sdot_S8*A_S)
@@ -336,8 +326,8 @@ class cc_cycling(Implicit_Problem):
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] - Li2S.volume_mole*sdot_Li2S*A_L)
             
             """Calculate change in electrolyte"""
-            res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']]
-            - (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el
+            res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
+            (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el 
             + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                             - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
             
@@ -374,8 +364,8 @@ class cc_cycling(Implicit_Problem):
         N_io_p, i_io_p = dst(s1, s2, D_el, dyInv_boundary)
         
         res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
-        - (N_io_m - N_io_p)*sep.dyInv)/sep.epsilon_el
-        
+        - (N_io_m - N_io_p)*sep.dyInv/sep.epsilon_el)
+                
         res[offset + sep.ptr['phi']] = i_io_m - i_io_p
         
         """====================Anode boundary conditions===================="""
@@ -385,6 +375,7 @@ class cc_cycling(Implicit_Problem):
         i_el_m = 0
         s1 = dict(s2)
         
+        j = 0
         offset = an.offsets[int(j)]
         
         i_el_p = i_ext
@@ -404,11 +395,16 @@ class cc_cycling(Implicit_Problem):
         
         res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
-        
+
         res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']]
         - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
         
         res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
+        
+#        print(res, '\n')
+#        print(SV, '\n')
+#        print(SV, '\n', res, '\n\n')
+#        print(t)
         
         return res  
       
@@ -436,8 +432,12 @@ class cc_cycling(Implicit_Problem):
         event6 = np.zeros([cat.npoints])
         event6 = y[cat.ptr_vec['phi_ed']] - 1.6
         
+        event7 = np.zeros([cat.npoints*elyte.n_species])
+        event7 = y[cat.ptr_vec['rho_k_el']] - 1e-50
         
-        events = np.concatenate((event1, event2, event3, event4, event5, event6))
+        
+        events = np.concatenate((event1, event2, event3, event4, event5, event6,
+                                 event7))
 
         return events
     

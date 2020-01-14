@@ -8,15 +8,17 @@ from li_s_battery_inputs import inputs
 from li_s_battery_init import anode
 from li_s_battery_init import cathode
 from li_s_battery_init import sep
-from li_s_battery_init import elyte_obj, sulfur_obj, Li2S_obj, carbon_obj
+from li_s_battery_init import elyte_obj, sulfur_obj, Li2S_obj, carbon_obj, conductor_obj
+from li_s_battery_init import carbon_el_s, Li2S_el_s, sulfur_el_s
 from li_s_battery_functions import dst, set_state, set_state_sep
 from matplotlib import pyplot as plt
-
+from math import pi
 import numpy as np
 import pandas as pd
+import cantera as ct
 
 def conservation_tests(SV, tags):
-    
+    F = ct.faraday
     flag_cat = 1
     flag_sep = 1
     flag_an = 1
@@ -25,10 +27,14 @@ def conservation_tests(SV, tags):
     i_sep = np.zeros([len(SV.index)])
     N_Li_sep = np.zeros([len(SV.index)])
     i_cc = np.zeros([len(SV.index)])
+    i_dl = np.zeros([len(SV.index)])
     n_S_tot = np.zeros([len(SV.index)])
     n_S_elyte = np.zeros([len(SV.index)])
     n_S_solid_vec = np.zeros([len(SV.index)])
     n_S_Li2S_vec = np.zeros([len(SV.index)])
+    n_S_cat = np.zeros([len(SV.index)])
+    n_S_sep = np.zeros([len(SV.index)])
+    n_S_an = np.zeros([len(SV.index)])
     charge_el_cat = np.zeros([len(SV.index)])
     charge_el_sep = np.zeros([len(SV.index)])
     charge_el_an = np.zeros([len(SV.index)])
@@ -36,7 +42,14 @@ def conservation_tests(SV, tags):
     n_Li_cat = np.zeros([len(SV.index)])
     n_Li_Li2S = np.zeros([len(SV.index)])
     n_Li_tot = np.zeros([len(SV.index)])
-
+    N_Li_dl = np.zeros([len(SV.index)])
+    N_Li_dl_integral = np.zeros([len(SV.index)])
+    
+    eps_S_vec = np.zeros([len(SV.index)])
+    eps_Li2S_vec = np.zeros([len(SV.index)])
+    eps_el_vec = np.zeros([len(SV.index)])
+    eps_C_vec = np.zeros([len(SV.index)])
+    
     for i, state in SV.iterrows():
         # We will check several items to ensure conservation at each time step.
         # All quantities will be per cell area
@@ -45,10 +58,18 @@ def conservation_tests(SV, tags):
         #   3. charge neutrality in electrolyte and carbon
         
         """1. Conservation of sulfur"""
+        np_S = state.iloc[cathode.ptr['np_S8']]
+        np_L = state.iloc[cathode.ptr['np_Li2S']]
+        
         # Volume fractions at current state
-        eps_S8 = max(state.iloc[cathode.ptr['eps_S8']], 0)
-        eps_Li2S = max(state.iloc[cathode.ptr['eps_Li2S']], 0)
+        eps_S8 = max(state.iloc[cathode.ptr['eps_S8']], 1e-25)
+        eps_Li2S = max(state.iloc[cathode.ptr['eps_Li2S']], 1e-25)
         eps_el = 1 - eps_S8 - eps_Li2S - cathode.eps_C_0
+        
+        eps_S_vec[i] = eps_S8
+        eps_Li2S_vec[i] = eps_Li2S
+        eps_el_vec[i] = eps_el
+        eps_C_vec[i] = 1 - eps_S8 - eps_Li2S - eps_el
 
         # Concentration vector for all species in elyte at current state
         rho_el_cat = state.iloc[cathode.ptr['rho_k_el']]
@@ -61,18 +82,18 @@ def conservation_tests(SV, tags):
         rho_S_el_an = state.iloc[anode.offsets[int(0)]+anode.ptr['rho_k_el'][cathode.i_S8:]]
 
         # Number of moles of sulfur atoms in elyte of each component
-        n_S_cat = eps_el*cathode.H*np.dot(cathode.n_S_atoms, rho_S_el_cat)
-        n_S_sep = sep.epsilon_el*sep.H*np.dot(cathode.n_S_atoms, rho_S_el_sep)
-        n_S_an = anode.eps_el*anode.H*np.dot(cathode.n_S_atoms, rho_S_el_an)
+        n_S_cat[i] = eps_el*cathode.H*np.dot(cathode.n_S_atoms, rho_S_el_cat)
+        n_S_sep[i] = sep.epsilon_el*sep.H*np.dot(cathode.n_S_atoms, rho_S_el_sep)
+        n_S_an[i] = anode.eps_el*anode.H*np.dot(cathode.n_S_atoms, rho_S_el_an)
         
         # Number of moles of sulfur atoms in solid phases
         n_S_solid = 8*sulfur_obj.density_mole*eps_S8*cathode.H
         n_S_Li2S = Li2S_obj.density_mole*eps_Li2S*cathode.H
         
-        n_S_elyte[i] = n_S_cat + n_S_sep + n_S_an
+        n_S_elyte[i] = n_S_cat[i] + n_S_sep[i] + n_S_an[i]
         n_S_solid_vec[i] = n_S_solid
         n_S_Li2S_vec[i] = n_S_Li2S
-        n_S_tot[i] = (n_S_cat + n_S_solid + n_S_Li2S) + n_S_sep + n_S_an
+        n_S_tot[i] = (n_S_cat[i] + n_S_solid + n_S_Li2S) + n_S_sep[i] + n_S_an[i]
         
         """2. Conservation of lithium"""
         offset1 = cathode.offsets[-1]
@@ -80,16 +101,41 @@ def conservation_tests(SV, tags):
         offset2 = sep.offsets[0]
         s2 = set_state_sep(state.values, offset2, sep.ptr)
         dyInv = 1/(0.5*(cathode.dy + sep.dy))
-        D_el = cathode.D_el*eps_el
+        D_el = cathode.D_el*eps_el**(1.5)
         N_io_sep, i_io_sep = dst(s1, s2, D_el, dyInv)
+#        print(N_io_sep, '\n')
         if i == 0:
             dt = 0
         else:
             dt = SV.iloc[i, -1] - SV.iloc[i-1, -1]
+            
+        """Cantera objects (to get faradaic current)"""
+        carbon_obj.electric_potential = s1['phi_ed']
+        elyte_obj.electric_potential = s1['phi_el'] 
+        conductor_obj.electric_potential = s1['phi_ed']
+        
+        elyte_obj.X = s1['X_k']
+        
+        # Calculate new particle radii based on new volume fractions
+        A_S = 3*eps_S8/(3*eps_S8*cathode.V_0/2/pi/np_S)**(1/3)
+        A_L = 3*eps_Li2S/(3*eps_Li2S*cathode.V_0/2/pi/np_L)**(1/3)
+        
+        r_S = 3*eps_S8/A_S
+        r_L = 3*eps_Li2S/A_L
+        
+        A_C = inputs.A_C_0 - (pi*np_S*r_S**2)/cathode.V_0 - (pi*np_L*r_L**2)/cathode.V_0
+        
+        i_Far = carbon_el_s.get_net_production_rates(conductor_obj)*F*A_C/cathode.dyInv
+            
+        # Net rate of formation
+        R_Li_dl = (-i_Far + i_ext - 0)/cathode.H/F
+#        print(R_Li_dl)
+        N_Li_dl[i] = dt*R_Li_dl*cathode.H
 
         N_Li_sep[i] = N_io_sep[2]*dt
         i_sep[i] = i_io_sep
         i_cc[i] = i_ext
+        i_dl[i] = (-i_Far + i_ext - 0)
         
         rho_Li_el_cat = rho_el_cat[2]
         n_Li_cat[i] = eps_el*cathode.H*(rho_Li_el_cat - inputs.C_k_el_0[2])
@@ -102,7 +148,6 @@ def conservation_tests(SV, tags):
         charge_el_cat[i] = eps_el*cathode.H*np.dot(inputs.z_k_el, rho_el_cat)
         charge_el_sep[i] = sep.epsilon_el*sep.H*np.dot(inputs.z_k_el, rho_el_sep)
         charge_el_an[i] = anode.eps_el*anode.H*np.dot(inputs.z_k_el, rho_el_an)
-        
 #            C_S_anions_0 = inputs.C_k_el_0[5:]
 #            C_S_anions = SV[offset + ptr['rho_k_el'][5:]]
 #            
@@ -113,7 +158,10 @@ def conservation_tests(SV, tags):
         
     pct_error_S = 100*(n_S_tot - n_S_0)/n_S_0
     N_Li_integral = np.cumsum(N_Li_sep) #*dt_vec
+    N_Li_dl_integral = np.cumsum(N_Li_dl)
     pct_error_Li = (N_Li_integral + n_Li_tot)
+    
+    test = (n_S_0 - n_S_tot[-1])
     """---------------------------------------------------------------------"""
     """Plotting"""
     
@@ -135,11 +183,14 @@ def conservation_tests(SV, tags):
         tick.label1.set_fontname('Times New Roman')    
     
     p1, = plt.plot(SV.loc[:, 'Time'], n_S_tot, 'k-', linewidth=lw)
-    p2, = plt.plot(SV.loc[:, 'Time'], n_S_elyte, 'g-', linewidth=lw)
+#    p2, = plt.plot(SV.loc[:, 'Time'], n_S_elyte, 'g-', linewidth=lw)
     p3, = plt.plot(SV.loc[:, 'Time'], n_S_solid_vec, linewidth=lw)
     p4, = plt.plot(SV.loc[:, 'Time'], n_S_Li2S_vec, linewidth=lw)
     p5, = plt.plot(SV.loc[:, 'Time'], n_S_0*np.ones((len(n_S_tot))), 'k--', linewidth=lw)
-    plt.legend(['Total', 'Electrolyte', 'S8', 'Li2S'])
+    p6, = plt.plot(SV.loc[:, 'Time'], n_S_cat, linewidth=lw)
+    p7, = plt.plot(SV.loc[:, 'Time'], n_S_sep, linewidth=lw)
+    p8, = plt.plot(SV.loc[:, 'Time'], n_S_an, linewidth=lw)
+    plt.legend(['Total', 'S8', 'Li2S', 'Initial', 'Cathode elyte', 'Sep elyte', 'Anode elyte'])
 #    p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], 'k-', linewidth=lw)
 #    plt.xlim((0, SV.loc[-1, 'Time']))
     plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
@@ -173,6 +224,7 @@ def conservation_tests(SV, tags):
 #    plt.xlim((0, SV.loc[-1, 'Time']))
 #    plt.xticks([0, 250, 500, 750, 1000, 1250, 1500, 1750])
     plt.ylim((-10, 100))
+    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
 #    plt.yticks([2, 3, 4, 5, 6, 7, 8])
 #    plt.ylabel('Mean PS order', fontstyle='normal', fontname='Times new Roman', \
 #                fontsize=fs+2, labelpad=5.0)
@@ -180,7 +232,7 @@ def conservation_tests(SV, tags):
 #                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     
     "-----Plot charge neutrality-----"
-    fig = plt.figure(4)
+    fig = plt.figure(3)
     ax = fig.add_subplot(311)
     ax2 = fig.add_subplot(312, sharex=ax, sharey=ax)
     ax3 = fig.add_subplot(313, sharex=ax, sharey=ax)
@@ -200,13 +252,17 @@ def conservation_tests(SV, tags):
     
     plt.sca(ax)
     p1, = plt.plot(SV.loc[:, 'Time'], charge_el_cat, 'k-', linewidth=lw)
+    p2, = plt.plot(SV.loc[:, 'Time'], np.zeros_like(charge_el_cat), 'k--', linewidth=lw)
     plt.sca(ax2)
-    p2, = plt.plot(SV.loc[:, 'Time'], charge_el_sep, 'k-', linewidth=lw)
+    p3, = plt.plot(SV.loc[:, 'Time'], charge_el_sep, 'k-', linewidth=lw)
+    p4, = plt.plot(SV.loc[:, 'Time'], np.zeros_like(charge_el_sep), 'k--', linewidth=lw)
     plt.sca(ax3)
-    p3, = plt.plot(SV.loc[:, 'Time'], charge_el_an, 'k-', linewidth=lw)
+    p5, = plt.plot(SV.loc[:, 'Time'], charge_el_an, 'k-', linewidth=lw)
+    p6, = plt.plot(SV.loc[:, 'Time'], np.zeros_like(charge_el_an), 'k--', linewidth=lw)
 #    p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], 'k-', linewidth=lw)
 #    plt.xlim((0, SV.loc[-1, 'Time']))
 #    plt.xticks([0, 250, 500, 750, 1000, 1250, 1500, 1750])
+    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
 #    plt.ylim((0, 100))
 #    plt.yticks([2, 3, 4, 5, 6, 7, 8])
 #    plt.ylabel('Mean PS order', fontstyle='normal', fontname='Times new Roman', \
@@ -215,7 +271,7 @@ def conservation_tests(SV, tags):
 #                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     
     "-----Plot lithium balance in cathode-----"
-    fig=plt.figure(5)
+    fig=plt.figure(4)
     ax = fig.add_axes([0.2, 0.2, 0.6, 0.75])
     fig.set_size_inches((10., 5.0))
     
@@ -235,6 +291,30 @@ def conservation_tests(SV, tags):
     plt.legend(['Separator', 'External', 'Net'])
     
     "-----Plot lithium balance in cathode-----"
+    fig=plt.figure(5)
+    ax = fig.add_axes([0.2, 0.2, 0.6, 0.75])
+    fig.set_size_inches((10., 5.0))
+    
+    fs = 20
+    lw = 2.0
+    
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label1.set_fontsize(fs)
+        tick.label1.set_fontname('Times New Roman')
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label1.set_fontsize(fs)
+        tick.label1.set_fontname('Times New Roman')    
+        
+    N_Li_flux_in = -N_Li_integral + N_Li_dl_integral
+    p1, = plt.plot(SV.loc[:, 'Time'], N_Li_flux_in, 'k-', linewidth=lw)
+    p2, = plt.plot(SV.loc[:, 'Time'], n_Li_cat, 'g-', linewidth=lw)
+    p3, = plt.plot(SV.loc[:, 'Time'], n_Li_Li2S, linewidth=lw)
+    p4, = plt.plot(SV.loc[:, 'Time'], n_Li_tot, linewidth=lw)
+#    p5, = plt.plot(SV.loc[:, 'Time'], N_Li_dl_integral, linewidth=lw)
+    plt.legend(['Lithium from separator and double layer', 'Change in elyte', 'Change in solid', 'Total change'])
+    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
+    
+    "-----Plot lithium balance in cathode-----"
     fig=plt.figure(6)
     ax = fig.add_axes([0.2, 0.2, 0.6, 0.75])
     fig.set_size_inches((10., 5.0))
@@ -249,13 +329,13 @@ def conservation_tests(SV, tags):
         tick.label1.set_fontsize(fs)
         tick.label1.set_fontname('Times New Roman')    
         
-    p1, = plt.plot(SV.loc[:, 'Time'], -N_Li_integral, 'k-', linewidth=lw)
-    p2, = plt.plot(SV.loc[:, 'Time'], n_Li_cat, 'g-', linewidth=lw)
-    p3, = plt.plot(SV.loc[:, 'Time'], n_Li_Li2S, linewidth=lw)
-    p4, = plt.plot(SV.loc[:, 'Time'], n_Li_tot, linewidth=lw)
-    plt.legend(['Lithium from separator', 'Change in elyte', 'Change in solid', 'Total change'])
+    p1, = plt.plot(SV.loc[:, 'Time'], pct_error_Li, 'k-', linewidth=lw)
+    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
+#    p2, = plt.plot(SV.loc[:, 'Time'], n_Li_cat, 'g-', linewidth=lw)
+#    p3, = plt.plot(SV.loc[:, 'Time'], n_Li_Li2S, linewidth=lw)
+#    p4, = plt.plot(SV.loc[:, 'Time'], n_Li_tot, linewidth=lw)
+#    plt.legend(['Lithium from separator', 'Change in elyte', 'Change in solid', 'Total change'])
     
-    "-----Plot lithium balance in cathode-----"
     fig=plt.figure(7)
     ax = fig.add_axes([0.2, 0.2, 0.6, 0.75])
     fig.set_size_inches((10., 5.0))
@@ -270,11 +350,12 @@ def conservation_tests(SV, tags):
         tick.label1.set_fontsize(fs)
         tick.label1.set_fontname('Times New Roman')    
         
-    p1, = plt.plot(SV.loc[:, 'Time'], pct_error_Li, 'k-', linewidth=lw)
-#    p2, = plt.plot(SV.loc[:, 'Time'], n_Li_cat, 'g-', linewidth=lw)
-#    p3, = plt.plot(SV.loc[:, 'Time'], n_Li_Li2S, linewidth=lw)
-#    p4, = plt.plot(SV.loc[:, 'Time'], n_Li_tot, linewidth=lw)
-#    plt.legend(['Lithium from separator', 'Change in elyte', 'Change in solid', 'Total change'])
+    p1, = plt.plot(SV.loc[:, 'Time'], eps_S_vec, 'k-', linewidth=lw)
+    p2, = plt.plot(SV.loc[:, 'Time'], eps_Li2S_vec, linewidth=lw)
+    p3, = plt.plot(SV.loc[:, 'Time'], eps_el_vec, linewidth=lw)
+    p4, = plt.plot(SV.loc[:, 'Time'], eps_C_vec, linewidth=lw)
+    plt.legend(['S8', 'Li2S', 'Elyte', 'C'])
+    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
     
     return
 
