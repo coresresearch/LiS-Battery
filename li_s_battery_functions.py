@@ -20,9 +20,7 @@ def dst(s1, s2, D_eff, dyInv):
     N_io = np.zeros_like(s1['C_k'])
     N_io = (-D_eff*(s2['C_k'] - s1['C_k'])*dyInv
             -D_eff*C_k*(z_k*F/R/T)*(s2['phi_el'] - s1['phi_el'])*dyInv)
-    
-#    N_io = N_io*np.array((1., 1., 1., 1., 0., 0., 0., 0., 0., 0.))
-        
+            
     i_io = np.dot(N_io, z_k)*F
     
     return N_io, i_io

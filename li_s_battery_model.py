@@ -400,9 +400,7 @@ class cc_cycling(Implicit_Problem):
         - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
         
         res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
-        
-        print(t)
-        
+                
         return res  
     
     "========================================================================="
