@@ -111,7 +111,7 @@ def main():
     sim_dch = IDA(bat_dch)
     sim_dch.atol = atol
     sim_dch.rtol = rtol
-    sim_dch.maxh = 5
+#    sim_dch.maxh = 5
     sim_dch.verbosity = sim_output
     sim_dch.make_consistent('IDA_YA_YDP_INIT')
     
@@ -401,17 +401,9 @@ class cc_cycling(Implicit_Problem):
         
         res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
         
-#        print(res, '\n')
-#        print(SV, '\n')
-#        print(SV, '\n', res, '\n\n')
-#        print(t)
+        print(t)
         
         return res  
-      
-    "========================================================================="
-    
-    def set_state():
-        return
     
     "========================================================================="
     
