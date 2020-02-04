@@ -38,7 +38,7 @@ carbon_el_s = ct.Interface(inputs.ctifile, inputs.graphite_elyte_phase,
                              [carbon_obj, elyte_obj, conductor_obj])
 lithium_el_s = ct.Interface(inputs.ctifile, inputs.anode_elyte_phase,
                              [lithium_obj, elyte_obj, conductor_obj])
-#Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [Li2S_obj, Li2S_el_s, ])
+Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
 if hasattr(inputs, 'C_k_el_0'):
     elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
@@ -149,8 +149,8 @@ class cathode():
     eps_C_0 = m_solid*omega_C/rho_C/H
     eps_L_0 = 1e-10; 
     
-    A_S_0 = (3*eps_S_0)/((3*eps_S_0*V_0)/(2*pi*inputs.np_S8_init))**(1/3)
-    A_L_0 = (3*eps_L_0)/(3*eps_L_0*V_0/2/inputs.np_Li2S_init/pi)**(1/3)
+    A_S_0 = (3*eps_S_0)/((3*eps_S_0)/(2*pi*inputs.np_S8_init))**(1/3)
+    A_L_0 = (3*eps_L_0)/(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(1/3)
     
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
     eps_pore = 1 - eps_C_0
@@ -158,20 +158,40 @@ class cathode():
     
     r_C = 3*eps_C_0/inputs.A_C_0
     
-    i_S8 = elyte_obj.species_index(inputs.Max_sulfide)
-    n_S_atoms = np.zeros([len(elyte_obj.species_names[i_S8:])])    
-    for i, species in enumerate(elyte_obj.species_names[i_S8:]):
-        n_S_atoms[i] = elyte_obj.n_atoms(species, 'S')  
+    n_S_atoms = np.zeros([len(elyte_obj.species_names)])
+    for i, species in enumerate(elyte_obj.species_names):
+        if elyte_obj.n_atoms(species, 'S'):
+            n_S_atoms[i] = elyte_obj.n_atoms(species, 'S')
+        else:
+            n_S_atoms[i] = 0
+            
+    S_atoms_bool = np.zeros_like(n_S_atoms)
+    for i in np.arange(len(n_S_atoms)):
+        if n_S_atoms[i] == 0:
+            S_atoms_bool[i] = 0
+        else:
+            S_atoms_bool[i] = 1
+            
+#    n_S_atoms[4] = 0
+#    S_atoms_bool[4] = 0
+    
+#    i_S8 = elyte_obj.species_index(inputs.Max_sulfide)
+#    n_S_atoms = np.zeros([len(elyte_obj.species_names[i_S8:])])    
+#    for i, species in enumerate(elyte_obj.species_names[i_S8:]):
+#        n_S_atoms[i] = elyte_obj.n_atoms(species, 'S')  
         
-    n_S_0 = eps_el_0*H*np.dot(n_S_atoms, inputs.C_k_el_0[i_S8:]) \
+    n_S_0 = eps_el_0*H*np.dot(n_S_atoms, inputs.C_k_el_0) \
           + 8*sulfur_obj.density_mole*eps_S_0*H \
           + Li2S_obj.density_mole*eps_L_0*H
               
-    W_S_k = elyte_obj.molecular_weights[i_S8:]
-    m_S_el = inputs.A_cat*eps_el_0*H*np.dot(W_S_k, inputs.C_k_el_0[i_S8:])
+    W_S_k = elyte_obj.molecular_weights*S_atoms_bool
+    m_S_el = inputs.A_cat*eps_el_0*H*np.dot(W_S_k, inputs.C_k_el_0)
     
-    oneC = (2*eps_el_0*np.dot(n_S_atoms, inputs.C_k_el_0[i_S8:]) + \
-           16*(eps_S_0)*sulfur_obj.density_mole)*H*F/3600
+    x = np.copy(n_S_atoms)
+    x[5:] = (x[5:] - 1)
+#    oneC = (2*eps_el_0*np.dot(x, inputs.C_k_el_0) + \
+#           16*(eps_S_0)*sulfur_obj.density_mole)*H*F/3600
+    oneC = 1675*(m_S_0 + m_S_el)/inputs.A_cat
 #    oneC_alt = eps_S_0*H*sulfur_obj.density_mass*1675
     
     def get_i_ext():
@@ -183,6 +203,8 @@ class cathode():
     # Calculate the actual current density. 
 #    if inputs.flag_cathode == 1:
     i_ext_amp = -inputs.C_rate*oneC
+#    -inputs.C_rate*oneC
+#    -1675*(m_S_0 + m_S_el)/inputs.A_cat  # -inputs.C_rate*oneC
     
     sigma_eff = inputs.sigma_cat*eps_C_0/tau**3
     
@@ -190,6 +212,8 @@ class cathode():
     
 #    D_el = inputs.D_Li_el*eps_el_0/tau**3
     D_el = inputs.D_Li_el  #/tau**3
+    
+    eps_cutoff = 1e-20
     
     def get_tflag():
         return cathode.t_flag
@@ -243,7 +267,7 @@ class sep():
     
     offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
     
-    n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0[cathode.i_S8:])
+    n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
 "============================================================================="
 
@@ -292,7 +316,7 @@ class anode():
     
     D_el = inputs.D_Li_el*eps_el**(1.)/tau**3
     
-    n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0[cathode.i_S8:])
+    n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
     print(cathode.n_S_0 + sep.n_S_0 + n_S_0)
     

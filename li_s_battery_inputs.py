@@ -16,6 +16,7 @@ will be handled by a standalone module
 """
 
 import numpy as np
+from math import pi
 
 class inputs():
     
@@ -34,7 +35,7 @@ class inputs():
     # Set number of discretized shells in each particle
 #    nshells_anode = 5*flag_anode
     
-    flag_req = 1
+    flag_req = 0
     
     """Plotting options"""
     # To turn on profile plotting set to 1
@@ -49,7 +50,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.02
+    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -62,7 +63,7 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_tune.cti'
+    ctifile = 'sulfur_cathode_test.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -93,10 +94,10 @@ class inputs():
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
-    # Initial number of nucleation sites for solid phases. Eventually will
+    # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
-    np_S8_init = 1      # Initial number of sulfur nucleation sites
-    np_Li2S_init = 1    # Initial number of Li2S nucleation sites
+    np_S8_init = 312e6      # Initial number of sulfur nucleation sites
+    np_Li2S_init = 312e6    # Initial number of Li2S nucleation sites
     
     # Cell geometry
     H_cat = 40e-6               # Cathode thickness [m]
@@ -107,7 +108,7 @@ class inputs():
     #   area separately in [kg_sulfur] and [m^2] respectively. Enter 'loading'
     #   or 'bulk' in the string >sulfur_method below.
     sulfur_method = 'bulk'
-    A_cat = 80e-6               # Cathode planar area [m^2]
+    A_cat = 80e-6  #pi*0.01**2               # Cathode planar area [m^2]
     m_S_0 = 1e-6                # Initial total mass of sulfur in cathode [kg_S8]
                                 # if 'bulk' method chosen. Sulfur loading in
                                 # [kg_S8/m^2] if 'loading' method chosen.
