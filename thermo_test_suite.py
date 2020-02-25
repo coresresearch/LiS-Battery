@@ -10,6 +10,7 @@ import cantera as ct
 from math import pi
 from matplotlib import pyplot as plt
 from li_s_battery_inputs import inputs
+from li_s_battery_init import cathode as cat
 
 "Import cantera objects - this step is the same regardless of test type"
 elyte = ct.Solution(inputs.ctifile, inputs.elyte_phase)
@@ -24,27 +25,30 @@ Li2S_el_s = ct.Interface(inputs.ctifile, inputs.Li2S_elyte_phase,
                              [Li2S, elyte, conductor])
 carbon_el_s = ct.Interface(inputs.ctifile, inputs.graphite_elyte_phase,
                              [carbon, elyte, conductor])
+Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
 plt.close('all')
 N = 100
 
 
-elyte.electric_potential = 1.0
-V_cell = 2.4
+elyte.electric_potential = SV_dch.iloc[-1, cat.ptr['phi_ed']] - SV_dch.iloc[-1, cat.ptr['phi_dl']]
+V_cell = SV_dch.iloc[-1, cat.ptr_vec['phi_ed']]
 carbon.electric_potential = V_cell
 conductor.electric_potential = V_cell
 #carbon_el_s.electric_potential = 2.5
 
-C_k_0 = np.array([1.023e1, 
-                  1.023e1, 
-                  1.024, 
-                  1.0229, 
-                  1.943e-2, 
-                  1.821e-4, 
-                  3.314e-4, 
-                  2.046e-5, 
-                  5.348e-10, 
-                  8.456e-13])
+#C_k_0 = np.array([1.023e1, 
+#                  1.023e1, 
+#                  1.024, 
+#                  1.0229, 
+#                  1.943e-2, 
+#                  1.821e-4, 
+#                  3.314e-4, 
+#                  2.046e-5, 
+#                  5.348e-10, 
+#                  8.456e-13])
+
+C_k_0 = SV_dch.iloc[-1, cat.ptr_vec['rho_k_el']].values
 
 C_k_mat = np.zeros([len(C_k_0), N])
 C_k_mat[0, :] = np.linspace(C_k_0[0], C_k_0[0], N)
@@ -141,11 +145,12 @@ rxn_labels = ['$S_8(s) <-> S_8(l)$',
               '$S_6^{2-} <-> S_4^{2-}$', 
               '$S_4^{2-} <-> S_2^{2-}$', 
               '$S_2^{2-} <-> S^{2-}$',
-              '$2 Li^{+} + S^{2-} <-> Li_2S$']
+              '$2 Li^{+} + S^{2-} <-> Li_2S$',
+              '$Li_2S <-> 2 Li^{+} + 0.5 S_2^{2-}$']
 
-dG = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
-q_f = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
-q_r = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions])
+dG = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions+Li2S_tpb.n_reactions])
+q_f = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions+Li2S_tpb.n_reactions])
+q_r = np.zeros([sulfur_el_s.n_reactions+carbon_el_s.n_reactions+Li2S_el_s.n_reactions+Li2S_tpb.n_reactions])
 
 C_k = np.copy(C_k_0)
 #C_k[-1] = 1e-13
@@ -159,16 +164,21 @@ q_f[1:carbon_el_s.n_reactions+1] = carbon_el_s.forward_rates_of_progress
 q_r[1:carbon_el_s.n_reactions+1] = carbon_el_s.reverse_rates_of_progress
 dG[1:carbon_el_s.n_reactions+1] = carbon_el_s.delta_gibbs
 
-q_f[-1] = Li2S_el_s.forward_rates_of_progress
-q_r[-1] = Li2S_el_s.reverse_rates_of_progress
-dG[-1] = Li2S_el_s.delta_gibbs
+q_f[-2] = Li2S_el_s.forward_rates_of_progress
+q_r[-2] = Li2S_el_s.reverse_rates_of_progress
+dG[-2] = Li2S_el_s.delta_gibbs
+
+q_f[-1] = Li2S_tpb.forward_rates_of_progress
+q_r[-1] = Li2S_tpb.reverse_rates_of_progress
+dG[-1] = Li2S_tpb.delta_gibbs
 
 x = np.arange(0, len(q_f))
 width = 0.25
 
-fig, ax = plt.subplots(figsize=(12,6))
+fig, ax = plt.subplots(figsize=(18,6))
 rects1 = ax.bar(x - width/2, q_f, width, label='forward progress')
 rects2 = ax.bar(x + width/2, q_r, width, label='reverse progress')
+#rects3 = ax.bar(x + 1.5*width, dG, width, label='Delta G')
 
 
 #fig2, ax2 = plt.subplots()

@@ -11,11 +11,13 @@ from math import pi
 from li_s_battery_inputs import inputs
 from li_s_battery_init import cathode as cat
 
-def dst(s1, s2, D_eff, dyInv):
+def dst(s1, s2, D_eff, dy1, dy2):
     F = ct.faraday; R = ct.gas_constant; T = inputs.T
     
+    dyInv = 1/(0.5*(dy1 + dy2))
+    w1 = dy2/(dy1 + dy2); w2 = dy1/(dy1 + dy2)
     C_0 = (s1['C_tot'] + s2['C_tot'])*0.5
-    C_k = (s1['C_k'] + s2['C_k'])*0.5
+    C_k = (w1*s1['C_k'] + w2*s2['C_k'])  #*0.5
     z_k = inputs.z_k_el
     
     N_io = np.zeros_like(s1['C_k'])

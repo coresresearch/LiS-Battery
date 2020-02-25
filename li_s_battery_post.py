@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import cantera as ct
 
-def conservation_tests(SV, tags):
+def conservation_tests(SV, tags, sulfur_fig):
     F = ct.faraday
     flag_cat = 1
     flag_sep = 1
@@ -173,7 +173,7 @@ def conservation_tests(SV, tags):
     """Plotting"""
     
     "-----Plot conservation of sulfur-----"
-    fig = plt.figure(1)
+    fig = plt.figure(sulfur_fig)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
     fig.set_size_inches((10.,5.0))
     
@@ -209,7 +209,7 @@ def conservation_tests(SV, tags):
 #                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     
     "-----Plot percent error in sulfur-----"
-    fig = plt.figure(2)
+    fig = plt.figure(sulfur_fig+1)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
     fig.set_size_inches((10.,5.0))
     
@@ -418,11 +418,11 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
             rho_S = np.append(rho_S, tags['rho_el'][i]) 
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]]) #ax=axes[2]
+    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=False, ax=axes[2, yax], xlim=[0,t.iloc[-1]]) #ax=axes[2]
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.set_ylim((1e-6, 1e2))
+#    SV_plot.set_ylim((1e-6, 1e2))
     SV_plot.set_xlim((0, 1750))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
@@ -456,7 +456,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 
 "============================================================================="
 
-def plot_meanPS(SV, tags):
+def plot_meanPS(SV, tags, cycle):
     
     SV_df = SV.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
@@ -470,7 +470,7 @@ def plot_meanPS(SV, tags):
             meanPS[j, i] = sum(cathode.n_S_atoms[5:-2]*C_k.iloc[j, :])/sum(cathode.S_atoms_bool[5:-2]*C_k.iloc[j, :])
           
     "Set up your figure"
-    fig = plt.figure(3)
+    fig = plt.figure()
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
     fig.set_size_inches((8.,5.0))
     
@@ -665,7 +665,8 @@ def tag_strings(SV):
     
     
 if __name__ == "__main__":
-    conservation_tests(SV_ch, tags)
+    conservation_tests(SV_dch, tags, 1)
+    conservation_tests(SV_ch, tags, 3)
     
     
     

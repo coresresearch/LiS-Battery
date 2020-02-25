@@ -40,6 +40,12 @@ lithium_el_s = ct.Interface(inputs.ctifile, inputs.anode_elyte_phase,
                              [lithium_obj, elyte_obj, conductor_obj])
 Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
+elyte_obj.electric_potential = inputs.Phi_el_init
+carbon_obj.electric_potential = inputs.Cell_voltage
+conductor_obj.electric_potential = inputs.Cell_voltage
+
+print(-carbon_el_s.delta_standard_gibbs/ct.faraday)
+
 if hasattr(inputs, 'C_k_el_0'):
     elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
 
@@ -213,7 +219,8 @@ class cathode():
 #    D_el = inputs.D_Li_el*eps_el_0/tau**3
     D_el = inputs.D_Li_el  #/tau**3
     
-    eps_cutoff = 1e-20
+    eps_cutoff = 1e-15
+    eps_dropoff = 1e-3
     
     def get_tflag():
         return cathode.t_flag

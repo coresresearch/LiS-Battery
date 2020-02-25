@@ -63,7 +63,7 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_test.cti'
+    ctifile = 'sulfur_cathode_test2.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -87,8 +87,8 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    Phi_el_init = 1.0
-    Cell_voltage = 2.3
+    Phi_el_init = 1.3
+    Cell_voltage = 2.4
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
@@ -96,8 +96,8 @@ class inputs():
     
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
-    np_S8_init = 312e6      # Initial number of sulfur nucleation sites
-    np_Li2S_init = 312e6    # Initial number of Li2S nucleation sites
+    np_S8_init = 312e6      # Initial number of sulfur nucleation sites [n/m^3]
+    np_Li2S_init = 312e6    # Initial number of Li2S nucleation sites [n/m^3]
     
     # Cell geometry
     H_cat = 40e-6               # Cathode thickness [m]

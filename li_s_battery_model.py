@@ -44,7 +44,7 @@ def main():
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
     atol = np.ones_like(SV_0)*1e-5
-    atol[cat.ptr_vec['eps_S8']] = 1e-25
+    atol[cat.ptr_vec['eps_S8']] = 1e-30
     atol[cat.ptr_vec['eps_Li2S']] = 1e-25
     atol[cat.ptr_vec['rho_k_el']] = 1e-30
 #    atol = 1e-30; 
@@ -54,7 +54,7 @@ def main():
     
     fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = 2+inputs.flag_req)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
-    fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
+    fig.text(0.35, 0.85, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
 #    fig2, axes2 = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = 1)
 #    plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
@@ -131,7 +131,7 @@ def main():
     
     plot_sim(tags, SV_dch_df, 'Discharging', 0, fig, axes)
     
-    plot_meanPS(SV_dch_df, tags)
+    plot_meanPS(SV_dch_df, tags, 'Discharging')
     
     print('Done Discharging\n')
     
@@ -178,6 +178,9 @@ def main():
     SV_0 = SV_req[-1, :]  #SV_dch[-1, :]
     SV_dot_0 = SV_dot_req[-1, :]  #SV_dot_dch[-1, :]
     
+    SV_0[0] = cat.eps_cutoff  # cat.eps_cutoff*1e2
+#    SV_dot_0[0] = 0
+    
     cat.set_i_ext(-cat.i_ext_amp)
     
     # Update problem instance initial conditions
@@ -189,6 +192,7 @@ def main():
     sim_ch = IDA(bat_ch)
     sim_ch.atol = atol
     sim_ch.rtol = rtol
+#    sim_ch.maxh = 0.1
     sim_ch.verbosity = sim_output
     sim_ch.make_consistent('IDA_YA_YDP_INIT')
     
@@ -201,7 +205,9 @@ def main():
     
     plot_sim(tags, SV_ch_df, 'Charging', 1+inputs.flag_req, fig, axes)
     
-    plot_meanPS(SV_ch_df, tags)
+    plot_meanPS(SV_ch_df, tags, 'Charging')
+    
+    print('Max S_8(e) concentration = ', max(SV_ch[:, 6]))
     
     print('Done Charging\n')
     
@@ -230,7 +236,7 @@ from li_s_battery_init import elyte_obj as elyte
 from li_s_battery_functions import set_state
 from li_s_battery_functions import set_state_sep
 from li_s_battery_functions import dst
-from math import pi
+from math import pi, exp, tanh
 
 class cc_cycling(Implicit_Problem):    
     def res_fun(t, SV, SV_dot):
@@ -291,7 +297,7 @@ class cc_cycling(Implicit_Problem):
 
             # Current node plus face boundary fluxes
             i_el_p = cat.sigma_eff*(s1['phi_ed'] - s2['phi_ed'])*cat.dyInv
-            N_io_p, i_io_p = dst(s1, s2, D_el, cat.dyInv)
+            N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, cat.dy)
             
             sdot_C = C_el_s.get_net_production_rates(elyte)
             sdot_L = L_el_s.get_net_production_rates(elyte) 
@@ -370,9 +376,12 @@ class cc_cycling(Implicit_Problem):
         eps_el = 1 - cat.eps_C_0 - eps_S8 - eps_Li2S  
         
         # Calculate new particle radii based on new volume fractions
-        A_S = 3*eps_S8**(2/3)/(3/2/pi/np_S)**(1/3)
-        A_L = 3*eps_Li2S/(3*eps_Li2S/2/pi/np_L)**(1/3)
+        A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+        A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
+#        if eps_S8 == 0:
+#            r_S = 0
+#        else:
         r_S = 3*eps_S8/A_S
         r_L = 3*eps_Li2S/A_L
         
@@ -384,28 +393,44 @@ class cc_cycling(Implicit_Problem):
         elyte.electric_potential = s1['phi_el']
         conductor.electric_potential = s1['phi_ed']
         
-#        print(s1['X_k'], '\n', i_ext, '\n')
         elyte.X = s1['X_k']
         
         # Set outlet boundary conditions for THIS node
         i_el_p = 0
         D_el = cat.D_el*eps_el**(1.5)
         dyInv_boundary = 1/(0.5*(cat.dy + sep.dy))
-        N_io_p, i_io_p = dst(s1, s2, D_el, dyInv_boundary)
+        N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, sep.dy)
         
         sdot_C = C_el_s.get_net_production_rates(elyte)
-        sdot_L = L_el_s.get_net_production_rates(elyte)
-        
-        R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+#        sdot_L = L_el_s.get_net_production_rates(elyte)
+#        print(C_el_s.forward_rate_constants, '\n\n', C_el_s.reverse_rate_constants, i_ext, '\n\n\n')
+#        R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
         R_C = sdot_C*A_C
-        R_L = sdot_L*A_L
-        if SV[offset + ptr['eps_S8']] < cat.eps_cutoff:
-            sdot_S = 0*S_el_s.get_net_production_rates(elyte)
-            R_S = sdot_S*A_S
-        else:
+#        R_L = sdot_L*A_L
+        if eps_S8 < cat.eps_dropoff and i_ext > 0:  #eps_S8 < cat.eps_dropoff and i_ext > 0: #S_el_s.get_net_production_rates(sulfur) < 0 and
+            mult = (1/cat.eps_dropoff)*tanh(eps_S8)
+            sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
             sdot_S = S_el_s.get_net_production_rates(elyte)
             R_S = sdot_S*A_S
-               
+        else:
+            sdot_S8 = S_el_s.get_net_production_rates(sulfur)
+            sdot_S = S_el_s.get_net_production_rates(elyte)
+            R_S = sdot_S*A_S
+            
+#        if SV[offset + ptr['rho_k_el'][4]] > 0.02:
+#        if i_ext > 0 and eps_S8 < 0.05:
+#            print(SV[offset + ptr['rho_k_el'][4]], S_el_s.get_net_production_rates(sulfur), \
+#                  sdot_S8, sdot_S8*A_S*sulfur.volume_mole, eps_S8, SV[offset + ptr['eps_S8']])
+                        
+        if SV[offset + ptr['eps_Li2S']] < cat.eps_cutoff:
+            R_tpb = 0*tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+            sdot_L = 0*L_el_s.get_net_production_rates(elyte)
+            R_L = sdot_L*A_L
+        else:
+            R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+            sdot_L = L_el_s.get_net_production_rates(elyte)
+            R_L = sdot_L*A_L
+             
         i_C = C_el_s.get_net_production_rates(conductor)*A_C
         i_L = Li2S_tpb.get_net_production_rates(conductor)*tpb_len
         i_Far = (i_C + i_L)*F/cat.dyInv
@@ -415,23 +440,26 @@ class cc_cycling(Implicit_Problem):
         R_net = R_C + R_S + R_L + R_tpb
         R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/cat.dy/F
         
-        sdot_S8 = S_el_s.get_net_production_rates(sulfur)
+#        sdot_S8 = S_el_s.get_net_production_rates(sulfur)
         sdot_Li2S = L_el_s.get_net_production_rates(Li2S)  
         sdot_tpb = Li2S_tpb.get_net_production_rates(Li2S)
         
-        Li2S_form = Li2S.volume_mole*sdot_Li2S*A_L
-        Li2S_cons = Li2S.volume_mole*sdot_tpb*tpb_len
+#        print(Li2S.volume_mole*sdot_Li2S*A_L, '\n')
         
-#        print(L_el_s.delta_gibbs, i_ext, '\n')
-                
+#        if i_ext > 0:
+#            print(C_el_s.forward_rate_constants/C_el_s.reverse_rate_constants, '\n')
+                        
         """Calculate change in Sulfur"""                
         res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
                                     - sulfur.volume_mole*sdot_S8*A_S)
-   
+        
+#        print(eps_S8, sulfur.volume_mole*sdot_S8*A_S, S_el_s.delta_gibbs, t, i_ext, '\n')
+
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*sdot_Li2S*A_L)  #- Li2S.volume_mole*sdot_tpb*tpb_len)
+                                      - Li2S.volume_mole*sdot_Li2S*A_L - Li2S.volume_mole*sdot_tpb*tpb_len)
         
+#        print(sdot_Li2S*A_L, '\n', sdot_tpb*tpb_len, '\n')
         
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
@@ -474,7 +502,7 @@ class cc_cycling(Implicit_Problem):
         D_el = sep.D_el 
         
         # Current node plus face boundary conditions
-        N_io_p, i_io_p = dst(s1, s2, D_el, dyInv_boundary)
+        N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, an.dy)
         
         res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
         - (N_io_m - N_io_p)*sep.dyInv/sep.epsilon_el)
@@ -517,9 +545,13 @@ class cc_cycling(Implicit_Problem):
         
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
-        
+#        print(SV, '\n')
+#        print(res, t, '\n\n')
 #        print(SV_dot, '\n\n')
-#        print(t, i_ext)
+#        print(A_S, t, i_ext)
+#        print(t)
+#        if i_ext > 0:
+#            print(res, '\n\n')
         
         return res  
     
@@ -535,7 +567,7 @@ class cc_cycling(Implicit_Problem):
         event3 = np.zeros([cat.npoints])
         event4 = np.zeros([cat.npoints])
         event3 = 1 - y[cat.ptr_vec['eps_Li2S']]
-        event4 = y[cat.ptr_vec['eps_Li2S']]
+#        event4 = y[cat.ptr_vec['eps_Li2S']]
         
         event5 = np.zeros([cat.npoints])
         event5 = 2.8 - y[cat.ptr_vec['phi_ed']]
@@ -561,8 +593,8 @@ class cc_cycling(Implicit_Problem):
             print('Sulfur volume fraction over 1')
             raise TerminateSimulation
         if state_info[1]:
-            print('Sulfur volume fraction below 0')
-            raise TerminateSimulation
+            print('WARNING: Sulfur volume fraction below 0')
+#            raise TerminateSimulation
         elif state_info[2]:
             print('Li2S volume fraction over 1')
             raise TerminateSimulation
