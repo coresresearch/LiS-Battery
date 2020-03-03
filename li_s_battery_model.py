@@ -90,7 +90,7 @@ def main():
     # Obtain tag strings for dataframe columns
     tags = tag_strings(SV_eq_df)
     
-#    plot_sim(tags, SV_eq_df, 'Equilibrating', 0, fig2, axes2)
+#    plot_sim(tags, SV_eq_df, 'Equilibrating', 0, fig, axes)
 #    print(SV_eq_df[tags['rho_el'][4:10]].iloc[-1])
     
     print('Done equilibrating\n')
@@ -379,9 +379,6 @@ class cc_cycling(Implicit_Problem):
         A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
         A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
-#        if eps_S8 == 0:
-#            r_S = 0
-#        else:
         r_S = 3*eps_S8/A_S
         r_L = 3*eps_Li2S/A_L
         
@@ -416,54 +413,42 @@ class cc_cycling(Implicit_Problem):
             sdot_S8 = S_el_s.get_net_production_rates(sulfur)
             sdot_S = S_el_s.get_net_production_rates(elyte)
             R_S = sdot_S*A_S
-            
-#        if SV[offset + ptr['rho_k_el'][4]] > 0.02:
-#        if i_ext > 0 and eps_S8 < 0.05:
-#            print(SV[offset + ptr['rho_k_el'][4]], S_el_s.get_net_production_rates(sulfur), \
-#                  sdot_S8, sdot_S8*A_S*sulfur.volume_mole, eps_S8, SV[offset + ptr['eps_S8']])
                         
-        if SV[offset + ptr['eps_Li2S']] < cat.eps_cutoff:
-            R_tpb = 0*tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+        if eps_Li2S < cat.eps_dropoff and i_ext < 0:
+#            R_tpb = 0*tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+            mult = (1/cat.eps_dropoff)*tanh(eps_Li2S)
+            sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
             sdot_L = 0*L_el_s.get_net_production_rates(elyte)
             R_L = sdot_L*A_L
         else:
-            R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+#            R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
+            sdot_Li2S = L_el_s.get_net_production_rates(Li2S)
             sdot_L = L_el_s.get_net_production_rates(elyte)
             R_L = sdot_L*A_L
              
         i_C = C_el_s.get_net_production_rates(conductor)*A_C
-        i_L = Li2S_tpb.get_net_production_rates(conductor)*tpb_len
+        i_L = 0*Li2S_tpb.get_net_production_rates(conductor)*tpb_len
         i_Far = (i_C + i_L)*F/cat.dyInv
-#        i_Far = C_el_s.get_net_production_rates(conductor)*F*A_C/cat.dyInv
         
         # Net rate of formation
-        R_net = R_C + R_S + R_L + R_tpb
+        R_net = R_C + R_S + R_L #+ R_tpb
         R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/cat.dy/F
         
 #        sdot_S8 = S_el_s.get_net_production_rates(sulfur)
-        sdot_Li2S = L_el_s.get_net_production_rates(Li2S)  
+#        sdot_Li2S = L_el_s.get_net_production_rates(Li2S)  
         sdot_tpb = Li2S_tpb.get_net_production_rates(Li2S)
-        
-#        print(Li2S.volume_mole*sdot_Li2S*A_L, '\n')
-        
-#        if i_ext > 0:
-#            print(C_el_s.forward_rate_constants/C_el_s.reverse_rate_constants, '\n')
                         
         """Calculate change in Sulfur"""                
         res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
                                     - sulfur.volume_mole*sdot_S8*A_S)
         
-#        print(eps_S8, sulfur.volume_mole*sdot_S8*A_S, S_el_s.delta_gibbs, t, i_ext, '\n')
-
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*sdot_Li2S*A_L - Li2S.volume_mole*sdot_tpb*tpb_len)
-        
-#        print(sdot_Li2S*A_L, '\n', sdot_tpb*tpb_len, '\n')
-        
+                                      - Li2S.volume_mole*sdot_Li2S*A_L) # - Li2S.volume_mole*sdot_tpb*tpb_len)
+                
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
-        (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el 
+        (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el
         + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                         - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
         
@@ -493,9 +478,7 @@ class cc_cycling(Implicit_Problem):
         # Shift forward to NEXT node
         j = 0; offset = an.offsets[int(j)]
         s2 = set_state(SV, offset, an.ptr)
-        
-        dyInv_boundary = 1/(0.5*(sep.dy + an.dy))
-        
+                
         # Shift back to THIS node
         offset = sep.offsets[int(j)]
         

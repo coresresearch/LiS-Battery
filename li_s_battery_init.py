@@ -153,13 +153,14 @@ class cathode():
     
     eps_S_0 = m_S/rho_S/H
     eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-10; 
+    eps_L_0 = 1e-5; 
     
     A_S_0 = (3*eps_S_0)/((3*eps_S_0)/(2*pi*inputs.np_S8_init))**(1/3)
     A_L_0 = (3*eps_L_0)/(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(1/3)
     
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
     eps_pore = 1 - eps_C_0
+#    print(1e9*eps_el_0/eps_S_0/sulfur_obj.volume_mass/1e6)
     print(eps_el_0/eps_S_0)
     
     r_C = 3*eps_C_0/inputs.A_C_0
@@ -220,7 +221,7 @@ class cathode():
     D_el = inputs.D_Li_el  #/tau**3
     
     eps_cutoff = 1e-15
-    eps_dropoff = 1e-3
+    eps_dropoff = 1e-10
     
     def get_tflag():
         return cathode.t_flag

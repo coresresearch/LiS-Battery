@@ -394,6 +394,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     SV_plot.set_xlim((0, 1750))
     SV_plot.set_ylim((1.5, 2.8))
     SV_plot.set_yticks([1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8])
+    SV_plot.set_xticks([400, 800, 1200, 1600])
 #    SV_plot.set_ylim((2.25, 2.5))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(False)
@@ -460,6 +461,8 @@ def plot_meanPS(SV, tags, cycle):
     
     SV_df = SV.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
+#    SV_df2 = SV2.copy()
+#    SV_df2.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
     
 #    C_k = SV_df[tags['rho_el'][cathode.i_S8:-2]].copy()
     meanPS = np.zeros([len(SV_df.index), inputs.npoints_cathode])
@@ -487,14 +490,15 @@ def plot_meanPS(SV, tags, cycle):
         tick.label1.set_fontname('Times New Roman')    
     
     for i in np.arange(inputs.npoints_cathode):
-        p1, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, i], '--', linewidth=lw)
+        p1, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, i], '-', linewidth=lw)
+#        p2, = plt.plot(SV_df2.loc[:, 'Time'], SV_df2[tags['phi_ed']], 'b--', linewidth=lw)
     #    p2, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, 1], 'b--', linewidth=lw)
     #    p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], 'k-', linewidth=lw)
         plt.xlim((0, 1770))
         plt.xticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600])
-    #    plt.ylim((1.6, 2.6))
+#        plt.ylim((1.6, 2.6))
         plt.yticks([2, 3, 4, 5, 6, 7, 8])
-        plt.ylabel('Mean PS order', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
+        plt.ylabel('Cell Voltage [V]', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
         plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
         
     return
@@ -665,6 +669,8 @@ def tag_strings(SV):
     
     
 if __name__ == "__main__":
+#    plot_meanPS(SV_dch, SV_ch, tags, 'Discharging')
+#    plot_meanPS(SV_ch, tags, 'Charging')
     conservation_tests(SV_dch, tags, 1)
     conservation_tests(SV_ch, tags, 3)
     

@@ -50,7 +50,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 1
+    C_rate = 0.1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
