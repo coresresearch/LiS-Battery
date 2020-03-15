@@ -228,6 +228,9 @@ class cathode():
     
     def set_tflag(value):
         cathode.t_flag = value
+        
+    def set_tags(value):
+        cathode.tags = value
     
 "============================================================================="        
         

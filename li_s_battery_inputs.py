@@ -37,6 +37,8 @@ class inputs():
     
     flag_req = 0
     
+    n_cycles = 1
+    
     """Plotting options"""
     # To turn on profile plotting set to 1
     flag_plot_profiles = 0
@@ -50,7 +52,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.1
+    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -63,7 +65,7 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_test2.cti'
+    ctifile = 'sulfur_cathode_working.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'

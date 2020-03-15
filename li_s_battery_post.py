@@ -387,7 +387,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     print(SV_df.iloc[-1, -1])
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
-    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, yax], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, 0], xlim=[0,t.iloc[-1]])
     SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$V_{cell}$ [V]', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[A-h/kg_{sulfur}]$', fontsize = fontsize).set_visible(False)
@@ -419,11 +419,12 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
             rho_S = np.append(rho_S, tags['rho_el'][i]) 
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=False, ax=axes[2, yax], xlim=[0,t.iloc[-1]]) #ax=axes[2]
+    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]]) #ax=axes[2]
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-#    SV_plot.set_ylim((1e-6, 1e2))
+    SV_plot.set_ylim((1e-6, 1e1))
+#    SV_plot.set_ylim((-0.1, 7.1))
     SV_plot.set_xlim((0, 1750))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
@@ -473,7 +474,7 @@ def plot_meanPS(SV, tags, cycle):
             meanPS[j, i] = sum(cathode.n_S_atoms[5:-2]*C_k.iloc[j, :])/sum(cathode.S_atoms_bool[5:-2]*C_k.iloc[j, :])
           
     "Set up your figure"
-    fig = plt.figure()
+    fig = plt.figure(2)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
     fig.set_size_inches((8.,5.0))
     
