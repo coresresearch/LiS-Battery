@@ -387,14 +387,14 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     print(SV_df.iloc[-1, -1])
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
-    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, 0], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, yax], xlim=[0,t.iloc[-1]])
     SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$V_{cell}$ [V]', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[A-h/kg_{sulfur}]$', fontsize = fontsize).set_visible(False)
     SV_plot.set_xlim((0, 1750))
-    SV_plot.set_ylim((1.5, 2.8))
-    SV_plot.set_yticks([1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8])
     SV_plot.set_xticks([400, 800, 1200, 1600])
+    SV_plot.set_ylim((1., 2.8))
+    SV_plot.set_yticks([1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8])
 #    SV_plot.set_ylim((2.25, 2.5))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(False)
@@ -407,6 +407,8 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     SV_plot.set_ylabel(r'$\varepsilon_i$ [-]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
     SV_plot.set_xlim((0, 1750))
+    SV_plot.set_ylim((-0.1, 0.5))
+    SV_plot.set_xticks([400, 800, 1200, 1600])
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
@@ -419,13 +421,14 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
             rho_S = np.append(rho_S, tags['rho_el'][i]) 
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]]) #ax=axes[2]
+    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]], colormap='plasma') #ax=axes[2]
 #    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel(r'$\rho_k$ [kmol/m$^3]$', fontsize = fontsize)
+    SV_plot.set_ylabel(r'$C_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.set_ylim((1e-6, 1e1))
+    SV_plot.set_ylim((1e-10, 1e1))
 #    SV_plot.set_ylim((-0.1, 7.1))
     SV_plot.set_xlim((0, 1750))
+    SV_plot.set_xticks([400, 800, 1200, 1600])
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
@@ -470,8 +473,8 @@ def plot_meanPS(SV, tags, cycle):
     for i in np.arange(inputs.npoints_cathode):
         for j in np.arange(len(SV_df.index)):
             offset = i*elyte_obj.n_species
-            C_k = SV_df[tags['rho_el'][5+offset:offset+elyte_obj.n_species-2]].copy()
-            meanPS[j, i] = sum(cathode.n_S_atoms[5:-2]*C_k.iloc[j, :])/sum(cathode.S_atoms_bool[5:-2]*C_k.iloc[j, :])
+            C_k = SV_df[tags['rho_el'][4+offset:offset+elyte_obj.n_species-2]].copy()
+            meanPS[j, i] = sum(cathode.n_S_atoms[4:-2]*C_k.iloc[j, :])/sum(cathode.S_atoms_bool[4:-2]*C_k.iloc[j, :])
           
     "Set up your figure"
     fig = plt.figure(2)
@@ -480,7 +483,7 @@ def plot_meanPS(SV, tags, cycle):
     
     "Formatting for the figure:"
     fs = 20     #font size for plots
-    lw = 2.0    #line width for plots
+    lw = 3.0    #line width for plots
 #    font = plt.matplotlib.font_manager.FontProperties(family='Times New Roman',size=fs-1)
     
     for tick in ax.xaxis.get_major_ticks():
@@ -492,16 +495,15 @@ def plot_meanPS(SV, tags, cycle):
     
     for i in np.arange(inputs.npoints_cathode):
         p1, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, i], '-', linewidth=lw)
-#        p2, = plt.plot(SV_df2.loc[:, 'Time'], SV_df2[tags['phi_ed']], 'b--', linewidth=lw)
-    #    p2, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, 1], 'b--', linewidth=lw)
-    #    p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], 'k-', linewidth=lw)
+#        p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], '--', linewidth=lw)
+#        p2, = plt.plot(SV_df2.loc[:, 'Time'], SV_df2.loc[:, tags['phi_ed']], 'g--', linewidth=lw)
         plt.xlim((0, 1770))
         plt.xticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600])
-#        plt.ylim((1.6, 2.6))
+#        plt.ylim((1.5, 2.8))
         plt.yticks([2, 3, 4, 5, 6, 7, 8])
-        plt.ylabel('Cell Voltage [V]', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
+        plt.ylabel(r'Cell Voltage $[\mathrm{V}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
         plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
-        
+#        plt.legend(["Discharge", "Charge"])
     return
 
 def label_columns(t, SV, an_np, sep_np, cat_np):

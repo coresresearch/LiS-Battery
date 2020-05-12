@@ -1,0 +1,272 @@
+
+#----------------------------------------------------------------------
+#	Sulfur Cathode for Li-ion battery simulations
+#		S. DeCaluwe, Colorado School of Mines
+#		01-29-2015
+#		Adopted from Hofmann, Fronczek, and Bessler,
+#			J. Power Sources, 2014.
+#
+# Modified by D. Korff, Colorado School of Mines
+#		06-12-2019
+#----------------------------------------------------------------------
+units(length = "cm", time = "s", quantity = "mol", act_energy = "J/mol")
+
+metal(
+	name 	 = "sulfur",
+	elements = "S",
+	species  = "S8(s)",
+	density  = (2.07e3, 'kg/m3'),
+	initial_state = state(temperature=300.0, pressure=101325)
+	)
+
+metal(
+	name = "lithium",
+	elements = "Li",
+	species = "Li(s)",
+	density = (0.534, 'g/cm3'),
+	initial_state = state(temperature=300.0)
+)
+
+IdealSolidSolution(
+	name 	 = "lithium_sulfide",
+	elements = "Li S",
+	species  = "Li2S(s)",
+	density  = (1640, 'kg/m3'),
+	initial_state = state(temperature=300.0),
+	standard_concentration = "unity"
+	)
+
+metal(
+	name	= "carbon",
+	elements = "C",
+	species  = "C6",
+	density	 = (2.26e3, 'kg/m3'),
+	initial_state = state(temperature=300.0, pressure=101325)
+	)
+
+metal(
+    name          = "electron",
+    elements      = "E",
+    species       = "electron",
+    density       = (1.0, 'kg/m3'), # dummy entry
+    initial_state = state(temperature=300.0, mole_fractions = "electron:1.0")
+		)
+
+ideal_interface(
+		name = "sulfur_surf",
+		species = "(dummy)",
+	 	site_density = 3.48e-2,
+		reactions = "S-E-*",
+		phases = " sulfur electrolyte electron ",
+		initial_state = state(temperature=300.0)
+		)
+
+ideal_interface(
+		name = "carbon_surf",
+		species = "(dummy)",
+	 	site_density = 3.48e-2,
+		reactions = "C-E-*",
+		phases = " carbon electrolyte electron ",
+		initial_state = state(temperature=300.0)
+		)
+
+ideal_interface(
+		name = "lithium_sulfide_surf",
+		species = "(dummy)",
+		site_density = 3.48e-2,
+		reactions = "L-E-*",
+		phases = " lithium_sulfide electrolyte ",
+		initial_state = state(temperature=300.0)
+		)
+
+ideal_interface(
+	name = "lithium_surf",
+	species = "(dummy)",
+	site_density = 3.48e-2,
+	reactions = "Anode-*",
+	phases = "lithium electrolyte electron",
+	initial_state = state(temperature=300.0)
+)
+
+edge(
+	name = "tpb",
+	elements = " Li S ",
+	species = "(tpb)",
+	site_density = 3.48e-2,
+	reactions = "Cat-tpb-*",
+	phases = ' electrolyte lithium_sulfide electron ',
+	initial_state = state(temperature=300.0, coverages = '(tpb):1.0')
+	)
+
+#------------------------------------------------------------------------------
+# Carbonate based electrolyte
+# Solvent: TEGDME
+# Salt: 1M LiTFSI
+#------------------------------------------------------------------------------
+
+IdealSolidSolution(
+    name                   = "electrolyte",
+    elements               = "Li C F N H O E S",
+    species                = "TEGDME(e) Li+(e) TFSI-(e) S8(e) Li2S8(e) Li2S6(e) Li2S4(e) Li2S3(e) Li2S2(e)",
+    initial_state          = state(temperature=300.0,
+														 mole_fractions = '''TEGDME(e):0.66 Li+(e):0.17 TFSI-(e):0.17
+														 S8(e):0.0 Li2S8(e):0.0 Li2S6(e):0.0 Li2S4(e):0.0 Li2S3(e):0.0 Li2S2(e):0.0'''),
+    standard_concentration = "unity"
+		)
+
+#-----------------------------------------------------------------------------
+#  Species data
+#-----------------------------------------------------------------------------
+species(
+	name = "Li(s)",
+	atoms = "Li:1",
+	thermo = const_cp(h0 = (0, 'kJ/mol'), s0 = (29.1, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (12.998, 'cm3/mol'))
+)
+
+species(
+	name = "electron",
+	atoms = "E:1",
+	thermo = const_cp(h0 = (0.0, 'kcal/mol'))
+	)
+
+species(
+	name = "C6",
+	atoms = "C:6",
+	thermo = const_cp(h0 = (0.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (72.0660/2.270, 'cm3/mol'))
+	)
+
+#------------------------------------------------------------------------------
+# Lithium ion, MW: 6.940455 g/mol
+# Density of electrolyte: 1260.0 kg/m3 (used to calculate species molar volume
+# as molecular weight (MW)/density)
+# Molar enthalpy and entropy taken from Li+(aq) from P. Atkins "Physical
+# Chemistry", Wiley-VCH (2006)
+#------------------------------------------------------------------------------
+species(
+	name 		= "Li+(e)",
+	atoms 		= " Li:1 E:-1 ",
+	thermo 		= const_cp(h0 = (-278, 'kJ/mol'), s0 = (13.4, 'J/mol/K')),
+	standardState	= constantIncompressible(molarVolume = (5.51, 'cm3/mol'))
+	)
+
+#------------------------------------------------------------------------------
+# Hexafluorophosphate ion, MW: 144.964745 g/mol
+# Density of electrolyte: 1260.0 kg/m3 (used to calculate species molar volume
+# as molecular weight (MW)/density)
+# Molar enthalpy and entropy set to zero (dummy entries as this species does
+# not participate in chemical reactions)
+#------------------------------------------------------------------------------
+species(
+    name          = "TFSI-(e)",
+    atoms         = "C:2 F:6 S:2 O:4 N:1 E:1",
+    thermo        = const_cp(h0 = (0.0, 'J/mol'), s0 = (0.0, 'J/mol/K')),
+    standardState = constantIncompressible(molarVolume = (147.4, 'cm3/mol'))
+	)
+
+#------------------------------------------------------------------------------
+# Ethylene carbonate, MW: 88.0630 g/mol
+# Density of electrolyte: 1260 kg/m3 (used to calculate species molar volume
+# as molecular weight (MW)/density)
+# Molar enthalpy and entropy set to zero (dummy entries as this species does
+# not participate in chemical reactions)
+#------------------------------------------------------------------------------
+species(
+    name          = "TEGDME(e)",
+    atoms         = "C:10 H:22 O:5",
+    thermo        = const_cp(h0 =(0.0, 'J/mol'), s0 = (0.0, 'J/mol/K')),
+    standardState = constantIncompressible(molarVolume = (220.1, 'cm3/mol'))
+		)
+
+#------------------------------------------------------------------------------
+# Sulfur species
+#------------------------------------------------------------------------------
+x = 10
+species(
+	name = "S8(s)",
+	atoms = "S:8",
+	thermo = const_cp(h0 = (0.0, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
+	)
+
+species(
+	name = "S8(e)",
+	atoms = "S:8",
+	thermo = const_cp(h0 = (17.6-1.5, 'kJ/mol'), s0 = (0.0, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S8(e)",
+	atoms = "Li:2 S:8",
+	thermo = const_cp(h0 = (-1402.2, 'kJ/mol'), s0 = (-142.5, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/8.07e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S6(e)",
+	atoms = "Li:2 S:6",
+	thermo = const_cp(h0 = (-1316.6, 'kJ/mol'), s0 = (-3.8, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/10.76e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S4(e)",
+	atoms = "Li:2 S:4",
+	thermo = const_cp(h0 = (-1341.1, 'kJ/mol'), s0 = (-95.8, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/16.14e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S3(e)",
+	atoms = "Li:2 S:3",
+	thermo = const_cp(h0 = (-1333.0, 'kJ/mol'), s0 = (-148.7, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/24.22e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S2(e)",
+	atoms = "Li:2 S:2",
+	thermo = const_cp(h0 = (-1316.7, 'kJ/mol'), s0 = (-198.2, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/32.3e3, 'm3/mol'))
+	)
+
+species(
+	name = "Li2S(s)",
+	atoms = "Li:2 S:1",
+	thermo = const_cp(h0 = (-1260.1, 'kJ/mol'), s0 = (-250.1, 'J/mol/K')),
+	standardState = constantIncompressible(molarVolume = (1/64.6e3, 'm3/mol'))
+	)
+
+# dummy species for anode/electrolyte interface
+species(name = "(dummy)", atoms = "")
+species(name = "(tpb)", atoms = "")
+
+#-------------------------------------------------------------------------------
+# Anode reactions
+#-------------------------------------------------------------------------------
+surface_reaction("Li(s) <=> Li+(e) + electron", [2e5, 0.0, 0.0], id="Anode-1", beta=0.5)
+
+#-------------------------------------------------------------------------------
+# Sulfur-electrolyte reactions
+#-------------------------------------------------------------------------------
+surface_reaction("S8(s) <=> S8(e)", [1.00e-7, 0.0, 0.0], id="S-E-1")
+
+#-------------------------------------------------------------------------------
+# Carbon Electrolyte reactions
+#-------------------------------------------------------------------------------
+surface_reaction("S8(e) + 2 Li+(e) + 2 electron <=> Li2S8(e)", [6e8, 0.0, 0.0], id="C-E-1", beta=0.5)
+surface_reaction("Li2S8(e) + 2 Li+(e) + 2 electron <=> Li2S6(e) + Li2S2(e)", [8e5, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("Li2S6(e) + 2 Li+(e) + 2 electron <=> Li2S4(e) + Li2S2(e)", [1e3, 0.0, 0.0], id="C-E-3", beta=0.5)
+surface_reaction("Li2S8(e) + 2 Li+(e) + 2 electron <=> 2 Li2S4(e)", [5e4, 0.0, 0.0], id="C-E-4", beta=0.5)
+surface_reaction("2 Li2S4(e) + 2 Li+(e) + 2 electron <=> Li2S3(e) + Li2S(s)", [1e2, 0.0, 0.0], id="C-E-5", beta=0.5)
+
+#surface_reaction("2 Li2S4(e) => 2 Li2S3(e) + 0.25 S8(e)", [1e2, 0.0, 0.0], id="L-E-1")
+surface_reaction("2 Li2S3(e) => 2 Li2S2(e) + 0.25 S8(e)", [1e1, 0.0, 0.0], id="L-E-2")
+surface_reaction("2 Li2S2(e) => 2 Li2S(s) + 0.25 S8(e)", [1e1, 0.0, 0.0], id="L-E-3")
+#edge_reaction("4 Li2S(s) => Li2S4(e) + 7 Li+(e) + 7 electron", [1e-1, 0.0, 0.0], id="Cat-tpb-4", beta=0.5)
+
+
+
+#===============================================================================

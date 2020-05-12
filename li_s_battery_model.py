@@ -21,7 +21,6 @@ from assimulo.exception import TerminateSimulation
 
 from li_s_battery_inputs import inputs
 
-#from li_s_battery_init import battery
 from li_s_battery_init import anode as an
 from li_s_battery_init import sep
 from li_s_battery_init import cathode as cat
@@ -44,22 +43,24 @@ def main():
     t_0 = 0.
     t_f = 3600./inputs.C_rate
     algvar = sol_init.algvar
-    atol = np.ones_like(SV_0)*1e-5
-    atol[cat.ptr_vec['eps_S8']] = 1e-30
-    atol[cat.ptr_vec['eps_Li2S']] = 1e-25
-    atol[cat.ptr_vec['rho_k_el']] = 1e-40
-#    atol = 1e-30; 
-    rtol = 1e-7; sim_output = 50
+    atol = np.ones_like(SV_0)*1e-6
+    atol[cat.ptr_vec['eps_S8']] = 1e-15
+    atol[cat.ptr_vec['eps_Li2S']] = 1e-15
+    atol[cat.ptr_vec['rho_k_el']] = 1e-30
+    rtol = 1e-6; sim_output = 50
+    
+    rtol_ch = 1e-3
+    atol_ch = np.ones_like(SV_0)*1e-6
+    
+    atol_ch[cat.ptr_vec['eps_S8']] = 1e-15
+    atol_ch[cat.ptr_vec['eps_Li2S']] = 1e-15
+    atol_ch[cat.ptr_vec['rho_k_el']] = 1e-40
     
     rate_tag = str(inputs.C_rate)+"C"
     
     fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (2+inputs.flag_req)*inputs.n_cycles)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
     fig.text(0.35, 0.85, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
-    
-#    fig2, axes2 = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = 1)
-#    plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
-#    fig.text(0.15, 0.8, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
     
     # Set up user function to build figures based on inputs
     
@@ -86,13 +87,13 @@ def main():
     
     # Put solution into pandas dataframe with labeled columns
     SV_eq_df = label_columns(t_eq, SV_eq, an.npoints, sep.npoints, cat.npoints)
-#    SV_eq_df = []
     
     # Obtain tag strings for dataframe columns
     tags = tag_strings(SV_eq_df)
-    
 #    plot_sim(tags, SV_eq_df, 'Equilibrating', 0, fig, axes)
-#    print(SV_eq_df[tags['rho_el'][4:10]].iloc[-1])
+    
+    t_equilibrate = time.time() - t_count
+    print("Equilibration time = ", t_equilibrate, '\n')
     
     print('Done equilibrating\n')
         
@@ -103,12 +104,13 @@ def main():
         
         # New initial conditions from previous simulation
         if cycle_num == 0:
-            SV_0 = SV_eq[-1, :]
-            SV_dot_0 = SV_dot_eq[-1, :]
+            SV_0 = SV_0
+#            SV_eq[-1, :]
+            SV_dot_0 = SV_dot_0
+#            SV_dot_eq[-1, :]
         else:   
-            SV_0 = SV_0_cycle  #SV_eq[-1, :]
-            SV_dot_0 = SV_dot_0_cycle  #SV_dot_eq[-1, :]
-#            t_f = 3524.53
+            SV_0 = SV_0_cycle  
+            SV_dot_0 = SV_dot_0_cycle  
         
         # Set external current
         cat.set_i_ext(cat.i_ext_amp)
@@ -122,22 +124,17 @@ def main():
         sim_dch = IDA(bat_dch)
         sim_dch.atol = atol
         sim_dch.rtol = rtol
-        sim_dch.maxh = 5
+#        sim_dch.maxh = 57
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
         t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)
-        
-    #    if hasattr(cathode, 'get_tflag'):
-    #        t_flag_ch = cathode.get_tflag
             
         SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
-    #    SV_dch_df = []
+
         # Obtain tag strings for dataframe columns
         tags = tag_strings(SV_dch_df)
-        
         plot_sim(tags, SV_dch_df, 'Discharging', 0+2*cycle_num, fig, axes)
-        
         plot_meanPS(SV_dch_df, tags, 'Discharging')
         
         print('Done Discharging\n')
@@ -182,11 +179,10 @@ def main():
         
         print('Charging...')
         
-        SV_0 = SV_req[-1, :]  #SV_dch[-1, :]
-        SV_dot_0 = SV_dot_req[-1, :]  #SV_dot_dch[-1, :]
+        SV_0 = SV_req[-1, :]  
+        SV_dot_0 = SV_dot_req[-1, :]  
         
-        SV_0[cat.ptr_vec['eps_S8']] = cat.eps_cutoff  # cat.eps_cutoff*1e2
-    #    SV_dot_0[0] = 0
+        SV_0[cat.ptr_vec['eps_S8']] = cat.eps_cutoff  
         
         cat.set_i_ext(-cat.i_ext_amp)
         
@@ -197,17 +193,14 @@ def main():
         
         # Re-initialize simulation object
         sim_ch = IDA(bat_ch)
-        sim_ch.atol = atol
-        sim_ch.rtol = rtol
+        sim_ch.atol = atol_ch
+        sim_ch.rtol = rtol_ch
         if cycle_num > 0:
             sim_ch.maxh = 0.1
         sim_ch.verbosity = sim_output
         sim_ch.make_consistent('IDA_YA_YDP_INIT')
         
         t_ch, SV_ch, SV_dot_ch = sim_ch.simulate(t_f)
-        
-    #    if hasattr(cathode, 'get_tflag'):
-    #        t_flag_dch = cathode.get_tflag
             
         SV_ch_df = label_columns(t_ch, SV_ch, an.npoints, sep.npoints, cat.npoints)
         
@@ -218,23 +211,57 @@ def main():
         print('Max S_8(e) concentration = ', max(SV_ch[:, 6]))
         SV_0_cycle = SV_ch[-1, :]
         SV_dot_0_cycle = SV_ch[-1, :]
+        
         print('Done Charging\n')
+        
+#    "Set up your figure"
+#    fig = plt.figure(3)
+#    ax = fig.add_axes([0.2,0.2,0.6,0.75])
+#    fig.set_size_inches((8.,5.0))
+#    
+#    "Formatting for the figure:"
+#    fs = 20     #font size for plots
+#    lw = 2.0    #line width for plots
+##    font = plt.matplotlib.font_manager.FontProperties(family='Times New Roman',size=fs-1)
+#    
+#    for tick in ax.xaxis.get_major_ticks():
+#        tick.label1.set_fontsize(fs)
+#        tick.label1.set_fontname('Times New Roman')
+#    for tick in ax.yaxis.get_major_ticks():
+#        tick.label1.set_fontsize(fs)
+#        tick.label1.set_fontname('Times New Roman')  
+#     
+#        
+#    for i in np.arange(4, 10):
+#        p1, = plt.plot(SV_dch_df['Phi_ed1'], SV_dch_df[tags['rho_el'][i]])
+    
+#    short_df = min(len(SV_dch_df), len(SV_ch_df))
+#    for i in np.arange(0, 2000, 400):
+#        p1, = plt.plot(np.linspace(0, inputs.H_cat, inputs.npoints_cathode), SV_dch_df.loc[i, tags['phi_ed']])
+#        plt.xlim((0, inputs.H_cat))
+##        plt.xticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600])
+##        plt.ylim((1.6, 2.6))
+##        plt.yticks([2, 3, 4, 5, 6, 7, 8])
+#        plt.ylabel('Cathode Voltage [V]', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
+#        plt.xlabel(r'Cathode Depth $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
+##        plt.legend(["Discharge", "Charge"])
+    
     
     t_elapsed = time.time() - t_count
     print('t_cpu=', t_elapsed, '\n')
     
-    file_name_dch = "C_over"+str(int(1/inputs.C_rate))+"discharge_SP.csv"
-    file_name_ch = "C_over"+str(int(1/inputs.C_rate))+"charge_SP.csv"
-    print(file_name_dch, file_name_ch)
-#    SV_dch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_discharge_SP.csv', index=False, header=True)
-#    SV_ch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_charge_SP.csv', index=False, header=True)
-    SV_dch_df.to_csv(file_name_dch, index=False, header=True)
-    SV_ch_df.to_csv(file_name_ch, index=False, header=True)
-#    import csv
-#    with open('tags.csv', 'w') as f:
-#        for key in tags.keys():
-#            f.write("%s,%s\n"%(key,tags[key]))
-    cat.set_tags(tags)
+#    file_name_dch = "C_over"+str(int(1/inputs.C_rate))+"discharge_SP.csv"
+#    file_name_ch = "C_over"+str(int(1/inputs.C_rate))+"charge_SP.csv"
+#    print(file_name_dch, file_name_ch)
+##    SV_dch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_discharge_SP.csv', index=False, header=True)
+##    SV_ch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_charge_SP.csv', index=False, header=True)
+#    SV_dch_df.to_csv(file_name_dch, index=False, header=True)
+#    SV_ch_df.to_csv(file_name_ch, index=False, header=True)
+##    import csv
+##    with open('tags.csv', 'w') as f:
+##        for key in tags.keys():
+##            f.write("%s,%s\n"%(key,tags[key]))
+#    cat.set_tags(tags)
     
     
     return SV_eq_df, SV_dch_df, SV_ch_df, tags # SV_ch_df, tags #SV_eq_df, SV_req_df #, SV_dch_df
@@ -242,9 +269,6 @@ def main():
 "=============================================================================" 
 "===========RESIDUAL CLASSES AND HELPER FUNCTIONS BEYOND THIS POINT==========="
 "============================================================================="
-
-#from li_s_battery_init import anode_obj as anode
-#from li_s_battery_init import anode_s_obj as anode_s
 from li_s_battery_init import sulfur_obj as sulfur
 from li_s_battery_init import Li2S_obj as Li2S
 from li_s_battery_init import carbon_obj as carbon
@@ -310,7 +334,7 @@ class cc_cycling(Implicit_Problem):
             
             tpb_len = 3*eps_Li2S/(r_L**2)
             
-            A_C = inputs.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+            A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
 
             # Set states for THIS node            
             carbon.electric_potential = s1['phi_ed']
@@ -326,34 +350,23 @@ class cc_cycling(Implicit_Problem):
             
             sdot_C = C_el_s.get_net_production_rates(elyte)
             R_C = sdot_C*A_C
-#            if i_ext > 0:  
-            mult = tanh(eps_S8/cat.eps_dropoff)  #(1/cat.eps_dropoff)*tanh(eps_S8)
+            mult = tanh(eps_S8/cat.eps_dropoff)  
             sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
-            sdot_S = S_el_s.get_net_production_rates(elyte)  #
+            sdot_S = S_el_s.get_net_production_rates(elyte) 
             R_S = sdot_S*A_S
-#            else:
-#                sdot_S8 = S_el_s.get_net_production_rates(sulfur)
-#                sdot_S = S_el_s.get_net_production_rates(elyte)
-#                R_S = sdot_S*A_S
-                            
-#            if i_ext < 0:
-#                R_tpb = 0*tpb_len*Li2S_tpb.get_net_production_rates(elyte)
-            mult = tanh(eps_Li2S/cat.eps_dropoff)  #(1/cat.eps_dropoff)*tanh(eps_Li2S)
+
+            mult = tanh(eps_Li2S/cat.eps_dropoff)  
             sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
             sdot_L = L_el_s.get_net_production_rates(elyte)
-            R_L = sdot_L*A_L
-#            else:
-#                R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
-#                sdot_Li2S = L_el_s.get_net_production_rates(Li2S)
-#                sdot_L = L_el_s.get_net_production_rates(elyte)
-#                R_L = sdot_L*A_L
-                 
+            sdot_Li2S = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
+            sdot_L = Li2S_tpb.get_net_production_rates(elyte)
+            R_L = sdot_L*tpb_len
+
             i_C = C_el_s.get_net_production_rates(conductor)*A_C
-            i_L = 0*Li2S_tpb.get_net_production_rates(conductor)*tpb_len
-            i_Far = (i_C + i_L)*F/cat.dyInv
+            i_Far = (i_C)*F/cat.dyInv
             
             # Net rate of formation
-            R_net = R_C + R_S + R_L #+ R_tpb
+            R_net = R_C + R_S + R_L 
             R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/cat.dy/F
             
             """Calculate change in Sulfur"""                
@@ -362,7 +375,7 @@ class cc_cycling(Implicit_Problem):
        
             """Calculate change in Li2S"""
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                          - Li2S.volume_mole*sdot_Li2S*A_L)
+                                          - Li2S.volume_mole*sdot_Li2S*tpb_len)
             
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
@@ -415,7 +428,7 @@ class cc_cycling(Implicit_Problem):
         
         tpb_len = 3*eps_Li2S/(r_L**2)
         
-        A_C = inputs.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+        A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
         
         carbon.electric_potential = s1['phi_ed']
         elyte.electric_potential = s1['phi_el']
@@ -430,45 +443,36 @@ class cc_cycling(Implicit_Problem):
         
         sdot_C = C_el_s.get_net_production_rates(elyte)
         R_C = sdot_C*A_C
-#        if eps_S8 < cat.eps_dropoff and i_ext > 0:  
-        mult = tanh(eps_S8/cat.eps_dropoff)  #(1/cat.eps_dropoff)*tanh(eps_S8)
+        mult = tanh(eps_S8/cat.eps_dropoff)  
         sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
-        sdot_S = S_el_s.get_net_production_rates(elyte)  #
+        sdot_S = S_el_s.get_net_production_rates(elyte)  
         R_S = sdot_S*A_S
-#        else:
-#            sdot_S8 = S_el_s.get_net_production_rates(sulfur)
-#            sdot_S = S_el_s.get_net_production_rates(elyte)
-#            R_S = sdot_S*A_S
-                        
-#        if eps_Li2S < cat.eps_dropoff and i_ext < 0:
-#            R_tpb = 0*tpb_len*Li2S_tpb.get_net_production_rates(elyte)
-        mult = tanh(eps_Li2S/cat.eps_dropoff)  #(1/cat.eps_dropoff)*tanh(eps_Li2S)
+
+        mult = tanh(eps_Li2S/cat.eps_dropoff)  
         sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
         sdot_L = L_el_s.get_net_production_rates(elyte)
-        R_L = sdot_L*A_L
-#        else:
-##            R_tpb = tpb_len*Li2S_tpb.get_net_production_rates(elyte)
-#            sdot_Li2S = L_el_s.get_net_production_rates(Li2S)
-#            sdot_L = L_el_s.get_net_production_rates(elyte)
-#            R_L = sdot_L*A_L
-             
+        sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
+        sdot_tpb_el = Li2S_tpb.get_net_production_rates(elyte)
+        R_L = sdot_L*A_L + 0*sdot_tpb_el*tpb_len
+        
+        if i_ext < 0:
+            print(SV[offset + ptr['phi_ed']], '\n', C_el_s.forward_rate_constants, Li2S_tpb.forward_rate_constants, '\n', 
+                  C_el_s.reverse_rate_constants, Li2S_tpb.reverse_rate_constants, '\n\n')
+
         i_C = C_el_s.get_net_production_rates(conductor)*A_C
-        i_L = 0*Li2S_tpb.get_net_production_rates(conductor)*tpb_len
-        i_Far = (i_C + i_L)*F/cat.dyInv
+        i_Far = (i_C)*F/cat.dyInv
         
         # Net rate of formation
-        R_net = R_C + R_S + R_L #+ R_tpb
+        R_net = R_C + R_S + R_L 
         R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/cat.dy/F
-         
-#        sdot_tpb = Li2S_tpb.get_net_production_rates(Li2S)
-                        
+                                 
         """Calculate change in Sulfur"""                
         res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
                                     - sulfur.volume_mole*sdot_S8*A_S)
         
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*sdot_Li2S*A_L) # - Li2S.volume_mole*sdot_tpb*tpb_len)
+                                      - Li2S.volume_mole*(sdot_Li2S*A_L + sdot_tpb*tpb_len))
                 
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
@@ -541,24 +545,20 @@ class cc_cycling(Implicit_Problem):
         
         R_net = sdot_Li*an.A_Li
         i_Far = sdot_Far*an.A_Li*F*an.dy
-        
+           
         res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
 
         res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']]
         - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
         
-        res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']]
+        res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']] 
         
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
-#        print(SV, t, '\n')
-#        print(res, t, '\n\n')
-#        print(SV_dot, t, '\n\n')
-#        print(A_S, t, i_ext)
-#        print(t)
-#        if i_ext > 0:
-#            print(res, '\n\n')
+#        if i_ext < 0:
+#            print(SV, '\n')
+#        print(t, i_ext, '\n\n')
         
         return res  
     
@@ -579,7 +579,7 @@ class cc_cycling(Implicit_Problem):
         event5 = np.zeros([cat.npoints])
         event5 = 2.8 - y[cat.ptr_vec['phi_ed']]
         event6 = np.zeros([cat.npoints])
-        event6 = y[cat.ptr_vec['phi_ed']] - 1.5
+        event6 = y[cat.ptr_vec['phi_ed']] - 1.465
         
         event7 = np.zeros([cat.npoints*elyte.n_species])
         event7 = y[cat.ptr_vec['rho_k_el']]
@@ -593,7 +593,6 @@ class cc_cycling(Implicit_Problem):
     "========================================================================="
     
     def handle_event(self, solver, event_info):
-        
         state_info = event_info[0]
         
         if state_info[0]:
@@ -613,47 +612,13 @@ class cc_cycling(Implicit_Problem):
             raise TerminateSimulation
         elif state_info[5]:
             print('Cell voltage hit 1.5')
+#            cat.set_i_ext(0)
             raise TerminateSimulation
         elif any(state_info):
             print('Stop condition')
-            raise TerminateSimulation
-#        if any(state_info):
-#            print('shoulda stopped')
-#            raise TerminateSimulation
-#        while True:
-#            self.event_switch(solver, event_info)
-#            self.init_mode(solver)
-#            
-#            if not True in event_info:
-#                break
-    
-    "========================================================================="
-    
-#    def event_switch(self, solver, event_info):
-#        if not all(event_info):
-#            solver.sw = [not solver.sw]
-#            
-#        return solver.sw
-    
-    "========================================================================="
-    
-#    def init_mode(self, solver):
-#        cat.set_tflag(solver.t)
-#        solver.make_consistent('IDA_YA_YDP_INIT')
-#        
-#        if battery.get_i_ext() != 0:
-#            battery.set_i_ext(0)
-    
-    "========================================================================="
-    
-#class is_cycling(Implicit_Problem):
-#    def res_fun():
-#        print('is_cycling')
-    
+            raise TerminateSimulation    
     
 if __name__ == "__main__":
-#    SV_eq, SV_dch, tags = main()
     SV_eq, SV_dch, SV_ch, tags = main()
-#    SV_eq_df, SV_ch_df, SV_req_df = main()
-#    SV_eq, SV_ch, SV_req, SV_dch = main()
 
+"============================================================================="

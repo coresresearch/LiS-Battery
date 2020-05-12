@@ -32,11 +32,8 @@ class inputs():
     npoints_sep = 1*flag_sep
     npoints_cathode = 1*flag_cathode
     
-    # Set number of discretized shells in each particle
-#    nshells_anode = 5*flag_anode
-    
+    # Set number of discretized shells in each particle    
     flag_req = 0
-    
     n_cycles = 1
     
     """Plotting options"""
@@ -52,7 +49,8 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 1
+    C_rate = 0.05
+#    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -65,7 +63,11 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_working.cti'
+#    ctifile = 'sulfur_cathode_test4c.cti'
+#    ctifile = 'sulfur_cathode_cascade.cti'
+    ctifile = 'Kuzmina.cti'
+#    ctifile = 'Assary2.cti'
+#    ctifile = 'sulfur_cathode_working3.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -102,40 +104,44 @@ class inputs():
     np_Li2S_init = 312e6    # Initial number of Li2S nucleation sites [n/m^3]
     
     # Cell geometry
-    H_cat = 40e-6               # Cathode thickness [m]
-    A_C_0 = 1.32e5              # Initial volume specific area of carbon [1/m]
+    H_cat = 50e-6               # Cathode thickness [m]
+    r_C = H_cat/npoints_cathode/2
+    A_C_0 = 1e4             # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
     #   area separately in [kg_sulfur] and [m^2] respectively. Enter 'loading'
     #   or 'bulk' in the string >sulfur_method below.
-    sulfur_method = 'bulk'
-    A_cat = 80e-6  #pi*0.01**2               # Cathode planar area [m^2]
-    m_S_0 = 1e-6                # Initial total mass of sulfur in cathode [kg_S8]
+    sulfur_method = 'loading'
+    A_cat = 1.327e-4  #pi*0.01**2               # Cathode planar area [m^2]
+    m_S_0 = 2.5e-2               # Initial total mass of sulfur in cathode [kg_S8]
                                 # if 'bulk' method chosen. Sulfur loading in
                                 # [kg_S8/m^2] if 'loading' method chosen.
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
     #   the complementary phase is only the carbon structure - i.e. 40 wt% 
     #   sulfur means 60 wt% carbon.
-    pct_w_S8_0 = 0.40  # Initial weight percent of sulfur in cathode [kg_S8/kg]
-    pct_w_C_0 = 0.60   # Initial weight percent of carbon in cathode [kg_C/kg]
-    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-13*2
+    pct_w_S8_0 = 0.8  # Initial weight percent of sulfur in cathode [kg_S8/kg]
+    pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
+    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 2.046e-10*2 - 5.348e-10*2 - 8.456e-13*2
+#    C_k_el_0 = np.array([1.023e1, 
+#                         1.024, 
+#                         1.024, 
+#                         1.943e-2, 
+#                         1.821e-4, 
+#                         3.314e-6, 
+#                         2.046e-6,
+#                         2.046e-6,
+#                         5.348e-6])
     C_k_el_0 = np.array([1.023e1, 
-                         1.023e1, 
                          1.024, 
                          C_counter_n, 
                          1.943e-2, 
                          1.821e-4, 
-                         3.314e-4, 
-                         2.046e-5, 
-                         5.348e-10, 
-                         8.456e-13])
-#    C_k_el_0 = np.array([1.021e1, 1.023e1, 1.024, 1.023, 1.943e-2, 2.046e-5, 8.456e-13])
-#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024 - 5*1e-12, 1.943e-2, 1e-12, 
-#                         1e-12, 1e-12, 1e-12, 1e-12])
-#    C_k_el_0 = np.array([1.023e1, 1.023e1, 1.024, 1.024, 1.943e-2, 1.821e-4, 
-#                         2.046e-5, 8.456e-13])
+                         3.314e-6, 
+                         2.046e-6,
+                         2.046e-6,
+                         5.348e-6])
     
     "Cathode geometry and transport"
     # Anode geometry
@@ -163,7 +169,7 @@ class inputs():
                         #   surface area [-]
                         
     # Transport
-    C_dl_an = 1.5e-2    # Double-layer capacitance [F/m^2]
+    C_dl_an = 1.5e1    # Double-layer capacitance [F/m^2]
     sigma_an = 75.0     # Bulk anode electrical conductivity [S/m]
     D_Li_an = 7.5e-16   # Bulk diffusion coefficient for Li in graphite [m^2/s]
     
@@ -171,14 +177,13 @@ class inputs():
     H_elyte = 9e-6     # Separator thickness [m]
     
     # Elytespecies bulk diffusion coefficients and charges. 
-    #   Assumes four component elyte: [EC, PC, Li+, PF6-, S8(e), S8_2-, S6_2-
-    #                                  S4_2-, S2_2-, S_2-]
-    D_Li_el = np.array([1e-12, 1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
+    #   Assumes four component elyte: [TEGDME, Li+, TFSI-, S8(e), Li2S8, Li2S6
+    #                                  Li2S4, Li2S3, Li2S2]
+    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
                         1e-10, 1e-10])
-#    D_Li_el = np.array([1e-12, 1e-12, 1e-10, 4e-10, 0, 0, 0, 0,
-#                        0, 0])
 
-    z_k_el = np.array([0., 0., 1., -1., 0., -2., -2., -2., -2., -2.])
+#    z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0, 0.])
+    z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
     tau_sep = 1.6       # Tortuosity of separator [-]
