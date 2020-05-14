@@ -134,7 +134,7 @@ class cathode():
         
     n_S_atoms = np.zeros([len(elyte_obj.species_names)])
     for i, species in enumerate(elyte_obj.species_names):
-        if elyte_obj.n_atoms(species, 'S'):
+        if elyte_obj.n_atoms(species, 'S') and i != 2:
             n_S_atoms[i] = elyte_obj.n_atoms(species, 'S')
         else:
             n_S_atoms[i] = 0
@@ -271,7 +271,7 @@ class anode():
     H = inputs.H_an
     
     C_dl = inputs.C_dl_an
-    A_Li = 1e7
+    A_Li = 1e5
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3

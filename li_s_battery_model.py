@@ -104,10 +104,10 @@ def main():
         
         # New initial conditions from previous simulation
         if cycle_num == 0:
-            SV_0 = SV_0
-#            SV_eq[-1, :]
-            SV_dot_0 = SV_dot_0
-#            SV_dot_eq[-1, :]
+#            SV_0 = SV_0
+            SV_eq[-1, :]
+#            SV_dot_0 = SV_dot_0
+            SV_dot_eq[-1, :]
         else:   
             SV_0 = SV_0_cycle  
             SV_dot_0 = SV_dot_0_cycle  
@@ -280,7 +280,7 @@ from li_s_battery_init import lithium_obj as lithium
 from li_s_battery_init import lithium_el_s as lithium_s
 from li_s_battery_init import conductor_obj as conductor
 from li_s_battery_init import elyte_obj as elyte
-from li_s_battery_functions import set_state
+from li_s_battery_functions import set_state, set_geom, set_rxn
 from li_s_battery_functions import set_state_sep
 from li_s_battery_functions import dst
 from math import pi, exp, tanh
@@ -413,6 +413,8 @@ class cc_cycling(Implicit_Problem):
         j = cat.npoints-1; offset = cat.offsets[int(j)]
         
         # Set variables to CURRENT NODE value
+#        geom = set_geom(SV, offset, cat.ptr)
+        
         np_S = SV[offset + ptr['np_S8']]
         np_L = SV[offset + ptr['np_Li2S']]
         eps_S8 = max(SV[offset + ptr['eps_S8']], cat.eps_cutoff)
@@ -433,7 +435,6 @@ class cc_cycling(Implicit_Problem):
         carbon.electric_potential = s1['phi_ed']
         elyte.electric_potential = s1['phi_el']
         conductor.electric_potential = s1['phi_ed']
-        
         elyte.X = s1['X_k']
         
         # Set outlet boundary conditions for THIS node
@@ -441,6 +442,8 @@ class cc_cycling(Implicit_Problem):
         D_el = cat.D_el*eps_el**(1.5)
         N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, sep.dy)
         
+#        sdot, R_net = set_rxn(geom, C_el_s, S_el_s, L_el_s, Li2S_tpb, sulfur, 
+#                              elyte, Li2S, conductor)
         sdot_C = C_el_s.get_net_production_rates(elyte)
         R_C = sdot_C*A_C
         mult = tanh(eps_S8/cat.eps_dropoff)  
@@ -452,14 +455,11 @@ class cc_cycling(Implicit_Problem):
         sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
         sdot_L = L_el_s.get_net_production_rates(elyte)
         sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
-        sdot_tpb_el = Li2S_tpb.get_net_production_rates(elyte)
-        R_L = sdot_L*A_L + 0*sdot_tpb_el*tpb_len
-        
-        if i_ext < 0:
-            print(SV[offset + ptr['phi_ed']], '\n', C_el_s.forward_rate_constants, Li2S_tpb.forward_rate_constants, '\n', 
-                  C_el_s.reverse_rate_constants, Li2S_tpb.reverse_rate_constants, '\n\n')
+        sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
+        R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
 
-        i_C = C_el_s.get_net_production_rates(conductor)*A_C
+        i_C = C_el_s.get_net_production_rates(conductor)*A_C + Li2S_tpb.get_net_production_rates(conductor)*tpb_len
+#        + Li2S_tpb.get_creation_rates(conductor) - mult*Li2S_tpb.get_destruction_rates(conductor)
         i_Far = (i_C)*F/cat.dyInv
         
         # Net rate of formation
@@ -472,7 +472,8 @@ class cc_cycling(Implicit_Problem):
         
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*(sdot_Li2S*A_L + sdot_tpb*tpb_len))
+                                      - Li2S.volume_mole*(sdot_Li2S*A_L
+                                      + sdot_tpb*tpb_len))
                 
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
@@ -579,7 +580,7 @@ class cc_cycling(Implicit_Problem):
         event5 = np.zeros([cat.npoints])
         event5 = 2.8 - y[cat.ptr_vec['phi_ed']]
         event6 = np.zeros([cat.npoints])
-        event6 = y[cat.ptr_vec['phi_ed']] - 1.465
+        event6 = y[cat.ptr_vec['phi_ed']] - 1.5
         
         event7 = np.zeros([cat.npoints*elyte.n_species])
         event7 = y[cat.ptr_vec['rho_k_el']]

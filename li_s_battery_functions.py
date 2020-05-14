@@ -7,7 +7,7 @@ Created on Tue Dec 10 08:26:06 2019
 
 import cantera as ct
 import numpy as np
-from math import pi
+from math import pi, tanh
 from li_s_battery_inputs import inputs
 from li_s_battery_init import cathode as cat
 
@@ -57,6 +57,58 @@ def set_state(SV, offset, ptr):
 #                 - (pi*state['np_L']*state['r_L']**2)/cat.V_0
     
     return state
+
+"""========================================================================="""
+
+def set_geom(SV, offset, ptr):
+    geom = {}
+    
+    geom['np_S'] = SV[offset + ptr['np_S8']]
+    geom['np_L'] = SV[offset + ptr['np_Li2S']]
+    geom['eps_S'] = max(SV[offset + ptr['eps_S8']], cat.eps_cutoff)
+    geom['eps_L'] = max(SV[offset + ptr['eps_Li2S']], cat.eps_cutoff)
+    geom['eps_el'] = 1 - cat.eps_C_0 - geom['eps_S'] - geom['eps_L']
+    
+    geom['A_S'] = 2*pi*geom['np_S']*(3*geom['eps_S']/2/geom['np_S']/pi)**(2/3)
+    geom['A_L'] = 2*pi*geom['np_L']*(3*geom['eps_L']/2/geom['np_L']/pi)**(2/3)
+    
+    geom['r_S'] = 3*geom['eps_S']/geom['A_S']
+    geom['r_L'] = 3*geom['eps_L']/geom['A_L']
+    geom['L_tpb'] = 3*geom['eps_L']/(geom['r_L']**2)
+    geom['A_C'] = cat.A_C_0 - (pi*geom['np_S']*geom['r_S']**2) \
+                            - (pi*geom['np_L']*geom['r_L']**2)
+    
+    return geom
+
+def set_rxn(geom, C_el_s, S_el_s, L_el_s, Li2S_tpb, sulfur, elyte, Li2S, conductor):
+    sdot = {}
+    
+    sdot_C = C_el_s.get_net_production_rates(elyte)
+    R_C = sdot_C*geom['A_C']
+    
+    mult = tanh(geom['eps_S']/cat.eps_dropoff)
+    sdot['S8'] = S_el_s.get_creation_rates(sulfur) - \
+            mult*S_el_s.get_destruction_rates(sulfur)
+            
+    sdot_S = S_el_s.get_net_production_rates(elyte)
+    R_S = sdot_S*geom['A_S']
+    
+    mult = tanh(geom['eps_L']/cat.eps_dropoff)
+    sdot['Li2S'] = L_el_s.get_creation_rates(Li2S) - \
+              mult*L_el_s.get_destruction_rates(Li2S)
+    sdot['tpb'] = Li2S_tpb.get_creation_rates(Li2S) - \
+             mult*Li2S_tpb.get_destruction_rates(Li2S)
+              
+    sdot_L = L_el_s.get_net_production_rates(elyte)
+    sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - \
+                - Li2S_tpb.get_destruction_rates(elyte)
+    R_L = sdot_L*geom['A_L'] + sdot_tpb_el*geom['L_tpb']
+    R_net = R_C + R_S + R_L
+    
+    sdot['i_C'] = C_el_s.get_net_production_rates(conductor)*geom['A_C'] + \
+                  Li2S_tpb.get_net_production_rates(conductor)*geom['L_tpb']
+                  
+    return sdot, R_net
 
 """========================================================================="""
 

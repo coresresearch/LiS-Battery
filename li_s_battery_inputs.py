@@ -49,8 +49,8 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
+#    C_rate = 0.05
     C_rate = 0.05
-#    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -106,7 +106,7 @@ class inputs():
     # Cell geometry
     H_cat = 50e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
-    A_C_0 = 1e4             # Initial volume specific area of carbon [1/m]
+    A_C_0 = 1e5             # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
@@ -123,25 +123,25 @@ class inputs():
     #   sulfur means 60 wt% carbon.
     pct_w_S8_0 = 0.8  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
-    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 2.046e-10*2 - 5.348e-10*2 - 8.456e-13*2
+    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 2.046e-10*2 - 5.348e-10*2
+    C_k_el_0 = np.array([1.023e1, 
+                         1.024, 
+                         1.024, 
+                         1.943e-2, 
+                         1.821e-4, 
+                         3.314e-6, 
+                         2.046e-8,
+                         2.046e-10,
+                         5.348e-13])
 #    C_k_el_0 = np.array([1.023e1, 
 #                         1.024, 
-#                         1.024, 
+#                         C_counter_n, 
 #                         1.943e-2, 
 #                         1.821e-4, 
 #                         3.314e-6, 
 #                         2.046e-6,
 #                         2.046e-6,
 #                         5.348e-6])
-    C_k_el_0 = np.array([1.023e1, 
-                         1.024, 
-                         C_counter_n, 
-                         1.943e-2, 
-                         1.821e-4, 
-                         3.314e-6, 
-                         2.046e-6,
-                         2.046e-6,
-                         5.348e-6])
     
     "Cathode geometry and transport"
     # Anode geometry
@@ -182,8 +182,8 @@ class inputs():
     D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
                         1e-10, 1e-10])
 
-#    z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0, 0.])
-    z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
+    z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0, 0.])
+#    z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
     tau_sep = 1.6       # Tortuosity of separator [-]

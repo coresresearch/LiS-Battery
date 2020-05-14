@@ -101,29 +101,29 @@ def conservation_tests(SV, tags, sulfur_fig):
         n_S_Li2S_vec[i] = n_S_Li2S
         n_S_tot[i] = (n_S_cat[i] + n_S_solid + n_S_Li2S) + n_S_sep[i] + n_S_an[i]
         
-        """2. Conservation of lithium"""
+#        """2. Conservation of lithium"""
 #        offset1 = cathode.offsets[-1]
 #        s1 = set_state(state.values, offset1, cathode.ptr)
 #        offset2 = sep.offsets[0]
 #        s2 = set_state_sep(state.values, offset2, sep.ptr)
 #        dyInv = 1/(0.5*(cathode.dy + sep.dy))
-#        D_el = np.multiply(cathode.D_el, eps_el.reshape(2, 1)**1.5).reshape(1, len(cathode.D_el)*len(eps_el))
-##        D_el = np.multiply(cathode.D_el*eps_el**(1.5))
-#        N_io_sep, i_io_sep = dst(s1, s2, D_el, dyInv)
+##        D_el = np.multiply(cathode.D_el, eps_el.reshape(2, 1)**1.5).reshape(1, len(cathode.D_el)*len(eps_el))
+#        D_el = np.multiply(cathode.D_el, eps_el**(1.5))
+#        N_io_sep, i_io_sep = dst(s1, s2, D_el, cathode.dy, sep.dy)
 ##        print(N_io_sep, '\n')
 #        if i == 0:
 #            dt = 0
 #        else:
 #            dt = SV.iloc[i, -1] - SV.iloc[i-1, -1]
-            
-        """Cantera objects (to get faradaic current)"""
+#            
+#        """Cantera objects (to get faradaic current)"""
 #        carbon_obj.electric_potential = s1['phi_ed']
 #        elyte_obj.electric_potential = s1['phi_el'] 
 #        conductor_obj.electric_potential = s1['phi_ed']
 #        
 #        elyte_obj.X = s1['X_k']
-        
-        # Calculate new particle radii based on new volume fractions
+#        
+#        # Calculate new particle radii based on new volume fractions
 #        A_S = 3*eps_S8/(3*eps_S8*cathode.V_0/2/pi/np_S)**(1/3)
 #        A_L = 3*eps_Li2S/(3*eps_Li2S*cathode.V_0/2/pi/np_L)**(1/3)
 #        
@@ -133,8 +133,8 @@ def conservation_tests(SV, tags, sulfur_fig):
 #        A_C = inputs.A_C_0 - (pi*np_S*r_S**2)/cathode.V_0 - (pi*np_L*r_L**2)/cathode.V_0
 #        
 #        i_Far = carbon_el_s.get_net_production_rates(conductor_obj)*F*A_C/cathode.dyInv
-            
-        # Net rate of formation
+#            
+##         Net rate of formation
 #        R_Li_dl = (-i_Far + i_ext - 0)/cathode.H/F
 ##        print(R_Li_dl)
 #        N_Li_dl[i] = dt*R_Li_dl*cathode.H
@@ -238,8 +238,8 @@ def conservation_tests(SV, tags, sulfur_fig):
 #    plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', \
 #                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     
-#    "-----Plot charge neutrality-----"
-#    fig = plt.figure(3)
+    "-----Plot charge neutrality-----"
+#    fig = plt.figure(sulfur_fig+2)
 #    ax = fig.add_subplot(311)
 #    ax2 = fig.add_subplot(312, sharex=ax, sharey=ax)
 #    ax3 = fig.add_subplot(313, sharex=ax, sharey=ax)
@@ -270,12 +270,12 @@ def conservation_tests(SV, tags, sulfur_fig):
 ##    plt.xlim((0, SV.loc[-1, 'Time']))
 ##    plt.xticks([0, 250, 500, 750, 1000, 1250, 1500, 1750])
 #    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
-##    plt.ylim((0, 100))
-##    plt.yticks([2, 3, 4, 5, 6, 7, 8])
-##    plt.ylabel('Mean PS order', fontstyle='normal', fontname='Times new Roman', \
-##                fontsize=fs+2, labelpad=5.0)
-##    plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', \
-##                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
+#    plt.ylim((0, 100))
+#    plt.yticks([2, 3, 4, 5, 6, 7, 8])
+#    plt.ylabel('Mean PS order', fontstyle='normal', fontname='Times new Roman', \
+#                fontsize=fs+2, labelpad=5.0)
+#    plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', \
+#                fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
 #    
 #    "-----Plot lithium balance in cathode-----"
 #    fig=plt.figure(4)
@@ -393,7 +393,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     SV_plot.set_xlabel('Capacity $[A-h/kg_{sulfur}]$', fontsize = fontsize).set_visible(False)
     SV_plot.set_xlim((0, 1750))
     SV_plot.set_xticks([400, 800, 1200, 1600])
-    SV_plot.set_ylim((1., 2.8))
+    SV_plot.set_ylim((1.5, 2.8))
     SV_plot.set_yticks([1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8])
 #    SV_plot.set_ylim((2.25, 2.5))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
@@ -421,11 +421,11 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
             rho_S = np.append(rho_S, tags['rho_el'][i]) 
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]], colormap='plasma') #ax=axes[2]
+    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]], colormap='plasma', linewidth=2.) #ax=axes[2]
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$C_k$ [kmol/m$^3]$', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.set_ylim((1e-10, 1e1))
+    SV_plot.set_ylim((1e-6, 1e1))
 #    SV_plot.set_ylim((-0.1, 7.1))
     SV_plot.set_xlim((0, 1750))
     SV_plot.set_xticks([400, 800, 1200, 1600])
