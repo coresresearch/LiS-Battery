@@ -49,8 +49,8 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-#    C_rate = 0.05
     C_rate = 0.05
+#    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -63,11 +63,9 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-#    ctifile = 'sulfur_cathode_test4c.cti'
 #    ctifile = 'sulfur_cathode_cascade.cti'
     ctifile = 'Kuzmina.cti'
 #    ctifile = 'Assary2.cti'
-#    ctifile = 'sulfur_cathode_working3.cti'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -123,11 +121,11 @@ class inputs():
     #   sulfur means 60 wt% carbon.
     pct_w_S8_0 = 0.8  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
-    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 2.046e-10*2 - 5.348e-10*2
+    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-6*2 - 2.046e-6*2 - 2.046e-6*2 - 5.348e-6*2
     C_k_el_0 = np.array([1.023e1, 
                          1.024, 
                          1.024, 
-                         1.943e-2, 
+                         1.943e-4, 
                          1.821e-4, 
                          3.314e-6, 
                          2.046e-8,
@@ -169,7 +167,7 @@ class inputs():
                         #   surface area [-]
                         
     # Transport
-    C_dl_an = 1.5e1    # Double-layer capacitance [F/m^2]
+    C_dl_an = 1.5e-3    # Double-layer capacitance [F/m^2]
     sigma_an = 75.0     # Bulk anode electrical conductivity [S/m]
     D_Li_an = 7.5e-16   # Bulk diffusion coefficient for Li in graphite [m^2/s]
     

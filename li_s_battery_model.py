@@ -49,7 +49,7 @@ def main():
     atol[cat.ptr_vec['rho_k_el']] = 1e-30
     rtol = 1e-6; sim_output = 50
     
-    rtol_ch = 1e-3
+    rtol_ch = 1e-6
     atol_ch = np.ones_like(SV_0)*1e-6
     
     atol_ch[cat.ptr_vec['eps_S8']] = 1e-15

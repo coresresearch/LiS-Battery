@@ -151,6 +151,7 @@ class cathode():
           + Li2S_obj.density_mole*eps_L_0*H
               
     W_S_k = elyte_obj.molecular_weights*S_atoms_bool
+#    W_S_k = sulfur_obj.molecular_weights*(n_S_atoms/8.)
     m_S_el = inputs.A_cat*eps_el_0*H*np.dot(W_S_k, inputs.C_k_el_0)
     
     x = np.copy(n_S_atoms)
@@ -271,7 +272,7 @@ class anode():
     H = inputs.H_an
     
     C_dl = inputs.C_dl_an
-    A_Li = 1e5
+    A_Li = 1e7
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3
