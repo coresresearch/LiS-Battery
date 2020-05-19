@@ -75,6 +75,8 @@ phases:
 - name: lithium_sulfide_surf
   thermo: ideal-surface
   species: [(surf)]
+  kinetics: surface
+  reactions: none
   state:
     T: 300.0
     P: 1 atm
