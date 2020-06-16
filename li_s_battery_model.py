@@ -54,7 +54,7 @@ def main():
     
     atol_ch[cat.ptr_vec['eps_S8']] = 1e-15
     atol_ch[cat.ptr_vec['eps_Li2S']] = 1e-15
-    atol_ch[cat.ptr_vec['rho_k_el']] = 1e-40
+    atol_ch[cat.ptr_vec['rho_k_el']] = 1e-30
     
     rate_tag = str(inputs.C_rate)+"C"
     
@@ -212,59 +212,12 @@ def main():
         SV_0_cycle = SV_ch[-1, :]
         SV_dot_0_cycle = SV_ch[-1, :]
         
-        print('Done Charging\n')
-        
-#    "Set up your figure"
-#    fig = plt.figure(3)
-#    ax = fig.add_axes([0.2,0.2,0.6,0.75])
-#    fig.set_size_inches((8.,5.0))
-#    
-#    "Formatting for the figure:"
-#    fs = 20     #font size for plots
-#    lw = 2.0    #line width for plots
-##    font = plt.matplotlib.font_manager.FontProperties(family='Times New Roman',size=fs-1)
-#    
-#    for tick in ax.xaxis.get_major_ticks():
-#        tick.label1.set_fontsize(fs)
-#        tick.label1.set_fontname('Times New Roman')
-#    for tick in ax.yaxis.get_major_ticks():
-#        tick.label1.set_fontsize(fs)
-#        tick.label1.set_fontname('Times New Roman')  
-#     
-#        
-#    for i in np.arange(4, 10):
-#        p1, = plt.plot(SV_dch_df['Phi_ed1'], SV_dch_df[tags['rho_el'][i]])
-    
-#    short_df = min(len(SV_dch_df), len(SV_ch_df))
-#    for i in np.arange(0, 2000, 400):
-#        p1, = plt.plot(np.linspace(0, inputs.H_cat, inputs.npoints_cathode), SV_dch_df.loc[i, tags['phi_ed']])
-#        plt.xlim((0, inputs.H_cat))
-##        plt.xticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600])
-##        plt.ylim((1.6, 2.6))
-##        plt.yticks([2, 3, 4, 5, 6, 7, 8])
-#        plt.ylabel('Cathode Voltage [V]', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
-#        plt.xlabel(r'Cathode Depth $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
-##        plt.legend(["Discharge", "Charge"])
-    
+        print('Done Charging\n')    
     
     t_elapsed = time.time() - t_count
-    print('t_cpu=', t_elapsed, '\n')
+    print('t_cpu=', t_elapsed, '\n')    
     
-#    file_name_dch = "C_over"+str(int(1/inputs.C_rate))+"discharge_SP.csv"
-#    file_name_ch = "C_over"+str(int(1/inputs.C_rate))+"charge_SP.csv"
-#    print(file_name_dch, file_name_ch)
-##    SV_dch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_discharge_SP.csv', index=False, header=True)
-##    SV_ch_df.to_csv(r'C:\Users\dkorff\Research\LiS-repo\002C_charge_SP.csv', index=False, header=True)
-#    SV_dch_df.to_csv(file_name_dch, index=False, header=True)
-#    SV_ch_df.to_csv(file_name_ch, index=False, header=True)
-##    import csv
-##    with open('tags.csv', 'w') as f:
-##        for key in tags.keys():
-##            f.write("%s,%s\n"%(key,tags[key]))
-#    cat.set_tags(tags)
-    
-    
-    return SV_eq_df, SV_dch_df, SV_ch_df, tags # SV_ch_df, tags #SV_eq_df, SV_req_df #, SV_dch_df
+    return SV_eq_df, SV_dch_df, SV_ch_df, tags 
     
 "=============================================================================" 
 "===========RESIDUAL CLASSES AND HELPER FUNCTIONS BEYOND THIS POINT==========="
@@ -352,17 +305,19 @@ class cc_cycling(Implicit_Problem):
             R_C = sdot_C*A_C
             mult = tanh(eps_S8/cat.eps_dropoff)  
             sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
-            sdot_S = S_el_s.get_net_production_rates(elyte) 
+            sdot_S = S_el_s.get_net_production_rates(elyte)  
             R_S = sdot_S*A_S
-
+    
             mult = tanh(eps_Li2S/cat.eps_dropoff)  
             sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
             sdot_L = L_el_s.get_net_production_rates(elyte)
-            sdot_Li2S = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
-            sdot_L = Li2S_tpb.get_net_production_rates(elyte)
-            R_L = sdot_L*tpb_len
-
-            i_C = C_el_s.get_net_production_rates(conductor)*A_C
+            sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
+            sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
+            R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+    
+            i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
+              (Li2S_tpb.get_creation_rates(conductor)*mult - 
+               Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
             i_Far = (i_C)*F/cat.dyInv
             
             # Net rate of formation
@@ -375,7 +330,8 @@ class cc_cycling(Implicit_Problem):
        
             """Calculate change in Li2S"""
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                          - Li2S.volume_mole*sdot_Li2S*tpb_len)
+                                          - Li2S.volume_mole*(sdot_Li2S*A_L
+                                          + sdot_tpb*tpb_len))
             
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
@@ -458,8 +414,9 @@ class cc_cycling(Implicit_Problem):
         sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
         R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
 
-        i_C = C_el_s.get_net_production_rates(conductor)*A_C + Li2S_tpb.get_net_production_rates(conductor)*tpb_len
-#        + Li2S_tpb.get_creation_rates(conductor) - mult*Li2S_tpb.get_destruction_rates(conductor)
+        i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
+              (Li2S_tpb.get_creation_rates(conductor)*mult - 
+               Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
         i_Far = (i_C)*F/cat.dyInv
         
         # Net rate of formation
@@ -546,7 +503,7 @@ class cc_cycling(Implicit_Problem):
         
         R_net = sdot_Li*an.A_Li
         i_Far = sdot_Far*an.A_Li*F*an.dy
-           
+                   
         res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
 
@@ -557,9 +514,7 @@ class cc_cycling(Implicit_Problem):
         
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
-#        if i_ext < 0:
-#            print(SV, '\n')
-#        print(t, i_ext, '\n\n')
+
         
         return res  
     
@@ -601,7 +556,7 @@ class cc_cycling(Implicit_Problem):
             raise TerminateSimulation
         if state_info[1]:
             print('WARNING: Sulfur volume fraction below 0')
-#            raise TerminateSimulation
+            raise TerminateSimulation
         elif state_info[2]:
             print('Li2S volume fraction over 1')
             raise TerminateSimulation
@@ -613,7 +568,6 @@ class cc_cycling(Implicit_Problem):
             raise TerminateSimulation
         elif state_info[5]:
             print('Cell voltage hit 1.5')
-#            cat.set_i_ext(0)
             raise TerminateSimulation
         elif any(state_info):
             print('Stop condition')

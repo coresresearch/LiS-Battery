@@ -18,7 +18,6 @@ from li_s_battery_inputs import inputs
 
 
 "Import cantera objects - this step is the same regardless of test type"
-#anode_obj = ct.Solution(inputs.ctifile, inputs.anode_phase)
 elyte_obj = ct.Solution(inputs.ctifile, inputs.elyte_phase)
 sulfur_obj = ct.Solution(inputs.ctifile, inputs.cat_phase1)
 Li2S_obj = ct.Solution(inputs.ctifile, inputs.cat_phase2)
@@ -39,11 +38,6 @@ Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_o
 elyte_obj.electric_potential = inputs.Phi_el_init
 carbon_obj.electric_potential = inputs.Cell_voltage
 conductor_obj.electric_potential = inputs.Cell_voltage
-
-dG = np.array((-carbon_el_s.delta_standard_gibbs))
-#dG = np.append(dG, -Li2S_tpb.delta_standard_gibbs)
-print(np.round(dG/ct.faraday - lithium_el_s.delta_standard_gibbs/ct.faraday, 2))
-print([2.33,2.30,2.32,2.29,2.15,1.41,1.23])
 
 if hasattr(inputs, 'C_k_el_0'):
     elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
@@ -150,16 +144,13 @@ class cathode():
           + 8*sulfur_obj.density_mole*eps_S_0*H \
           + Li2S_obj.density_mole*eps_L_0*H
               
-    W_S_k = elyte_obj.molecular_weights*S_atoms_bool
-#    W_S_k = sulfur_obj.molecular_weights*(n_S_atoms/8.)
+#    W_S_k = elyte_obj.molecular_weights*S_atoms_bool # Old method
+    W_S_k = sulfur_obj.molecular_weights*(n_S_atoms/8.)
     m_S_el = inputs.A_cat*eps_el_0*H*np.dot(W_S_k, inputs.C_k_el_0)
     
     x = np.copy(n_S_atoms)
     x[5:] = (x[5:] - 1)
-#    oneC = (2*eps_el_0*np.dot(x, inputs.C_k_el_0) + \
-#           16*(eps_S_0)*sulfur_obj.density_mole)*H*F/3600
     oneC = 1675*(m_S_0 + m_S_el)/inputs.A_cat
-#    oneC_alt = eps_S_0*H*sulfur_obj.density_mass*1675
     
     def get_i_ext():
         return cathode.i_ext
@@ -176,6 +167,8 @@ class cathode():
     
     eps_cutoff = 1e-15
     eps_dropoff = 1e-10
+    
+#    z_k_el = elyte_obj.species_charges
     
     def get_tflag():
         return cathode.t_flag
@@ -234,6 +227,8 @@ class sep():
     
     n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
+#    z_k_el = elyte_obj.species_charges
+    
 "============================================================================="
 
 class anode():
@@ -272,7 +267,7 @@ class anode():
     H = inputs.H_an
     
     C_dl = inputs.C_dl_an
-    A_Li = 1e7
+    A_Li = 1e5
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3
@@ -280,6 +275,8 @@ class anode():
     D_el = inputs.D_Li_el*eps_el**(1.)/tau**3
     
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
+    
+#    z_k_el = elyte_obj.species_charges
         
 "============================================================================="
 
