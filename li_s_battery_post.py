@@ -111,7 +111,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 
 "============================================================================="
 
-def plot_meanPS(SV, tags, cycle):
+def plot_mean_ps(SV, tags, cycle):
     
     SV_df = SV.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
@@ -129,6 +129,11 @@ def plot_meanPS(SV, tags, cycle):
     "Set up your figure"
     fig = plt.figure(2)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
+
+    fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (
+        2+inputs.flag_re_eq)*inputs.n_cycles)
+
+
     fig.set_size_inches((8.,5.0))
     
     "Formatting for the figure:"
@@ -322,8 +327,8 @@ def tag_strings(SV):
     
     
 if __name__ == "__main__":
-#    plot_meanPS(SV_dch, SV_ch, tags, 'Discharging')
-#    plot_meanPS(SV_ch, tags, 'Charging')
+#    plot_mean_ps(SV_dch, SV_ch, tags, 'Discharging')
+#    plot_mean_ps(SV_ch, tags, 'Charging')
     conservation_tests(SV_dch, tags, 1)
     conservation_tests(SV_ch, tags, 3)
    

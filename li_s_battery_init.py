@@ -13,7 +13,7 @@ import numpy as np
 import cantera as ct
 import importlib
 from math import pi
-from matplotlib import pyplot as plt 
+from matplotlib import pyplot as plt
 
 from li_s_battery_inputs import inputs
 
@@ -356,11 +356,11 @@ sim_output = 50
 
 
 #=======================================================================
-# SET UP THE FIGURE FOR PLOTTING:
+# SET UP THE FIGURE
 #=======================================================================
     
 fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (
-    2+inputs.flag_req)*inputs.n_cycles)
+    2+inputs.flag_re_eq)*inputs.n_cycles)
 plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
 fig.text(0.35, 0.85, str(inputs.C_rate)+"C", fontsize=20, bbox=dict
     (facecolor='white', alpha = 0.5))

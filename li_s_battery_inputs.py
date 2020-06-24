@@ -33,7 +33,7 @@ class inputs():
     npoints_cathode = 1*flag_cathode
     
     # Set number of discretized shells in each particle    
-    flag_req = 0
+    flag_re_eq = 0
     n_cycles = 1
     
     """Plotting options"""
