@@ -20,7 +20,7 @@ from assimulo.exception import TerminateSimulation
 
 # Initialize the model, parameters, and cantera objects:
 from li_s_battery_init import anode, sep, cathode, inputs, sol_init, sim_time,\
-    atol, rtol, sim_output
+    atol, rtol, sim_output, fig, axes
 
 # Import post-processing routines:
 from li_s_battery_post import label_columns, tag_strings, plot_sim, plot_meanPS
@@ -37,16 +37,7 @@ def main():
     SV_0 = sol_init.SV_0
     SV_dot_0 = np.zeros_like(SV_0)
         
-    rate_tag = str(inputs.C_rate)+"C"
-    
-    fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (2+inputs.flag_req)*inputs.n_cycles)
-    plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
-    fig.text(0.35, 0.85, rate_tag, fontsize=20, bbox=dict(facecolor='white', alpha = 0.5))
-    
-    # Set up user function to build figures based on inputs
-    
     "----------Equilibration----------"
-    
     print('\nEquilibrating...')
 
     # Set external current to 0 for equilibration
