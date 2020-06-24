@@ -19,36 +19,24 @@ from assimulo.problem import Implicit_Problem
 from assimulo.exception import TerminateSimulation
 
 # Initialize the model, parameters, and cantera objects:
-from li_s_battery_init import anode, sep, cathode, inputs, sol_init
+from li_s_battery_init import anode, sep, cathode, inputs, sol_init, sim_time,\
+    atol, rtol, sim_output
 
 # Import post-processing routines:
 from li_s_battery_post import label_columns, tag_strings, plot_sim, plot_meanPS
 
 def main():
     
+    #TODO: Document what this line does, please.
     res_class = eval(inputs.test_type)
     
-#    plt.close('all')
+    # Save the current time, to measure the cpu time.
     t_count = time.time()
         
+    # Initial solution vector and resitual 
     SV_0 = sol_init.SV_0
     SV_dot_0 = np.zeros_like(SV_0)
-    t_0 = 0.
-    t_f = 3600./inputs.C_rate
-    algvar = sol_init.algvar
-    atol = np.ones_like(SV_0)*1e-6
-    atol[cathode.ptr_vec['eps_S8']] = 1e-15
-    atol[cathode.ptr_vec['eps_Li2S']] = 1e-15
-    atol[cathode.ptr_vec['rho_k_el']] = 1e-30
-    rtol = 1e-6; sim_output = 50
-    
-    rtol_ch = 1e-6
-    atol_ch = np.ones_like(SV_0)*1e-6
-    
-    atol_ch[cathode.ptr_vec['eps_S8']] = 1e-15
-    atol_ch[cathode.ptr_vec['eps_Li2S']] = 1e-15
-    atol_ch[cathode.ptr_vec['rho_k_el']] = 1e-30
-    
+        
     rate_tag = str(inputs.C_rate)+"C"
     
     fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (2+inputs.flag_req)*inputs.n_cycles)
@@ -65,9 +53,9 @@ def main():
     cathode.set_i_ext(0)
     
     # Create problem object
-    bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+    bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, sim_time[0])
     bat_eq.external_event_detection = True
-    bat_eq.algvar = algvar
+    bat_eq.algvar = sol_init.algvar
     
     # Create simulation object
     sim_eq = IDA(bat_eq)
@@ -76,7 +64,7 @@ def main():
     sim_eq.verbosity = sim_output
     sim_eq.make_consistent('IDA_YA_YDP_INIT')
     
-    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(t_f)
+    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(sim_time[1])
     
     # Put solution into pandas dataframe with labeled columns
     SV_eq_df = label_columns(t_eq, SV_eq, anode.npoints, sep.npoints, 
@@ -110,9 +98,9 @@ def main():
         cathode.set_i_ext(cathode.i_ext_amp)
         
         # Update problem instance initial conditions
-        bat_dch = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+        bat_dch = res_class(res_class.res_fun, SV_0, SV_dot_0, sim_time[0])
         bat_dch.external_event_detection = True
-        bat_dch.algvar = algvar
+        bat_dch.algvar = sol_init.algvar
             
         # Re-initialize simulation object
         sim_dch = IDA(bat_dch)
@@ -122,7 +110,7 @@ def main():
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
-        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)
+        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(sim_time[1])
             
         SV_dch_df = label_columns(t_dch, SV_dch, anode.npoints, sep.npoints, 
             cathode.npoints)
@@ -148,9 +136,9 @@ def main():
             cathode.set_i_ext(0)
             
             # Update problem instance initial conditions
-            bat_req = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+            bat_req = res_class(res_class.res_fun, SV_0, SV_dot_0, sim_time[0])
             bat_req.external_event_detection = True
-            bat_req.algvar = algvar
+            bat_req.algvar = sol_init.algvar
             
             # Re-initialize simulation object
             sim_req = IDA(bat_req)
@@ -159,7 +147,7 @@ def main():
             sim_req.verbosity = sim_output
             sim_req.make_consistent('IDA_YA_YDP_INIT')
             
-            t_req, SV_req, SV_dot_req = sim_req.simulate(t_f)
+            t_req, SV_req, SV_dot_req = sim_req.simulate(sim_time[1])
             
             SV_req_df = label_columns(t_req, SV_req, anode.npoints, 
                 sep.npoints, cathode.npoints)
@@ -183,20 +171,20 @@ def main():
         cathode.set_i_ext(-cathode.i_ext_amp)
         
         # Update problem instance initial conditions
-        bat_ch = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
+        bat_ch = res_class(res_class.res_fun, SV_0, SV_dot_0, sim_time[0])
         bat_ch.external_event_detection = True
-        bat_ch.algvar = algvar
+        bat_ch.algvar = sol_init.algvar
         
         # Re-initialize simulation object
         sim_ch = IDA(bat_ch)
-        sim_ch.atol = atol_ch
-        sim_ch.rtol = rtol_ch
+        sim_ch.atol = atol
+        sim_ch.rtol = rtol
         if cycle_num > 0:
             sim_ch.maxh = 0.1
         sim_ch.verbosity = sim_output
         sim_ch.make_consistent('IDA_YA_YDP_INIT')
         
-        t_ch, SV_ch, SV_dot_ch = sim_ch.simulate(t_f)
+        t_ch, SV_ch, SV_dot_ch = sim_ch.simulate(sim_time[1])
             
         SV_ch_df = label_columns(t_ch, SV_ch, anode.npoints, sep.npoints, 
             cathode.npoints)

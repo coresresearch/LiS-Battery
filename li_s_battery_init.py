@@ -334,10 +334,23 @@ class sol_init():
         SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
         algvar[offsets[j] + ptr['phi_dl']] = 1
         
-        SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init
-        
-    
+        SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init   
                                            
 "============================================================================="
+
+#=======================================================================
+# SIMULATION PARAMETERS
+#=======================================================================
+"Initial and final simulation times (s)"
+t_0 = 0.
+t_f = 3600./inputs.C_rate
+sim_time = [t_0, t_f]
+atol = np.ones_like(sol_init.SV_0)*1e-6
+atol[cathode.ptr_vec['eps_S8']] = 1e-15
+atol[cathode.ptr_vec['eps_Li2S']] = 1e-15
+atol[cathode.ptr_vec['rho_k_el']] = 1e-30
+
+rtol = 1e-6
+sim_output = 50
 
 print("Initialization check")
