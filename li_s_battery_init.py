@@ -16,24 +16,25 @@ from math import pi
 
 from li_s_battery_inputs import inputs
 
+infile = 'inputs/' + inputs.ctifile
 
 "Import cantera objects - this step is the same regardless of test type"
-elyte_obj = ct.Solution(inputs.ctifile, inputs.elyte_phase)
-sulfur_obj = ct.Solution(inputs.ctifile, inputs.cat_phase1)
-Li2S_obj = ct.Solution(inputs.ctifile, inputs.cat_phase2)
-carbon_obj = ct.Solution(inputs.ctifile, inputs.cat_phase3)
-conductor_obj = ct.Solution(inputs.ctifile, inputs.metal_phase)
-lithium_obj = ct.Solution(inputs.ctifile, inputs.an_phase)
+elyte_obj = ct.Solution(infile, inputs.elyte_phase)
+sulfur_obj = ct.Solution(infile, inputs.cat_phase1)
+Li2S_obj = ct.Solution(infile, inputs.cat_phase2)
+carbon_obj = ct.Solution(infile, inputs.cat_phase3)
+conductor_obj = ct.Solution(infile, inputs.metal_phase)
+lithium_obj = ct.Solution(infile, inputs.an_phase)
 
-sulfur_el_s = ct.Interface(inputs.ctifile, inputs.sulfur_elyte_phase,
+sulfur_el_s = ct.Interface(infile, inputs.sulfur_elyte_phase,
                              [sulfur_obj, elyte_obj, conductor_obj])
-Li2S_el_s = ct.Interface(inputs.ctifile, inputs.Li2S_elyte_phase,
+Li2S_el_s = ct.Interface(infile, inputs.Li2S_elyte_phase,
                              [Li2S_obj, elyte_obj, conductor_obj])
-carbon_el_s = ct.Interface(inputs.ctifile, inputs.graphite_elyte_phase,
+carbon_el_s = ct.Interface(infile, inputs.graphite_elyte_phase,
                              [carbon_obj, elyte_obj, conductor_obj])
-lithium_el_s = ct.Interface(inputs.ctifile, inputs.anode_elyte_phase,
+lithium_el_s = ct.Interface(infile, inputs.anode_elyte_phase,
                              [lithium_obj, elyte_obj, conductor_obj])
-Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
+Li2S_tpb = ct.Interface(infile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
 elyte_obj.electric_potential = inputs.Phi_el_init
 carbon_obj.electric_potential = inputs.Cell_voltage
