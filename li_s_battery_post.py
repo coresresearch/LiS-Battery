@@ -129,7 +129,7 @@ def plot_mean_ps(SV, tags, cycle):
     "Set up your figure"
     fig = plt.figure(2)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
-
+    
     fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (
         2+inputs.flag_re_eq)*inputs.n_cycles)
 
