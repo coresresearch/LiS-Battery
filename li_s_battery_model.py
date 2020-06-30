@@ -105,17 +105,9 @@ def main():
 "=============================================================================" 
 "===========RESIDUAL CLASSES AND HELPER FUNCTIONS BEYOND THIS POINT==========="
 "============================================================================="
-from li_s_battery_init import sulfur_obj as sulfur
-from li_s_battery_init import Li2S_obj as Li2S
-from li_s_battery_init import carbon_obj as carbon
-from li_s_battery_init import sulfur_el_s as S_el_s
-from li_s_battery_init import Li2S_el_s as L_el_s
-from li_s_battery_init import carbon_el_s as C_el_s
-from li_s_battery_init import Li2S_tpb
-from li_s_battery_init import lithium_obj as lithium
-from li_s_battery_init import lithium_el_s as lithium_s
-from li_s_battery_init import conductor_obj as conductor
-from li_s_battery_init import elyte_obj as elyte
+from li_s_battery_init import sulfur_obj, Li2S_obj, carbon_obj, elyte_obj, \
+    sulfur_elyte_surf_obj, Li2S_elyte_surf_obj, carbon_elyte_surf_obj, \
+    Li2S_tpb_obj, lithium_obj, lithium_elyte_surf_obj, conductor_obj
 from li_s_battery_functions import set_state, set_geom, set_rxn
 from li_s_battery_functions import set_state_sep
 from li_s_battery_functions import dst
@@ -173,10 +165,10 @@ class cc_cycling(Implicit_Problem):
             A_C = cathode.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
 
             # Set states for THIS node            
-            carbon.electric_potential = s1['phi_ed']
-            elyte.electric_potential = s1['phi_el'] 
-            conductor.electric_potential = s1['phi_ed']
-            elyte.X = s1['X_k']
+            carbon_obj.electric_potential = s1['phi_ed']
+            elyte_obj.electric_potential = s1['phi_el'] 
+            conductor_obj.electric_potential = s1['phi_ed']
+            elyte_obj.X = s1['X_k']
             
             D_el = cathode.D_el*eps_el**(1.5)
 
@@ -184,23 +176,23 @@ class cc_cycling(Implicit_Problem):
             i_el_p = cathode.sigma_eff*(s1['phi_ed'] - s2['phi_ed'])*cathode.dyInv
             N_io_p, i_io_p = dst(s1, s2, D_el, cathode.dy, cathode.dy)
             
-            sdot_C = C_el_s.get_net_production_rates(elyte)
+            sdot_C = carbon_elyte_surf_obj.get_net_production_rates(elyte_obj)
             R_C = sdot_C*A_C
             mult = tanh(eps_S8/cathode.eps_dropoff)  
-            sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
-            sdot_S = S_el_s.get_net_production_rates(elyte)  
+            sdot_S8 = sulfur_elyte_surf_obj.get_creation_rates(sulfur_obj) - mult*sulfur_elyte_surf_obj.get_destruction_rates(sulfur_obj)
+            sdot_S = sulfur_elyte_surf_obj.get_net_production_rates(elyte_obj)  
             R_S = sdot_S*A_S
     
             mult = tanh(eps_Li2S/cathode.eps_dropoff)  
-            sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
-            sdot_L = L_el_s.get_net_production_rates(elyte)
-            sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
-            sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
+            sdot_Li2S = Li2S_elyte_surf_obj.get_creation_rates(Li2S_obj) - mult*(Li2S_elyte_surf_obj.get_destruction_rates(Li2S_obj))
+            sdot_L = Li2S_elyte_surf_obj.get_net_production_rates(elyte_obj)
+            sdot_tpb = Li2S_tpb_obj.get_creation_rates(Li2S_obj) - mult*(Li2S_tpb_obj.get_destruction_rates(Li2S_obj))
+            sdot_tpb_el = mult*Li2S_tpb_obj.get_creation_rates(elyte_obj) - Li2S_tpb_obj.get_destruction_rates(elyte_obj)
             R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
     
-            i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
-              (Li2S_tpb.get_creation_rates(conductor)*mult - 
-               Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
+            i_C = (carbon_elyte_surf_obj.get_net_production_rates(conductor_obj)*A_C + 
+              (Li2S_tpb_obj.get_creation_rates(conductor_obj)*mult - 
+               Li2S_tpb_obj.get_destruction_rates(conductor_obj))*tpb_len)
             i_Far = (i_C)*F/cathode.dyInv
             
             # Net rate of formation
@@ -209,11 +201,11 @@ class cc_cycling(Implicit_Problem):
             
             """Calculate change in Sulfur"""                
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
-                                        - sulfur.volume_mole*sdot_S8*A_S)
+                                        - sulfur_obj.volume_mole*sdot_S8*A_S)
        
             """Calculate change in Li2S"""
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                          - Li2S.volume_mole*(sdot_Li2S*A_L
+                                          - Li2S_obj.volume_mole*(sdot_Li2S*A_L
                                           + sdot_tpb*tpb_len))
             
             """Calculate change in electrolyte"""
@@ -271,35 +263,34 @@ class cc_cycling(Implicit_Problem):
         
         A_C = cathode.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
         
-        carbon.electric_potential = s1['phi_ed']
-        elyte.electric_potential = s1['phi_el']
-        conductor.electric_potential = s1['phi_ed']
-        elyte.X = s1['X_k']
+        carbon_obj.electric_potential = s1['phi_ed']
+        elyte_obj.electric_potential = s1['phi_el']
+        conductor_obj.electric_potential = s1['phi_ed']
+        elyte_obj.X = s1['X_k']
         
         # Set outlet boundary conditions for THIS node
         i_el_p = 0
         D_el = cathode.D_el*eps_el**(1.5)
         N_io_p, i_io_p = dst(s1, s2, D_el, cathode.dy, sep.dy)
         
-#        sdot, R_net = set_rxn(geom, C_el_s, S_el_s, L_el_s, Li2S_tpb, sulfur, 
-#                              elyte, Li2S, conductor)
-        sdot_C = C_el_s.get_net_production_rates(elyte)
+        sdot_C = carbon_elyte_surf_obj.get_net_production_rates(elyte_obj)
         R_C = sdot_C*A_C
         mult = tanh(eps_S8/cathode.eps_dropoff)  
-        sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
-        sdot_S = S_el_s.get_net_production_rates(elyte)  
+        sdot_S8 = sulfur_elyte_surf_obj.get_creation_rates(sulfur_obj) - mult*sulfur_elyte_surf_obj.get_destruction_rates(sulfur_obj)
+        sdot_S = sulfur_elyte_surf_obj.get_net_production_rates(elyte_obj)  
         R_S = sdot_S*A_S
 
         mult = tanh(eps_Li2S/cathode.eps_dropoff)  
-        sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
-        sdot_L = L_el_s.get_net_production_rates(elyte)
-        sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
-        sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
+        sdot_Li2S = (Li2S_elyte_surf_obj.get_creation_rates(Li2S_obj) 
+            - mult*(Li2S_elyte_surf_obj.get_destruction_rates(Li2S_obj)))
+        sdot_L = Li2S_elyte_surf_obj.get_net_production_rates(elyte_obj)
+        sdot_tpb = Li2S_tpb_obj.get_creation_rates(Li2S_obj) - mult*(Li2S_tpb_obj.get_destruction_rates(Li2S_obj))
+        sdot_tpb_el = mult*Li2S_tpb_obj.get_creation_rates(elyte_obj) - Li2S_tpb_obj.get_destruction_rates(elyte_obj)
         R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
 
-        i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
-              (Li2S_tpb.get_creation_rates(conductor)*mult - 
-               Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
+        i_C = (carbon_elyte_surf_obj.get_net_production_rates(conductor_obj)*A_C + 
+              (Li2S_tpb_obj.get_creation_rates(conductor_obj)*mult - 
+               Li2S_tpb_obj.get_destruction_rates(conductor_obj))*tpb_len)
         i_Far = (i_C)*F/cathode.dyInv
         
         # Net rate of formation
@@ -308,11 +299,11 @@ class cc_cycling(Implicit_Problem):
                                  
         """Calculate change in Sulfur"""                
         res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
-                                    - sulfur.volume_mole*sdot_S8*A_S)
+                                    - sulfur_obj.volume_mole*sdot_S8*A_S)
         
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*(sdot_Li2S*A_L
+                                      - Li2S_obj.volume_mole*(sdot_Li2S*A_L
                                       + sdot_tpb*tpb_len))
                 
         """Calculate change in electrolyte"""
@@ -376,13 +367,13 @@ class cc_cycling(Implicit_Problem):
         i_io_p = 0
         N_io_p = 0
         
-        elyte.X = s1['X_k']
-        elyte.electric_potential = s1['phi_el']
-        lithium.electric_potential = s1['phi_ed']
-        conductor.electric_potential = s1['phi_ed']
+        elyte_obj.X = s1['X_k']
+        elyte_obj.electric_potential = s1['phi_el']
+        lithium_obj.electric_potential = s1['phi_ed']
+        conductor_obj.electric_potential = s1['phi_ed']
         
-        sdot_Li = lithium_s.get_net_production_rates(elyte)
-        sdot_Far = lithium_s.get_net_production_rates(conductor)
+        sdot_Li = lithium_elyte_surf_obj.get_net_production_rates(elyte_obj)
+        sdot_Far = lithium_elyte_surf_obj.get_net_production_rates(conductor_obj)
         
         R_net = sdot_Li*anode.A_Li
         i_Far = sdot_Far*anode.A_Li*F*anode.dy
@@ -422,7 +413,7 @@ class cc_cycling(Implicit_Problem):
         event6 = np.zeros([cathode.npoints])
         event6 = y[cathode.ptr_vec['phi_ed']] - 1.5
         
-        event7 = np.zeros([cathode.npoints*elyte.n_species])
+        event7 = np.zeros([cathode.npoints*elyte_obj.n_species])
         event7 = y[cathode.ptr_vec['rho_k_el']]
         
         

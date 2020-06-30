@@ -27,15 +27,15 @@ carbon_obj = ct.Solution(infile, inputs.cat_phase3)
 conductor_obj = ct.Solution(infile, inputs.metal_phase)
 lithium_obj = ct.Solution(infile, inputs.an_phase)
 
-sulfur_el_s = ct.Interface(infile, inputs.sulfur_elyte_phase,
+sulfur_elyte_surf_obj = ct.Interface(infile, inputs.sulfur_elyte_phase,
                              [sulfur_obj, elyte_obj, conductor_obj])
-Li2S_el_s = ct.Interface(infile, inputs.Li2S_elyte_phase,
+Li2S_elyte_surf_obj = ct.Interface(infile, inputs.Li2S_elyte_phase,
                              [Li2S_obj, elyte_obj, conductor_obj])
-carbon_el_s = ct.Interface(infile, inputs.graphite_elyte_phase,
+carbon_elyte_surf_obj = ct.Interface(infile, inputs.graphite_elyte_phase,
                              [carbon_obj, elyte_obj, conductor_obj])
-lithium_el_s = ct.Interface(infile, inputs.anode_elyte_phase,
+lithium_elyte_surf_obj = ct.Interface(infile, inputs.anode_elyte_phase,
                              [lithium_obj, elyte_obj, conductor_obj])
-Li2S_tpb = ct.Interface(infile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
+Li2S_tpb_obj = ct.Interface(infile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
 elyte_obj.electric_potential = inputs.Phi_el_init
 carbon_obj.electric_potential = inputs.Cell_voltage
