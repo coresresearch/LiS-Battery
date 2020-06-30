@@ -33,25 +33,16 @@ def main():
     # Save the current time, to measure the cpu time.
     t_count = time.time()
         
-    # Initial solution vector and resitual 
-    SV_0 = sol_init.SV_0
-    SV_dot_0 = np.zeros_like(SV_0)
-        
     "----------Equilibration----------"
     print('\nEquilibrating...')
 
     # Set external current to 0 for equilibration
-    cathode.set_i_ext(0)
+    i_ext_eq = 0
     
     # Create problem object, simulation object, and run the simulation:
-    bat_eq = create_problem(res_class, SV_0, SV_dot_0, sol_init.algvar, 
-        sim_time[0])
-    sim_eq = create_sim(bat_eq, atol, rtol, sim_output)
-    t_eq, SV_eq, SV_dot_eq = sim_eq.simulate(sim_time[1])
-    
-    # Put solution into pandas dataframe with labeled columns
-    SV_eq_df = label_columns(t_eq, SV_eq, anode.npoints, sep.npoints, 
-        cathode.npoints)
+    SV_eq_df, SV_0, SV_dot_0 = run_model(res_class, sol_init.SV_0, 
+        sol_init.SV_dot_0, i_ext_eq, sol_init.algvar, sim_time, atol, rtol, 
+        sim_output)
     
     t_equilibrate = time.time() - t_count
     print("Equilibration time = ", t_equilibrate, '\n')
@@ -62,109 +53,53 @@ def main():
         "------------Discharging-------------"
         print('Discharging...')
         
-        # New initial conditions from end of the previous simulation
-        if cycle_num == 0:
-            SV_0 = SV_eq[-1, :]
-            SV_dot_0 = SV_dot_eq[-1, :]
-        else:   
-            SV_0 = SV_0_cycle  
-            SV_dot_0 = SV_dot_0_cycle  
-        
-        # Set external current
-        cathode.set_i_ext(cathode.i_ext_amp)
-        
         # Update problem object, simulation object, and run the simulation:
-        bat_discharge = create_problem(res_class, SV_0, SV_dot_0, 
-            sol_init.algvar, sim_time[0])
-        sim_discharge = create_sim(bat_discharge, atol, rtol, sim_output)
-        t_discharge, SV_discharge, SV_dot_discharge = \
-            sim_discharge.simulate(sim_time[1])
-            
-        # Put solution into pandas dataframe with labeled columns   
-        SV_discharge_df = label_columns(t_discharge, SV_discharge, 
-            anode.npoints, sep.npoints, cathode.npoints)
-
-        # Obtain tag strings for dataframe columns
-        tags = tag_strings(SV_discharge_df)
-
-        # Add results to the plot:
-        plot_sim(tags, SV_discharge_df, 'Discharging', 0+2*cycle_num, fig, axes)
-        plot_mean_ps(SV_discharge_df, tags, 'Discharging')
+        SV_discharge_df, SV_0, SV_dot_0 = run_model(res_class, SV_0, SV_dot_0, 
+            cathode.i_ext_amp, sol_init.algvar, sim_time, atol, rtol, 
+            sim_output)
         
         print('Done Discharging\n')
         
         if inputs.flag_re_eq == 1:
             "--------Re-equilibration---------"
             print('Re-equilibrating...')
-            
-            # New initial conditions from previous simulation
-            SV_0 = SV_discharge[-1, :]
-            SV_dot_0 = SV_dot_discharge[-1, :]
-            
             # Set external current
-            cathode.set_i_ext(0)
-            
-            # Update problem instance, simulation object, and run the 
-            #   simulation:
-            bat_re_eq = create_problem(res_class, SV_0, SV_dot_0, 
-                sol_init.algvar, sim_time[0])
-            sim_re_eq = create_sim(bat_re_eq, atol, rtol, sim_output)
-            t_re_eq, SV_re_eq, SV_dot_re_eq = sim_re_eq.simulate(sim_time[1])
-            
-            # Put solution into pandas dataframe with labeled columns   
-            SV_re_eq_df = label_columns(t_re_eq, SV_re_eq, anode.npoints, 
-                sep.npoints, cathode.npoints)
-            
-            # Add results to the plot:
-            plot_sim(tags, SV_re_eq_df, 'Re-Equilibrating', 1, fig, axes)
+            SV_re_eq_df, SV_0, SV_dot_0 = run_model(res_class, SV_0, SV_dot_0, 
+                i_ext_eq, sol_init.algvar, sim_time, atol, rtol, sim_output)
         
             print('Done re-equilibrating\n')
-        else:
-            SV_re_eq = SV_discharge
-            SV_dot_re_eq = SV_dot_discharge
             
         "-----------Charging-----------"
         print('Charging...')
         
-        SV_0 = SV_re_eq[-1, :]  
-        SV_dot_0 = SV_dot_re_eq[-1, :]  
-        
         #TODO: Make this a conditional, that only sets the value if it exceeds 
         #   #the cutoff.
-        SV_0[cathode.ptr_vec['eps_S8']] = cathode.eps_cutoff  
-        
-        # Set the current to charge:
-        cathode.set_i_ext(-cathode.i_ext_amp)
-        
-        # Update problem instance initial conditions, simulation object, and 
-        #   run the simulation:
-        bat_charge = create_problem(res_class, SV_0, SV_dot_0, sol_init.algvar, 
-            sim_time[0])
-        sim_charge = create_sim(bat_charge, atol, rtol, sim_output)
-        if cycle_num > 0:
-            sim_charge.maxh = 0.1
-        t_charge, SV_charge, SV_dot_charge = sim_charge.simulate(sim_time[1])
-            
-        # Put solution into pandas dataframe with labeled columns
-        SV_charge_df = label_columns(t_charge, SV_charge, anode.npoints, 
-            sep.npoints, cathode.npoints)
-        
-        # Add results to the plots:
-        plot_sim(tags, SV_charge_df, 'Charging', 
-            1+inputs.flag_re_eq+2*cycle_num, fig, axes)
-        plot_mean_ps(SV_charge_df, tags, 'Charging')
-        
-        print('Max S_8(e) concentration = ', max(SV_charge[:, 6]))
+        SV_0[cathode.ptr_vec['eps_S8']] = cathode.eps_cutoff 
 
-        # Read out state vectors at the end of the cycle:
-        SV_0_cycle = SV_charge[-1, :]
-        SV_dot_0_cycle = SV_charge[-1, :]
-        
+         # Set up and run the simulation:
+        SV_charge_df, SV_0, SV_dot_0 = run_model(res_class, SV_0, SV_dot_0, 
+                -cathode.i_ext_amp, sol_init.algvar, sim_time, atol, rtol, sim_output)
+       
         print('Done Charging\n')    
     
     t_elapsed = time.time() - t_count
     print('t_cpu=', t_elapsed, '\n')    
     
+    # Obtain tag strings for dataframe columns
+    tags = tag_strings(SV_discharge_df)
+
+    # Add results to the plot:
+    plot_sim(tags, SV_discharge_df, 'Discharging', 0+2*cycle_num, fig, axes)
+    plot_mean_ps(SV_discharge_df, tags, 'Discharging')
+
+    if inputs.flag_re_eq:
+        plot_sim(tags, SV_re_eq_df, 'Re-Equilibrating', 1, fig, axes)
+        
+    # Add results to the plots:
+    plot_sim(tags, SV_charge_df, 'Charging', 
+        1+inputs.flag_re_eq+2*cycle_num, fig, axes)
+    plot_mean_ps(SV_charge_df, tags, 'Charging')
+
     return SV_eq_df, SV_discharge_df, SV_charge_df, tags 
     
 "=============================================================================" 
@@ -529,6 +464,33 @@ def create_problem(res_class, SV_0, SV_dot_0, algvar, t_0):
     bat.algvar = algvar
 
     return bat
+
+def run_model(res_class, SV_0, SV_dot_0, i_ext, algvar, time, 
+    atol, rtol, output):
+
+    # Set external current to 0 for equilibration
+    cathode.set_i_ext(i_ext)
+    
+    # Create problem object and simulation object, then run the simulation:
+    bat = res_class(res_class.res_fun, SV_0, SV_dot_0, time[0])
+    bat.external_event_detection = True
+    bat.algvar = algvar
+    
+    sim = IDA(bat)
+    sim.atol = atol
+    sim.rtol = rtol
+    sim.verbosity = output
+    sim.make_consistent('IDA_YA_YDP_INIT')
+
+    t, SV, SV_dot = sim.simulate(time[1])
+    
+    SV_0 = SV[-1, :]
+    SV_dot_0 = SV_dot[-1, :]
+
+    # Put solution into pandas dataframe with labeled columns
+    SV_df = label_columns(t, SV, anode.npoints, sep.npoints, cathode.npoints)
+
+    return SV_df, SV_0, SV_dot_0
 
 def create_sim(bat, atol, rtol, output):
     sim = IDA(bat)

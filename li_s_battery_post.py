@@ -64,7 +64,6 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 #    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     rho_S = np.array([])
-    print(len(tags['rho_el']))
     for i in np.arange(len(tags['rho_el'])):
         if cathode.S_atoms_bool[(i+1)%elyte_obj.n_species]: #and cathode.n_S_atoms[i-offset] > 2:
             rho_S = np.append(rho_S, tags['rho_el'][i]) 

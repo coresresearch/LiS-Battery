@@ -286,6 +286,7 @@ class sol_init():
     
     # Initialize solution vector 
     SV_0 = np.zeros([anode.nSV + sep.nSV + cathode.nSV])
+    SV_dot_0 = np.zeros_like(SV_0)
     
     # Set up algebraic variable vector
     algvar = np.zeros_like(SV_0)
