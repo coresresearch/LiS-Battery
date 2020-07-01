@@ -49,14 +49,14 @@ def read_state_cathode(SV, j, ptr):
 
     return state, np_S, np_L, eps_S8, eps_Li2S, eps_el
 
-def read_state_sep(SV, offset, ptr):
+def read_state_sep(SV, j, ptr):
     
     state = {}
     
-    state['phi_el'] = SV[offset + ptr['phi']]
-    state['C_tot'] = sum(SV[offset + ptr['C_k_elyte']])
-    state['C_k'] = SV[offset + ptr['C_k_elyte']]
-    state['X_k'] = SV[offset + ptr['C_k_elyte']]/sum(SV[offset + ptr['C_k_elyte']])
+    state['phi_el'] = SV[ptr['phi'][j]]
+    state['C_tot'] = sum(SV[ptr['C_k_elyte'][j]])
+    state['C_k'] = SV[ptr['C_k_elyte'][j]]
+    state['X_k'] = SV[ptr['C_k_elyte'][j]]/sum(SV[ptr['C_k_elyte'][j]])
     
     return state
 
@@ -76,7 +76,7 @@ def read_state_anode(SV, j, ptr):
 
 """========================================================================="""
 
-def set_geom(SV, offset, j, ptr):
+def set_geom(SV, j, ptr):
     geom = {}
     
     geom['np_S'] = SV[ptr['np_S8'][j]]

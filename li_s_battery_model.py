@@ -133,7 +133,7 @@ class cc_cycling(Implicit_Problem):
         
         """=============================CATHODE============================="""
         """INTERIOR NODES"""
-        for j in np.arange(1, cathode.npoints):
+        for j in np.arange(cathode.npoints-1):
             
             # Set previous outlet fluxes to new inlet fluxes
             i_el_in = i_el_out
@@ -147,7 +147,7 @@ class cc_cycling(Implicit_Problem):
             
             # Read state of 'next' cathode volume:
             s2, np_S8_2, np_Li2S_2, eps_S8_2, eps_Li2S_2, eps_elyte_2 = \
-                read_state_cathode(SV, j, cathode.ptr)
+                read_state_cathode(SV, j+1, cathode.ptr)
             
             # Calculate new particle radii based on new volume fractions
             A_S = 2*pi*np_S8*(3*eps_S8/2/np_S8/pi)**(2/3)
@@ -196,32 +196,32 @@ class cc_cycling(Implicit_Problem):
             R_net[cathode.ptr['iFar']] += (-i_Far + i_el_in - i_el_out)/cathode.dy/F
             
             """Calculate change in Sulfur"""         
-            res[ptr['eps_S8'][j-1]] = (SV_dot[ptr['eps_S8'][j-1]] 
+            res[ptr['eps_S8'][j]] = (SV_dot[ptr['eps_S8'][j]] 
                                         - sulfur_obj.volume_mole*sdot_S8*A_S)
        
             """Calculate change in Li2S"""
-            res[ptr['eps_Li2S'][j-1]] = (SV_dot[ptr['eps_Li2S'][j-1]] 
+            res[ptr['eps_Li2S'][j]] = (SV_dot[ptr['eps_Li2S'][j]] 
                                           - Li2S_obj.volume_mole*(sdot_Li2S*A_L
                                           + sdot_tpb*tpb_len))
             
             """Calculate change in electrolyte"""
-            res[ptr['C_k_elyte'][j-1]] = (SV_dot[ptr['C_k_elyte'][j-1]] - 
+            res[ptr['C_k_elyte'][j]] = (SV_dot[ptr['C_k_elyte'][j]] - 
                 (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte 
-                + SV[ptr['C_k_elyte'][j-1]]*(- SV_dot[ptr['eps_S8'][j-1]] 
-                - SV_dot[ptr['eps_Li2S'][j-1]])/eps_elyte)
+                + SV[ptr['C_k_elyte'][j]]*(- SV_dot[ptr['eps_S8'][j]] 
+                - SV_dot[ptr['eps_Li2S'][j]])/eps_elyte)
             
             """Calculate change in delta-phi double layer"""
-            res[ptr['phi_dl'][j-1]] = (SV_dot[ptr['phi_dl'][j-1]] - 
+            res[ptr['phi_dl'][j]] = (SV_dot[ptr['phi_dl'][j]] - 
             (-i_Far + i_el_in - i_el_out)*cathode.dyInv/cathode.C_dl/A_C)
             
             """Algebraic expression for charge neutrality in all phases"""
-            res[ptr['phi_ed'][j-1]] = i_el_in - i_el_out + i_io_in - i_io_out
+            res[ptr['phi_ed'][j]] = i_el_in - i_el_out + i_io_in - i_io_out
             
             """Calculate change in S8 nucleation sites"""
-            res[ptr['np_S8'][j-1]] = SV_dot[ptr['np_S8'][j-1]]
+            res[ptr['np_S8'][j]] = SV_dot[ptr['np_S8'][j]]
             
             """Calculate change in Li2S nucleation sites"""
-            res[ptr['np_Li2S'][j-1]] = SV_dot[ptr['np_Li2S'][j-1]]
+            res[ptr['np_Li2S'][j]] = SV_dot[ptr['np_Li2S'][j]]
             
         """=============================CATHODE============================="""
         """SEPARATOR BOUNDARY"""
@@ -233,21 +233,12 @@ class cc_cycling(Implicit_Problem):
         np_S8 = np_S8_2; np_Li2S = np_Li2S_2; eps_S8 = eps_S8_2
         eps_Li2S = eps_Li2S_2; eps_elyte = eps_elyte_2
         # Shift forward to NEXT node, first separator node (j=0)
-        j = 0; offset = sep.offsets[int(j)]
+        j = 0
         
-        s2 = read_state_sep(SV, offset, sep.ptr)
+        s2 = read_state_sep(SV, j, sep.ptr)
         
         # Shift back to THIS node, set THIS node outlet conditions
-        j = cathode.npoints-1;
-        
-        # Set variables to CURRENT NODE value
-#        geom = set_geom(SV, offset, cathode.ptr)
-        
-        # np_S8 = SV[offset + ptr['np_S8']]
-        # np_Li2S = SV[offset + ptr['np_Li2S']]
-        # eps_S8 = max(SV[ptr['eps_S8'][j-1]], cathode.eps_cutoff)
-        # eps_Li2S = max(SV[ptr['eps_Li2S'][j]], cathode.eps_cutoff)
-        # eps_elyte = 1 - cathode.eps_C_0 - eps_S8 - eps_Li2S  
+        j = cathode.npoints-1
         
         # Calculate new particle radii based on new volume fractions
         A_S = 2*pi*np_S8*(3*eps_S8/2/np_S8/pi)**(2/3)
@@ -335,19 +326,15 @@ class cc_cycling(Implicit_Problem):
         # Shift forward to NEXT node
         j = 0; 
         s2 = read_state_anode(SV, j, anode.ptr)
-                
-        # Shift back to THIS node
-        offset = sep.offsets[int(j)]
         
         D_el = sep.D_el 
         
         # Current node plus face boundary conditions
         N_k_elyte_out, i_io_out = dst(s1, s2, D_el, sep.dy, anode.dy)
-        
-        res[offset + sep.ptr['C_k_elyte']] = (SV_dot[offset + sep.ptr['C_k_elyte']]
+        res[sep.ptr['C_k_elyte'][j]] = (SV_dot[sep.ptr['C_k_elyte'][j]]
         - (N_k_elyte_in - N_k_elyte_out)*sep.dyInv/sep.epsilon_el)
                 
-        res[offset + sep.ptr['phi']] = i_io_in - i_io_out
+        res[sep.ptr['phi'][j]] = i_io_in - i_io_out
         
         """==============================ANODE=============================="""
         """INTERIOR NODES"""

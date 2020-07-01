@@ -71,7 +71,6 @@ class cathode():
     for j in np.arange(npoints):
         ptr['C_k_elyte'][j,:] = np.arange(2 + j*n_vars, 
                                 2 + j*n_vars + elyte_obj.n_species)
-    # ptr['C_k_elyte'] = 2 + np.arange(0, elyte_obj.n_species)
     ptr['phi_dl'] = np.arange(elyte_obj.n_species + 2, nSV, n_vars)
     ptr['phi_ed'] = np.arange(elyte_obj.n_species + 3, nSV, n_vars)
     ptr['np_S8'] = np.arange(elyte_obj.n_species + 4, nSV, n_vars)
@@ -192,6 +191,9 @@ class sep():
     
     # Number of variables per node
     n_vars = 1 + elyte_obj.n_species
+
+    # Set the length of the solution vector for the separator
+    nSV = npoints*n_vars
     
     H = inputs.H_elyte  # Separator thickness [m]
     
@@ -207,25 +209,18 @@ class sep():
     u_Li_el = inputs.D_Li_el*epsilon_el/ct.gas_constant/inputs.T/tau**3
     
     ptr = {}
-    ptr['C_k_elyte'] = np.arange(0, elyte_obj.n_species)
-    ptr['phi'] = elyte_obj.n_species
+    ptr['C_k_elyte'] = np.zeros((npoints, elyte_obj.n_species), dtype='int')
+    for j in np.arange(npoints):
+        ptr['C_k_elyte'][j,:] = np.arange(cathode.nSV + j*n_vars, 
+                                cathode.nSV + j*n_vars + elyte_obj.n_species)
+    ptr['phi'] = np.arange(cathode.nSV + elyte_obj.n_species, 
+                 cathode.nSV + nSV, n_vars)
     
     ptr_vec = {}
-    ptr_vec['C_k_elyte'] = cathode.nSV + ptr['C_k_elyte']
-    ptr_vec['phi'] = cathode.nSV + ptr['phi']
-    
-    for i in np.arange(1, npoints):
-        ptr_vec['C_k_elyte'] = np.append(ptr_vec['C_k_elyte'], 
-                                      cathode.nSV + ptr['C_k_elyte'] + i*n_vars)
-        ptr_vec['phi'] = np.append(ptr_vec['phi'], 
-                                   cathode.nSV + ptr['phi'] + i*n_vars)
+    ptr_vec['C_k_elyte'] = cathode.nSV + np.hstack(ptr['C_k_elyte'])
+    ptr_vec['phi'] = ptr['phi']
         
-    # Set the length of the solution vector for the separator
-    nSV = npoints*n_vars
-    
     D_el = inputs.D_Li_el*epsilon_el**(1.)/tau**3
-    
-    offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(n_vars))
     
     n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
@@ -320,14 +315,13 @@ class sol_init():
         algvar[ptr['np_Li2S'][j]] = 1
      
     # Separator
-    offsets = sep.offsets
     ptr = sep.ptr
     for j in np.arange(0, sep.npoints):
         
-        SV_0[offsets[j] + ptr['C_k_elyte']] = inputs.C_k_el_0
-        algvar[offsets[j] + ptr['C_k_elyte']] = 1
+        SV_0[ptr['C_k_elyte'][j]] = inputs.C_k_el_0
+        algvar[ptr['C_k_elyte'][j]] = 1
         
-        SV_0[offsets[j] + ptr['phi']] = inputs.Phi_el_init
+        SV_0[ptr['phi'][j]] = inputs.Phi_el_init
      
     # Anode
     ptr = anode.ptr

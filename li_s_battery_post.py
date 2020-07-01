@@ -172,11 +172,6 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
     newcols = {}
     for j in np.arange(0, an_np):
         offset = cathode.nSV + sep.nSV + j*anode.n_vars
-        
-#        # Loop over number of shells in anode
-#        for k in np.arange(0, anode.nshells):
-#            newcols_an = {k + offset: 'X_an'+str(j+1)+str(k+1)}
-#            newcols.update(newcols_an)
             
         # Loop over number of species in electrolyte
         for k in np.arange(0, elyte_obj.n_species):
@@ -194,7 +189,7 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
         """Label separator points"""
         newcols = {}
     for j in np.arange(0, sep_np):
-        offset = sep.offsets[j] # Set node offset value for loop
+        offset = cathode.nSV + j*sep.n_vars
         
         # Loop over number of species in electrolyte
         for k in np.arange(0, elyte_obj.n_species):
@@ -278,12 +273,12 @@ def tag_strings(SV):
         
     ptr = sep.ptr
     for j in np.arange(0, sep.npoints):
-        offset = int(sep.offsets[j])
+        offset = cathode.nSV + j*sep.n_vars
 
         rho_el_sep[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['C_k_elyte'][0]+offset:ptr['C_k_elyte'][-1]+offset+1]
+            SV_labels[ptr['C_k_elyte'][j,0]:ptr['C_k_elyte'][j,-1]+1]
             
-        phi_sep = np.append(phi_sep, SV_labels[ptr['phi'] + offset])
+        phi_sep = np.append(phi_sep, SV_labels[ptr['phi'][j]])
         
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
