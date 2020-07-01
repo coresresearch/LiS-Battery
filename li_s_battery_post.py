@@ -272,7 +272,7 @@ def tag_strings(SV):
         r_S8 = np.append(r_S8, SV_labels[ptr['eps_S8'] + offset])
         
         rho_el[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['rho_k_elyte'][0]+offset:ptr['rho_k_elyte'][-1]+offset+1]
+            SV_labels[ptr['C_k_elyte'][0]+offset:ptr['C_k_elyte'][-1]+offset+1]
             
         phi_dl = np.append(phi_dl, SV_labels[ptr['phi_dl'] + offset])
         phi_ed = np.append(phi_ed, SV_labels[ptr['phi_ed'] + offset])
@@ -284,7 +284,7 @@ def tag_strings(SV):
         offset = int(sep.offsets[j])
         
         rho_el_sep[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['rho_k_elyte'][0]+offset:ptr['rho_k_elyte'][-1]+offset+1]
+            SV_labels[ptr['C_k_elyte'][0]+offset:ptr['C_k_elyte'][-1]+offset+1]
             
         phi_sep = np.append(phi_sep, SV_labels[ptr['phi'] + offset])
         
@@ -293,7 +293,7 @@ def tag_strings(SV):
         offset = int(anode.offsets[j])
         
         rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['rho_k_elyte'][j,0]:ptr['rho_k_elyte'][j,-1]+1]
+            SV_labels[ptr['C_k_elyte'][j,0]:ptr['C_k_elyte'][j,-1]+1]
             
         phi_dl_an = np.append(phi_dl_an, SV_labels[ptr['phi_dl'][j]])
         phi_an = np.append(phi_an, SV_labels[ptr['phi_ed'][j]])
@@ -388,14 +388,14 @@ def conservation_tests(SV, tags, sulfur_fig):
 #        eps_C_vec[i] = 1 - eps_S8 - eps_Li2S - eps_el
 
         # Concentration vector for all species in elyte at current state
-#        rho_el_cat = state.iloc[cathode.ptr_vec['rho_k_elyte']]
-#        rho_el_sep = state.iloc[sep.ptr_vec['rho_k_elyte']]
-#        rho_el_an = state.iloc[anode.ptr['rho_k_elyte']]
+#        rho_el_cat = state.iloc[cathode.ptr_vec['C_k_elyte']]
+#        rho_el_sep = state.iloc[sep.ptr_vec['C_k_elyte']]
+#        rho_el_an = state.iloc[anode.ptr['C_k_elyte']]
         
         # Concentration of just sulfur containing species in electrolyte
-        rho_S_el_cat = state.iloc[cathode.ptr_vec['rho_k_elyte']]
-        rho_S_el_sep = state.iloc[sep.ptr_vec['rho_k_elyte']]
-        rho_S_el_an = state.iloc[anode.ptr_vec['rho_k_elyte']]
+        rho_S_el_cat = state.iloc[cathode.ptr_vec['C_k_elyte']]
+        rho_S_el_sep = state.iloc[sep.ptr_vec['C_k_elyte']]
+        rho_S_el_an = state.iloc[anode.ptr_vec['C_k_elyte']]
 
         # Number of moles of sulfur atoms in elyte of each component
         rho_S_el_cat_geo = np.multiply(rho_S_el_cat.values.reshape(inputs.npoints_cathode, elyte_obj.n_species), eps_el.reshape(inputs.npoints_cathode, 1))
@@ -467,7 +467,7 @@ def conservation_tests(SV, tags, sulfur_fig):
 #        charge_el_sep[i] = sep.epsilon_el*sep.H*np.dot(inputs.z_k_el, rho_el_sep)
 #        charge_el_an[i] = anode.eps_el*anode.H*np.dot(inputs.z_k_el, rho_el_an)
 #            C_S_anions_0 = inputs.C_k_el_0[5:]
-#            C_S_anions = SV[offset + ptr['rho_k_elyte'][5:]]
+#            C_S_anions = SV[offset + ptr['C_k_elyte'][5:]]
 #            
 #            Q = -i_ext*t/F
 #            Q_S = sum((C_S_anions - C_S_anions_0)*(-2)*eps_el*cat.H)

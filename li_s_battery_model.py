@@ -210,9 +210,9 @@ class cc_cycling(Implicit_Problem):
                                           + sdot_tpb*tpb_len))
             
             """Calculate change in electrolyte"""
-            res[offset + ptr['rho_k_elyte']] = (SV_dot[offset + ptr['rho_k_elyte']] - 
+            res[offset + ptr['C_k_elyte']] = (SV_dot[offset + ptr['C_k_elyte']] - 
             (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte 
-            + SV[offset + ptr['rho_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
+            + SV[offset + ptr['C_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
                                             - SV_dot[offset + ptr['eps_Li2S']])/eps_elyte)
             
             """Calculate change in delta-phi double layer"""
@@ -308,9 +308,9 @@ class cc_cycling(Implicit_Problem):
                                       + sdot_tpb*tpb_len))
                 
         """Calculate change in electrolyte"""
-        res[offset + ptr['rho_k_elyte']] = (SV_dot[offset + ptr['rho_k_elyte']] - 
+        res[offset + ptr['C_k_elyte']] = (SV_dot[offset + ptr['C_k_elyte']] - 
         (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte
-        + SV[offset + ptr['rho_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
+        + SV[offset + ptr['C_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
                                         - SV_dot[offset + ptr['eps_Li2S']])/eps_elyte)
         
         """Calculate change in delta-phi double layer"""
@@ -348,7 +348,7 @@ class cc_cycling(Implicit_Problem):
         # Current node plus face boundary conditions
         N_k_elyte_out, i_io_out = dst(s1, s2, D_el, sep.dy, anode.dy)
         
-        res[offset + sep.ptr['rho_k_elyte']] = (SV_dot[offset + sep.ptr['rho_k_elyte']]
+        res[offset + sep.ptr['C_k_elyte']] = (SV_dot[offset + sep.ptr['C_k_elyte']]
         - (N_k_elyte_in - N_k_elyte_out)*sep.dyInv/sep.epsilon_el)
                 
         res[offset + sep.ptr['phi']] = i_io_in - i_io_out
@@ -379,7 +379,7 @@ class cc_cycling(Implicit_Problem):
         R_net = sdot_Li*anode.A_Li
         i_Far = sdot_Far*anode.A_Li*F*anode.dy
                    
-        res[anode.ptr['rho_k_elyte'][j]] = (SV_dot[anode.ptr['rho_k_elyte'][j]]
+        res[anode.ptr['C_k_elyte'][j]] = (SV_dot[anode.ptr['C_k_elyte'][j]]
             - (R_net + (N_k_elyte_in - N_k_elyte_out)*anode.dyInv)/anode.eps_el)
 
         res[anode.ptr['phi_dl'][j]] = (
@@ -414,7 +414,7 @@ class cc_cycling(Implicit_Problem):
         event6 = y[cathode.ptr_vec['phi_ed']] - 1.5
         
         event7 = np.zeros([cathode.npoints*elyte_obj.n_species])
-        event7 = y[cathode.ptr_vec['rho_k_elyte']]
+        event7 = y[cathode.ptr_vec['C_k_elyte']]
         
         
         events = np.concatenate((event1, event2, event3, event4, event5, event6,
