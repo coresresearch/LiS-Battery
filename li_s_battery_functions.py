@@ -30,21 +30,21 @@ def dst(s1, s2, D_eff, dy1, dy2):
 
 """========================================================================="""
 
-def read_state_cathode(SV, offset, ptr):
+def read_state_cathode(SV, j, ptr):
     
     state = {}
     
-    state['phi_ed'] = SV[offset + ptr['phi_ed']]
-    state['phi_dl'] = SV[offset + ptr['phi_dl']]
-    state['phi_el'] = SV[offset + ptr['phi_ed']] - SV[offset + ptr['phi_dl']]
-    state['C_tot'] = sum(SV[offset + ptr['C_k_elyte']])
-    state['C_k'] = SV[offset + ptr['C_k_elyte']]
-    state['X_k'] = SV[offset + ptr['C_k_elyte']]/sum(SV[offset + ptr['C_k_elyte']])
+    state['phi_ed'] = SV[ptr['phi_ed'][j]]
+    state['phi_dl'] = SV[ptr['phi_dl'][j]]
+    state['phi_el'] = SV[ptr['phi_ed'][j]] - SV[ptr['phi_dl'][j]]
+    state['C_tot'] = sum(SV[ptr['C_k_elyte'][j]])
+    state['C_k'] = SV[ptr['C_k_elyte'][j]]
+    state['X_k'] = SV[ptr['C_k_elyte'][j]]/sum(SV[ptr['C_k_elyte'][j]])
     
-    np_S = SV[offset + ptr['np_S8']]
-    np_L = SV[offset + ptr['np_Li2S']]
-    eps_S8 = max(SV[offset + ptr['eps_S8']], cathode.eps_cutoff)
-    eps_Li2S = max(SV[offset + ptr['eps_Li2S']], cathode.eps_cutoff)
+    np_S = SV[ptr['np_S8'][j]]
+    np_L = SV[ptr['np_Li2S'][j]]
+    eps_S8 = max(SV[ptr['eps_S8'][j]], cathode.eps_cutoff)
+    eps_Li2S = max(SV[ptr['eps_Li2S'][j]], cathode.eps_cutoff)
     eps_el = 1 - cathode.eps_C_0 - eps_S8 - eps_Li2S
 
     return state, np_S, np_L, eps_S8, eps_Li2S, eps_el
@@ -60,7 +60,7 @@ def read_state_sep(SV, offset, ptr):
     
     return state
 
-def read_state_anode(SV, offset, j, ptr):
+def read_state_anode(SV, j, ptr):
     
     state = {}
     
@@ -76,13 +76,13 @@ def read_state_anode(SV, offset, j, ptr):
 
 """========================================================================="""
 
-def set_geom(SV, offset, ptr):
+def set_geom(SV, offset, j, ptr):
     geom = {}
     
-    geom['np_S'] = SV[offset + ptr['np_S8']]
-    geom['np_L'] = SV[offset + ptr['np_Li2S']]
-    geom['eps_S'] = max(SV[offset + ptr['eps_S8']], cathode.eps_cutoff)
-    geom['eps_L'] = max(SV[offset + ptr['eps_Li2S']], cathode.eps_cutoff)
+    geom['np_S'] = SV[ptr['np_S8'][j]]
+    geom['np_L'] = SV[ptr['np_Li2S'][j]]
+    geom['eps_S'] = max(SV[ptr['eps_S8'][j]], cathode.eps_cutoff)
+    geom['eps_L'] = max(SV[ptr['eps_Li2S'][j]], cathode.eps_cutoff)
     geom['eps_el'] = 1 - cathode.eps_C_0 - geom['eps_S'] - geom['eps_L']
     
     geom['A_S'] = 2*pi*geom['np_S']*(3*geom['eps_S']/2/geom['np_S']/pi)**(2/3)

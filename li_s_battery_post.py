@@ -171,7 +171,7 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
     """Label anode points"""
     newcols = {}
     for j in np.arange(0, an_np):
-        offset = anode.offsets[j]  # Set node offset value for loop
+        offset = cathode.nSV + sep.nSV + j*anode.n_vars
         
 #        # Loop over number of shells in anode
 #        for k in np.arange(0, anode.nshells):
@@ -210,9 +210,8 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
         
     """Label cathode points"""
     newcols = {}
-    for j in np.arange(0, cat_np):
-        offset = cathode.offsets[j]  # Set node offset value for loop
-        
+    for j in np.arange(0, cat_np):     
+        offset = j*cathode.n_vars   
         # Add tags for particle radius of Li2S and S8
         newcols_r = {0+offset: 'eps_S8'+str(j+1),
                      1+offset: 'eps_Li2S'  +str(j+1)}
@@ -266,23 +265,21 @@ def tag_strings(SV):
     
     ptr = cathode.ptr
     for j in np.arange(0, cathode.npoints):
-        offset = int(cathode.offsets[j])
-        
-        r_Li2S = np.append(r_Li2S, SV_labels[ptr['eps_Li2S'] + offset])
-        r_S8 = np.append(r_S8, SV_labels[ptr['eps_S8'] + offset])
-        
-        rho_el[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['C_k_elyte'][0]+offset:ptr['C_k_elyte'][-1]+offset+1]
+
+        r_Li2S = np.append(r_Li2S, SV_labels[ptr['eps_Li2S'][j]])
+        r_S8 = np.append(r_S8, SV_labels[ptr['eps_S8'][j]])
+        rho_el[j*cathode.n_vars:j*cathode.n_vars + elyte_obj.n_species] = \
+            SV_labels[ptr['C_k_elyte'][j,0]:ptr['C_k_elyte'][j,-1]+1]
             
-        phi_dl = np.append(phi_dl, SV_labels[ptr['phi_dl'] + offset])
-        phi_ed = np.append(phi_ed, SV_labels[ptr['phi_ed'] + offset])
-        np_S8 = np.append(np_S8, SV_labels[ptr['np_S8'] + offset])
-        np_Li2S = np.append(np_Li2S, SV_labels[ptr['np_Li2S'] + offset])
+        phi_dl = np.append(phi_dl, SV_labels[ptr['phi_dl'][j]])
+        phi_ed = np.append(phi_ed, SV_labels[ptr['phi_ed'][j]])
+        np_S8 = np.append(np_S8, SV_labels[ptr['np_S8'][j]])
+        np_Li2S = np.append(np_Li2S, SV_labels[ptr['np_Li2S'][j]])
         
     ptr = sep.ptr
     for j in np.arange(0, sep.npoints):
         offset = int(sep.offsets[j])
-        
+
         rho_el_sep[0 + offset:elyte_obj.n_species + offset] = \
             SV_labels[ptr['C_k_elyte'][0]+offset:ptr['C_k_elyte'][-1]+offset+1]
             
@@ -290,7 +287,7 @@ def tag_strings(SV):
         
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
-        offset = int(anode.offsets[j])
+        offset = cathode.nSV + sep.nSV + j*anode.n_vars
         
         rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
             SV_labels[ptr['C_k_elyte'][j,0]:ptr['C_k_elyte'][j,-1]+1]

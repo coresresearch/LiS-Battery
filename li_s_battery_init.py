@@ -28,13 +28,13 @@ conductor_obj = ct.Solution(infile, inputs.metal_phase)
 lithium_obj = ct.Solution(infile, inputs.an_phase)
 
 sulfur_elyte_surf_obj = ct.Interface(infile, inputs.sulfur_elyte_phase,
-                             [sulfur_obj, elyte_obj, conductor_obj])
+                        [sulfur_obj, elyte_obj, conductor_obj])
 Li2S_elyte_surf_obj = ct.Interface(infile, inputs.Li2S_elyte_phase,
-                             [Li2S_obj, elyte_obj, conductor_obj])
+                      [Li2S_obj, elyte_obj, conductor_obj])
 carbon_elyte_surf_obj = ct.Interface(infile, inputs.graphite_elyte_phase,
-                             [carbon_obj, elyte_obj, conductor_obj])
+                        [carbon_obj, elyte_obj, conductor_obj])
 lithium_elyte_surf_obj = ct.Interface(infile, inputs.anode_elyte_phase,
-                             [lithium_obj, elyte_obj, conductor_obj])
+                         [lithium_obj, elyte_obj, conductor_obj])
 Li2S_tpb_obj = ct.Interface(infile, 'tpb', [elyte_obj, Li2S_obj, conductor_obj])
 
 elyte_obj.electric_potential = inputs.Phi_el_init
@@ -60,31 +60,31 @@ class cathode():
         
     # Number of state variables per node
     n_vars = 2 + elyte_obj.n_species + 4
+    nSV = npoints*n_vars
     
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
-    ptr['eps_S8'] = 0
-    ptr['eps_Li2S'] = 1
-    ptr['C_k_elyte'] = 2 + np.arange(0, elyte_obj.n_species)
-    ptr['phi_dl'] = ptr['C_k_elyte'][-1] + 1
-    ptr['phi_ed'] = ptr['C_k_elyte'][-1] + 2
-    ptr['np_S8'] = ptr['C_k_elyte'][-1] + 3
-    ptr['np_Li2S'] = ptr['C_k_elyte'][-1] + 4
-    
-    nSV = npoints*n_vars
-    offsets = np.arange(0, int(nSV), int(n_vars))
+    ptr['eps_S8'] = np.arange(0, nSV, n_vars)
+    ptr['eps_Li2S'] = np.arange(1, nSV, n_vars)
+    ptr['C_k_elyte'] = np.zeros((npoints, elyte_obj.n_species), dtype='int')
+    for j in np.arange(npoints):
+        ptr['C_k_elyte'][j,:] = np.arange(2 + j*n_vars, 
+                                2 + j*n_vars + elyte_obj.n_species)
+    # ptr['C_k_elyte'] = 2 + np.arange(0, elyte_obj.n_species)
+    ptr['phi_dl'] = np.arange(elyte_obj.n_species + 2, nSV, n_vars)
+    ptr['phi_ed'] = np.arange(elyte_obj.n_species + 3, nSV, n_vars)
+    ptr['np_S8'] = np.arange(elyte_obj.n_species + 4, nSV, n_vars)
+    ptr['np_Li2S'] = np.arange(elyte_obj.n_species + 5, nSV, n_vars)
     
     ptr_vec = {}
-    ptr_vec['eps_S8']   = ptr['eps_S8']   + offsets
-    ptr_vec['eps_Li2S'] = ptr['eps_Li2S'] + offsets
-    ptr_vec['C_k_elyte'] = ptr['C_k_elyte']
-    for i in offsets[1:]:
-        ptr_vec['C_k_elyte'] = np.hstack((ptr_vec['C_k_elyte'],i+ptr['C_k_elyte']))
-    ptr_vec['phi_dl']  = ptr['phi_dl'] + offsets
-    ptr_vec['phi_ed']  = ptr['phi_ed']   + offsets
-    ptr_vec['np_S8']   = ptr['np_S8']   + offsets
-    ptr_vec['np_Li2S'] = ptr['np_Li2S'] + offsets
+    ptr_vec['eps_S8']   = ptr['eps_S8']
+    ptr_vec['eps_Li2S'] = ptr['eps_Li2S']
+    ptr_vec['C_k_elyte'] = np.hstack(ptr['C_k_elyte'])
+    ptr_vec['phi_dl']  = ptr['phi_dl']
+    ptr_vec['phi_ed']  = ptr['phi_ed']
+    ptr_vec['np_S8']   = ptr['np_S8']
+    ptr_vec['np_Li2S'] = ptr['np_Li2S']
     
     # Store parameters as class attributes
     T = inputs.T
@@ -263,15 +263,7 @@ class anode():
     ptr_vec = {}
     ptr_vec['C_k_elyte'] = (cathode.nSV + sep.nSV 
         + np.hstack(ptr['C_k_elyte']))
-    
-    for i in np.arange(1, npoints):
-        ptr_vec['C_k_elyte'] = np.append(ptr_vec['C_k_elyte'],
-                                       cathode.nSV + sep.nSV + ptr['C_k_elyte'] + i*n_vars)
-    
-    # Set length of solution vector for anode
-    offsets = np.arange(int(cathode.nSV + sep.nSV), 
-                        int(cathode.nSV + sep.nSV) + int(nSV), int(n_vars))
-    
+        
     # Geometric parameters
     eps_el = 1 - inputs.epsilon_an
     tau = inputs.tau_an
@@ -304,29 +296,28 @@ class sol_init():
     algvar = np.zeros_like(SV_0)
      
     # Cathode
-    offsets = cathode.offsets
     ptr = cathode.ptr
     for j in np.arange(0, cathode.npoints):
         
-        SV_0[offsets[j] + ptr['eps_S8']] = cathode.eps_S_0
-        algvar[offsets[j] + ptr['eps_S8']] = 1
+        SV_0[ptr['eps_S8'][j]] = cathode.eps_S_0
+        algvar[ptr['eps_S8']] = 1
         
-        SV_0[offsets[j] + ptr['eps_Li2S']] = cathode.eps_L_0
-        algvar[offsets[j] + ptr['eps_Li2S']] = 1
+        SV_0[ptr['eps_Li2S'][j]] = cathode.eps_L_0
+        algvar[ptr['eps_Li2S'][j]] = 1
         
-        SV_0[offsets[j] + ptr['C_k_elyte']] = inputs.C_k_el_0
-        algvar[offsets[j] + ptr['C_k_elyte']] = 1
+        SV_0[ptr['C_k_elyte'][j]] = inputs.C_k_el_0
+        algvar[ptr['C_k_elyte'][j]] = 1
         
-        SV_0[offsets[j]+ptr['phi_dl']] = inputs.Cell_voltage - inputs.Phi_el_init
-        algvar[offsets[j] + ptr['phi_dl']] = 1
+        SV_0[ptr['phi_dl'][j]] = inputs.Cell_voltage - inputs.Phi_el_init
+        algvar[ptr['phi_dl'][j]] = 1
                                            
-        SV_0[offsets[j]+ptr['phi_ed']] = inputs.Cell_voltage
+        SV_0[ptr['phi_ed'][j]] = inputs.Cell_voltage
         
-        SV_0[offsets[j]+ptr['np_S8']]=inputs.np_S8_init
-        algvar[offsets[j] + ptr['np_S8']] = 1
+        SV_0[ptr['np_S8'][j]]=inputs.np_S8_init
+        algvar[ptr['np_S8'][j]] = 1
         
-        SV_0[offsets[j]+ptr['np_Li2S']] = inputs.np_Li2S_init
-        algvar[offsets[j] + ptr['np_Li2S']] = 1
+        SV_0[ptr['np_Li2S'][j]] = inputs.np_Li2S_init
+        algvar[ptr['np_Li2S'][j]] = 1
      
     # Separator
     offsets = sep.offsets
@@ -339,7 +330,6 @@ class sol_init():
         SV_0[offsets[j] + ptr['phi']] = inputs.Phi_el_init
      
     # Anode
-    offsets = anode.offsets
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
         SV_0[ptr['C_k_elyte'][j]] = inputs.C_k_el_0

@@ -120,10 +120,10 @@ class cc_cycling(Implicit_Problem):
         
         """=============================CATHODE============================="""
         """CC BOUNDARY"""
-        j = 0; offset = cathode.offsets[int(j)]
+        j = 0
         i_ext = cathode.get_i_ext()
         s2, np_S8_2, np_Li2S_2, eps_S8_2, eps_Li2S_2, eps_elyte_2 = \
-            read_state_cathode(SV, offset, cathode.ptr)
+            read_state_cathode(SV, j, cathode.ptr)
 
         # Set electronic current and ionic current boundary conditions. These 
         #   will be re-assigned as "in" values, once inside the for loop:
@@ -145,14 +145,9 @@ class cc_cycling(Implicit_Problem):
             np_S8 = np_S8_2; np_Li2S = np_Li2S_2; eps_S8 = eps_S8_2
             eps_Li2S = eps_Li2S_2; eps_elyte = eps_elyte_2
             
-            # Update offset to NEXT node
-            offset = cathode.offsets[int(j)]
-            
+            # Read state of 'next' cathode volume:
             s2, np_S8_2, np_Li2S_2, eps_S8_2, eps_Li2S_2, eps_elyte_2 = \
-                read_state_cathode(SV, offset, cathode.ptr)
-
-            # Set variables to CURRENT NODE value
-            offset = cathode.offsets[int(j-1)]
+                read_state_cathode(SV, j, cathode.ptr)
             
             # Calculate new particle radii based on new volume fractions
             A_S = 2*pi*np_S8*(3*eps_S8/2/np_S8/pi)**(2/3)
@@ -200,33 +195,33 @@ class cc_cycling(Implicit_Problem):
             R_net = R_C + R_S + R_L 
             R_net[cathode.ptr['iFar']] += (-i_Far + i_el_in - i_el_out)/cathode.dy/F
             
-            """Calculate change in Sulfur"""                
-            res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
+            """Calculate change in Sulfur"""         
+            res[ptr['eps_S8'][j-1]] = (SV_dot[ptr['eps_S8'][j-1]] 
                                         - sulfur_obj.volume_mole*sdot_S8*A_S)
        
             """Calculate change in Li2S"""
-            res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
+            res[ptr['eps_Li2S'][j-1]] = (SV_dot[ptr['eps_Li2S'][j-1]] 
                                           - Li2S_obj.volume_mole*(sdot_Li2S*A_L
                                           + sdot_tpb*tpb_len))
             
             """Calculate change in electrolyte"""
-            res[offset + ptr['C_k_elyte']] = (SV_dot[offset + ptr['C_k_elyte']] - 
-            (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte 
-            + SV[offset + ptr['C_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
-                                            - SV_dot[offset + ptr['eps_Li2S']])/eps_elyte)
+            res[ptr['C_k_elyte'][j-1]] = (SV_dot[ptr['C_k_elyte'][j-1]] - 
+                (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte 
+                + SV[ptr['C_k_elyte'][j-1]]*(- SV_dot[ptr['eps_S8'][j-1]] 
+                - SV_dot[ptr['eps_Li2S'][j-1]])/eps_elyte)
             
             """Calculate change in delta-phi double layer"""
-            res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
+            res[ptr['phi_dl'][j-1]] = (SV_dot[ptr['phi_dl'][j-1]] - 
             (-i_Far + i_el_in - i_el_out)*cathode.dyInv/cathode.C_dl/A_C)
             
             """Algebraic expression for charge neutrality in all phases"""
-            res[offset + ptr['phi_ed']] = i_el_in - i_el_out + i_io_in - i_io_out
+            res[ptr['phi_ed'][j-1]] = i_el_in - i_el_out + i_io_in - i_io_out
             
             """Calculate change in S8 nucleation sites"""
-            res[offset + ptr['np_S8']] = SV_dot[offset + ptr['np_S8']]
+            res[ptr['np_S8'][j-1]] = SV_dot[ptr['np_S8'][j-1]]
             
             """Calculate change in Li2S nucleation sites"""
-            res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
+            res[ptr['np_Li2S'][j-1]] = SV_dot[ptr['np_Li2S'][j-1]]
             
         """=============================CATHODE============================="""
         """SEPARATOR BOUNDARY"""
@@ -235,23 +230,24 @@ class cc_cycling(Implicit_Problem):
         i_io_in = i_io_out
         N_k_elyte_in = N_k_elyte_out
         s1 = dict(s2)
-        
+        np_S8 = np_S8_2; np_Li2S = np_Li2S_2; eps_S8 = eps_S8_2
+        eps_Li2S = eps_Li2S_2; eps_elyte = eps_elyte_2
         # Shift forward to NEXT node, first separator node (j=0)
         j = 0; offset = sep.offsets[int(j)]
         
         s2 = read_state_sep(SV, offset, sep.ptr)
         
         # Shift back to THIS node, set THIS node outlet conditions
-        j = cathode.npoints-1; offset = cathode.offsets[int(j)]
+        j = cathode.npoints-1;
         
         # Set variables to CURRENT NODE value
 #        geom = set_geom(SV, offset, cathode.ptr)
         
-        np_S8 = SV[offset + ptr['np_S8']]
-        np_Li2S = SV[offset + ptr['np_Li2S']]
-        eps_S8 = max(SV[offset + ptr['eps_S8']], cathode.eps_cutoff)
-        eps_Li2S = max(SV[offset + ptr['eps_Li2S']], cathode.eps_cutoff)
-        eps_elyte = 1 - cathode.eps_C_0 - eps_S8 - eps_Li2S  
+        # np_S8 = SV[offset + ptr['np_S8']]
+        # np_Li2S = SV[offset + ptr['np_Li2S']]
+        # eps_S8 = max(SV[ptr['eps_S8'][j-1]], cathode.eps_cutoff)
+        # eps_Li2S = max(SV[ptr['eps_Li2S'][j]], cathode.eps_cutoff)
+        # eps_elyte = 1 - cathode.eps_C_0 - eps_S8 - eps_Li2S  
         
         # Calculate new particle radii based on new volume fractions
         A_S = 2*pi*np_S8*(3*eps_S8/2/np_S8/pi)**(2/3)
@@ -299,32 +295,32 @@ class cc_cycling(Implicit_Problem):
         R_net[cathode.ptr['iFar']] += (-i_Far + i_el_in - i_el_out)/cathode.dy/F
                                  
         """Calculate change in Sulfur"""                
-        res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
+        res[ptr['eps_S8'][j]] = (SV_dot[ptr['eps_S8'][j]] 
                                     - sulfur_obj.volume_mole*sdot_S8*A_S)
         
         """Calculate change in Li2S"""
-        res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
+        res[ptr['eps_Li2S'][j]] = (SV_dot[ptr['eps_Li2S'][j]] 
                                       - Li2S_obj.volume_mole*(sdot_Li2S*A_L
                                       + sdot_tpb*tpb_len))
                 
         """Calculate change in electrolyte"""
-        res[offset + ptr['C_k_elyte']] = (SV_dot[offset + ptr['C_k_elyte']] - 
+        res[ptr['C_k_elyte'][j]] = (SV_dot[ptr['C_k_elyte'][j]] - 
         (R_net + (N_k_elyte_in - N_k_elyte_out)*cathode.dyInv)/eps_elyte
-        + SV[offset + ptr['C_k_elyte']]*(- SV_dot[offset + ptr['eps_S8']] 
-                                        - SV_dot[offset + ptr['eps_Li2S']])/eps_elyte)
+        + SV[ptr['C_k_elyte'][j]]*(- SV_dot[ptr['eps_S8'][j]] 
+                                        - SV_dot[ptr['eps_Li2S'][j]])/eps_elyte)
         
         """Calculate change in delta-phi double layer"""
-        res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
+        res[ptr['phi_dl'][j]] = (SV_dot[ptr['phi_dl'][j]] - 
         (-i_Far + i_el_in - i_el_out)*cathode.dyInv/cathode.C_dl/A_C)
         
         """Algebraic expression for charge neutrality in all phases"""
-        res[offset + ptr['phi_ed']] = i_el_in - i_el_out + i_io_in - i_io_out
+        res[ptr['phi_ed'][j]] = i_el_in - i_el_out + i_io_in - i_io_out
         
         """Calculate change in S8 nucleation sites"""
-        res[offset + ptr['np_S8']] = SV_dot[offset + ptr['np_S8']]
+        res[ptr['np_S8'][j]] = SV_dot[ptr['np_S8'][j]]
         
         """Calculate change in Li2S nucleation sites"""
-        res[offset + ptr['np_Li2S']] = SV_dot[offset + ptr['np_Li2S']]
+        res[ptr['np_Li2S'][j]] = SV_dot[ptr['np_Li2S'][j]]
         
         """============================SEPARATOR============================"""
         """INTERIOR NODES"""
@@ -337,8 +333,8 @@ class cc_cycling(Implicit_Problem):
         s1 = dict(s2)
         
         # Shift forward to NEXT node
-        j = 0; offset = anode.offsets[int(j)]
-        s2 = read_state_anode(SV, offset, j, anode.ptr)
+        j = 0; 
+        s2 = read_state_anode(SV, j, anode.ptr)
                 
         # Shift back to THIS node
         offset = sep.offsets[int(j)]
@@ -362,7 +358,6 @@ class cc_cycling(Implicit_Problem):
         s1 = dict(s2)
         
         j = 0
-        offset = anode.offsets[int(j)]
         
         i_el_out = i_ext
         i_io_out = 0
