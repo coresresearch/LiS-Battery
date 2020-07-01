@@ -144,7 +144,6 @@ class cc_cycling(Implicit_Problem):
             s1 = dict(s2)
             np_S8 = np_S8_2; np_Li2S = np_Li2S_2; eps_S8 = eps_S8_2
             eps_Li2S = eps_Li2S_2; eps_elyte = eps_elyte_2
-
             
             # Update offset to NEXT node
             offset = cathode.offsets[int(j)]
@@ -339,7 +338,7 @@ class cc_cycling(Implicit_Problem):
         
         # Shift forward to NEXT node
         j = 0; offset = anode.offsets[int(j)]
-        s2 = read_state_anode(SV, offset, anode.ptr)
+        s2 = read_state_anode(SV, offset, j, anode.ptr)
                 
         # Shift back to THIS node
         offset = sep.offsets[int(j)]
@@ -380,15 +379,14 @@ class cc_cycling(Implicit_Problem):
         R_net = sdot_Li*anode.A_Li
         i_Far = sdot_Far*anode.A_Li*F*anode.dy
                    
-        res[offset + anode.ptr['rho_k_elyte']] = (
-            SV_dot[offset + anode.ptr['rho_k_elyte']]
+        res[anode.ptr['rho_k_elyte'][j]] = (SV_dot[anode.ptr['rho_k_elyte'][j]]
             - (R_net + (N_k_elyte_in - N_k_elyte_out)*anode.dyInv)/anode.eps_el)
 
-        res[offset + anode.ptr['phi_dl']] = (
-            SV_dot[offset + anode.ptr['phi_dl']]
+        res[anode.ptr['phi_dl'][j]] = (
+            SV_dot[anode.ptr['phi_dl'][j]]
             - (-i_Far + i_el_in - i_el_out)*anode.dyInv/anode.C_dl/anode.A_Li) 
         
-        res[offset + anode.ptr['phi_ed']] = SV[offset + anode.ptr['phi_ed']] 
+        res[anode.ptr['phi_ed'][j]] = SV[anode.ptr['phi_ed'][j]]
         
         """==============================ANODE=============================="""
         """CC BOUNDARY"""

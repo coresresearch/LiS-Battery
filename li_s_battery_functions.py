@@ -60,16 +60,16 @@ def read_state_sep(SV, offset, ptr):
     
     return state
 
-def read_state_anode(SV, offset, ptr):
+def read_state_anode(SV, offset, j, ptr):
     
     state = {}
     
-    state['phi_ed'] = SV[offset + ptr['phi_ed']]
-    state['phi_dl'] = SV[offset + ptr['phi_dl']]
-    state['phi_el'] = SV[offset + ptr['phi_ed']] - SV[offset + ptr['phi_dl']]
-    state['C_tot'] = sum(SV[offset + ptr['rho_k_elyte']])
-    state['C_k'] = SV[offset + ptr['rho_k_elyte']]
-    state['X_k'] = SV[offset + ptr['rho_k_elyte']]/sum(SV[offset + ptr['rho_k_elyte']])
+    state['phi_ed'] = SV[ptr['phi_ed'][j]]
+    state['phi_dl'] = SV[ptr['phi_dl'][j]]
+    state['phi_el'] = SV[ptr['phi_ed'][j]] - state['phi_dl']
+    state['C_tot'] = sum(SV[ptr['rho_k_elyte'][j]])
+    state['C_k'] = SV[ptr['rho_k_elyte'][j]]
+    state['X_k'] = SV[ptr['rho_k_elyte'][j]]/sum(SV[ptr['rho_k_elyte'][j]])
     
     return state
 

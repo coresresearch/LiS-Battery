@@ -242,18 +242,27 @@ class anode():
     #   variables in entire SV:
     n_vars = 2 + elyte_obj.n_species
     nSV = npoints*n_vars
-    nSV_tot = cathode.nSV + sep.nSV + nSV
-    
+    ptr_start = cathode.nSV + sep.nSV
+    nSV_tot = ptr_start + nSV
+
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
     
-    ptr['rho_k_elyte'] = np.arange(0, elyte_obj.n_species)
-    ptr['phi_dl'] = ptr['rho_k_elyte'][-1] + 1
-    ptr['phi_ed'] = ptr['rho_k_elyte'][-1] + 2
+    ptr['rho_k_elyte'] = np.zeros((npoints, elyte_obj.n_species), dtype='int')
+    for j in np.arange(npoints):
+        ptr['rho_k_elyte'][j,:] = np.arange(ptr_start + j*n_vars, 
+            ptr_start + j*n_vars + elyte_obj.n_species)
+    
+    ptr['phi_dl'] = np.arange(ptr_start + elyte_obj.n_species, nSV_tot, n_vars, 
+        dtype='int')
+
+    ptr['phi_ed'] = np.arange(ptr_start + elyte_obj.n_species + 1, nSV_tot, 
+        n_vars, dtype='int')
     
     ptr_vec = {}
-    ptr_vec['rho_k_elyte'] = cathode.nSV + sep.nSV + ptr['rho_k_elyte']
+    ptr_vec['rho_k_elyte'] = (cathode.nSV + sep.nSV 
+        + np.hstack(ptr['rho_k_elyte']))
     
     for i in np.arange(1, npoints):
         ptr_vec['rho_k_elyte'] = np.append(ptr_vec['rho_k_elyte'],
@@ -333,13 +342,13 @@ class sol_init():
     offsets = anode.offsets
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
-        SV_0[offsets[j] + ptr['rho_k_elyte']] = inputs.C_k_el_0
-        algvar[offsets[j] + ptr['rho_k_elyte']] = 1
+        SV_0[ptr['rho_k_elyte'][j]] = inputs.C_k_el_0
+        algvar[ptr['rho_k_elyte'][j]] = 1
         
-        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
-        algvar[offsets[j] + ptr['phi_dl']] = 1
+        SV_0[ptr['phi_dl'][j]] = inputs.Phi_an_init - inputs.Phi_el_init
+        algvar[ptr['phi_dl'][j]] = 1
         
-        SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init   
+        SV_0[ptr['phi_ed'][j]] = inputs.Phi_an_init   
                                            
 "============================================================================="
 

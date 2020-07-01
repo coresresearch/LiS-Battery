@@ -5,12 +5,9 @@ Created on Tue Jun 25 14:35:17 2019
 @author: dkorff
 """
 from li_s_battery_inputs import inputs
-from li_s_battery_init import anode
-from li_s_battery_init import cathode
-from li_s_battery_init import sep
-from li_s_battery_init import elyte_obj, sulfur_obj, Li2S_obj, carbon_obj, \
-    conductor_obj, sulfur_elyte_surf_obj, Li2S_elyte_surf_obj, \
-    carbon_elyte_surf_obj
+from li_s_battery_init import anode, cathode, sep, elyte_obj, sulfur_obj, \
+    Li2S_obj, carbon_obj, conductor_obj, sulfur_elyte_surf_obj, \
+    Li2S_elyte_surf_obj, carbon_elyte_surf_obj
 from li_s_battery_functions import dst
 from matplotlib import pyplot as plt
 from math import pi, floor
@@ -24,18 +21,15 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
         showlegend = 1
     else:
         showlegend = 0
-    
-#    SV_df = SV_df_orig.copy()
-#    SV_df['phi_dl'] = SV_df['phi_dl'] + SV_df['phi_el']
-    
+        
     vol_fracs = tags['eps_S8'] + tags['eps_Li2S']
-#    phi = tags['phi_dl'] + tags['phi_ed']
     phi = tags['phi_ed']
     fontsize = 18
     SV_df = SV_df_stage.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
     print(SV_df.iloc[-1, -1])
     t = SV_df['Time']
+
     # Plot potential for the electrolyte and the double layer
     SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, yax], xlim=[0,t.iloc[-1]])
     SV_plot.set_title(stage, fontsize = fontsize)
@@ -299,10 +293,10 @@ def tag_strings(SV):
         offset = int(anode.offsets[j])
         
         rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['rho_k_elyte'][0]+offset:ptr['rho_k_elyte'][-1]+offset+1]
+            SV_labels[ptr['rho_k_elyte'][j,0]:ptr['rho_k_elyte'][j,-1]+1]
             
-        phi_dl_an = np.append(phi_dl_an, SV_labels[ptr['phi_dl'] + offset])
-        phi_an = np.append(phi_an, SV_labels[ptr['phi_ed'] + offset])
+        phi_dl_an = np.append(phi_dl_an, SV_labels[ptr['phi_dl'][j]])
+        phi_an = np.append(phi_an, SV_labels[ptr['phi_ed'][j]])
         
     phi_sep = phi_sep.tolist()
     phi_dl_an = phi_dl_an.tolist()
