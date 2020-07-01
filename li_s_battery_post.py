@@ -11,7 +11,7 @@ from li_s_battery_init import sep
 from li_s_battery_init import elyte_obj, sulfur_obj, Li2S_obj, carbon_obj, \
     conductor_obj, sulfur_elyte_surf_obj, Li2S_elyte_surf_obj, \
     carbon_elyte_surf_obj
-from li_s_battery_functions import dst, set_state, set_state_sep
+from li_s_battery_functions import dst
 from matplotlib import pyplot as plt
 from math import pi, floor
 import numpy as np
