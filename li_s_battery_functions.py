@@ -37,9 +37,9 @@ def read_state_cathode(SV, offset, ptr):
     state['phi_ed'] = SV[offset + ptr['phi_ed']]
     state['phi_dl'] = SV[offset + ptr['phi_dl']]
     state['phi_el'] = SV[offset + ptr['phi_ed']] - SV[offset + ptr['phi_dl']]
-    state['C_tot'] = sum(SV[offset + ptr['rho_k_el']])
-    state['C_k'] = SV[offset + ptr['rho_k_el']]
-    state['X_k'] = SV[offset + ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
+    state['C_tot'] = sum(SV[offset + ptr['rho_k_elyte']])
+    state['C_k'] = SV[offset + ptr['rho_k_elyte']]
+    state['X_k'] = SV[offset + ptr['rho_k_elyte']]/sum(SV[offset + ptr['rho_k_elyte']])
     
     np_S = SV[offset + ptr['np_S8']]
     np_L = SV[offset + ptr['np_Li2S']]
@@ -54,9 +54,9 @@ def read_state_sep(SV, offset, ptr):
     state = {}
     
     state['phi_el'] = SV[offset + ptr['phi']]
-    state['C_tot'] = sum(SV[offset + ptr['rho_k_el']])
-    state['C_k'] = SV[offset + ptr['rho_k_el']]
-    state['X_k'] = SV[offset + ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
+    state['C_tot'] = sum(SV[offset + ptr['rho_k_elyte']])
+    state['C_k'] = SV[offset + ptr['rho_k_elyte']]
+    state['X_k'] = SV[offset + ptr['rho_k_elyte']]/sum(SV[offset + ptr['rho_k_elyte']])
     
     return state
 
@@ -67,9 +67,9 @@ def read_state_anode(SV, offset, ptr):
     state['phi_ed'] = SV[offset + ptr['phi_ed']]
     state['phi_dl'] = SV[offset + ptr['phi_dl']]
     state['phi_el'] = SV[offset + ptr['phi_ed']] - SV[offset + ptr['phi_dl']]
-    state['C_tot'] = sum(SV[offset + ptr['rho_k_el']])
-    state['C_k'] = SV[offset + ptr['rho_k_el']]
-    state['X_k'] = SV[offset + ptr['rho_k_el']]/sum(SV[offset + ptr['rho_k_el']])
+    state['C_tot'] = sum(SV[offset + ptr['rho_k_elyte']])
+    state['C_k'] = SV[offset + ptr['rho_k_elyte']]
+    state['X_k'] = SV[offset + ptr['rho_k_elyte']]/sum(SV[offset + ptr['rho_k_elyte']])
     
     return state
 
