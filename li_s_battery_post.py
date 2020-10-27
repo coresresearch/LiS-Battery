@@ -22,28 +22,28 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     if stage == 'Charging':
         showlegend = 1
     else:
-        showlegend = 0
+        showlegend = 1
     
 #    SV_df = SV_df_orig.copy()
 #    SV_df['phi_dl'] = SV_df['phi_dl'] + SV_df['phi_el']
     
     vol_fracs = tags['eps_S8'] + tags['eps_Li2S']
 #    phi = tags['phi_dl'] + tags['phi_ed']
-    phi = tags['phi_ed']
+    phi = tags['phi_ed'][0]
     fontsize = 18
     SV_df = SV_df_stage.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
     print(SV_df.iloc[-1, -1])
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
-    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0, yax], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0], xlim=[0,t.iloc[-1]])
     SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$V_{cell}$ [V]', fontsize = fontsize)
     SV_plot.set_xlabel('Capacity $[A-h/kg_{sulfur}]$', fontsize = fontsize).set_visible(False)
-    SV_plot.set_xlim((0, 1750))
-    SV_plot.set_xticks([400, 800, 1200, 1600])
-    SV_plot.set_ylim((1.5, 2.8))
-    SV_plot.set_yticks([1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8])
+    SV_plot.set_xlim((0, 1500))
+    SV_plot.set_xticks([200, 400, 600, 800, 1000, 1200, 1400])
+    SV_plot.set_ylim((1.8, 2.5))
+    SV_plot.set_yticks([1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5])
 #    SV_plot.set_ylim((2.25, 2.5))
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(False)
@@ -51,13 +51,13 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 #    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
     # Plot Li2S and S8 volume fractions
-    SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1, yax], xlim=[0,t.iloc[-1]])
+    SV_plot = SV_df.plot(x='Time', y=vol_fracs, ax=axes[1], xlim=[0,t.iloc[-1]])
 #    SV_plot.set_title(stage, fontsize = fontsize)
     SV_plot.set_ylabel(r'$\varepsilon_i$ [-]', fontsize = fontsize)
     SV_plot.set_xlabel('Time [s]', fontsize = fontsize).set_visible(False)
-    SV_plot.set_xlim((0, 1750))
-    SV_plot.set_ylim((-0.1, 0.8))
-    SV_plot.set_xticks([400, 800, 1200, 1600])
+    SV_plot.set_xlim((0, 1500))
+    SV_plot.set_ylim((-0.1, 1))
+    SV_plot.set_xticks([200, 400, 600, 800, 1000, 1200, 1400])
     SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
                    frameon=False, fontsize = 15).set_visible(showlegend)
     SV_plot.tick_params(axis='both', labelsize=16)
@@ -65,23 +65,26 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     
     rho_S = np.array([])
     for i in np.arange(len(tags['rho_el'])):
-        offset = floor(i/10)*10
-        if cathode.S_atoms_bool[i-offset]: #and cathode.n_S_atoms[i-offset] > 2:
+        offset = floor(i/elyte_obj.n_species)*elyte_obj.n_species
+        if cathode.S_atoms_bool[i-offset] and cathode.n_S_atoms[i-offset] >= 1:
             rho_S = np.append(rho_S, tags['rho_el'][i]) 
     rho_S = np.append(rho_S, tags['rho_el'][1])
     
     # Plot species densities in electrolyte
-    SV_plot = SV_df.plot(x='Time', y=rho_S, logy=True, ax=axes[2, yax], xlim=[0,t.iloc[-1]], colormap='plasma', linewidth=2.) #ax=axes[2]
-#    SV_plot.set_title(stage, fontsize = fontsize)
-    SV_plot.set_ylabel(r'$C_k$ [kmol/m$^3]$', fontsize = fontsize)
-    SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-    SV_plot.set_ylim((1e-6, 1e1))
-#    SV_plot.set_ylim((-0.1, 7.1))
-    SV_plot.set_xlim((0, 1750))
-    SV_plot.set_xticks([400, 800, 1200, 1600])
-    SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
-                   frameon=False, fontsize = 15).set_visible(showlegend)
-    SV_plot.tick_params(axis='both', labelsize=16)
+    for i in np.arange(0, inputs.npoints_cathode):
+        offset = i*cathode.n_S_species
+        SV_plot = SV_df.plot(x='Time', y=rho_S[offset:cathode.n_S_species+offset], logy=True, ax=axes[2], 
+                             xlim=[0,t.iloc[-1]], colormap='plasma', linewidth=2.) #ax=axes[2]
+    #    SV_plot.set_title(stage, fontsize = fontsize)
+        SV_plot.set_ylabel(r'$C_k$ [kmol/m$^3]$', fontsize = fontsize)
+        SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
+        SV_plot.set_ylim((1e-11, 1e1))
+    #    SV_plot.set_ylim((-0.1, 7.1))
+        SV_plot.set_xlim((0, 1500))
+        SV_plot.set_xticks([200, 400, 600, 800, 1000, 1200, 1400])
+        SV_plot.legend(loc=2, bbox_to_anchor=(1.0, 1), ncol=1, borderaxespad=0,
+                       frameon=False, fontsize = 15).set_visible(showlegend)
+        SV_plot.tick_params(axis='both', labelsize=16)
 #    SV_plot.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     
 #    # Plot species densities in separator electrolyte
@@ -112,7 +115,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 "============================================================================="
 
 def plot_meanPS(SV, tags, cycle):
-    
+    meanPS_data = pd.read_csv(r'MeanPS Data.csv', header=None)  
     SV_df = SV.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
 #    SV_df2 = SV2.copy()
@@ -145,6 +148,7 @@ def plot_meanPS(SV, tags, cycle):
     
     for i in np.arange(inputs.npoints_cathode):
         p1, = plt.plot(SV_df.loc[:, 'Time'], meanPS[:, i], '-', linewidth=lw)
+        p2, = plt.plot(meanPS_data.iloc[:,0], meanPS_data.iloc[:,1], 'o')
 #        p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], '--', linewidth=lw)
 #        p2, = plt.plot(SV_df2.loc[:, 'Time'], SV_df2.loc[:, tags['phi_ed']], 'g--', linewidth=lw)
         plt.xlim((0, 1770))
@@ -155,6 +159,18 @@ def plot_meanPS(SV, tags, cycle):
         plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
 #        plt.legend(["Discharge", "Charge"])
     return
+
+#def plot_PSconc(SV, tags, cycle):
+#    SV_df = SV.copy()
+#    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
+#    
+#    concPS = np.zeros([len(SV_df.index), inputs.npoints_cathode])
+#    for i in np.arange(inputs.npoints_cathode):
+#        for j in np.arange(len(SV_df.index)):
+#            offset = i*elyte_obj.n_species
+#            C_k = SV_df[tags['rho_el'][4+offset:offset+elyte_obj.n_species-2]].copy()
+#            meanPS[j, i] = sum(cathode.n_S_atoms[4:-2]*C_k.iloc[j, :])
+#    return
 
 def label_columns(t, SV, an_np, sep_np, cat_np):
     
@@ -272,7 +288,7 @@ def tag_strings(SV):
         r_Li2S = np.append(r_Li2S, SV_labels[ptr['eps_Li2S'] + offset])
         r_S8 = np.append(r_S8, SV_labels[ptr['eps_S8'] + offset])
         
-        rho_el[0 + offset:elyte_obj.n_species + offset] = \
+        rho_el[0 + offset:elyte_obj.n_species + offset - 3] = \
             SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
             
         phi_dl = np.append(phi_dl, SV_labels[ptr['phi_dl'] + offset])

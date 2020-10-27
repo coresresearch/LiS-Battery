@@ -16,7 +16,6 @@ from math import pi
 
 from li_s_battery_inputs import inputs
 
-
 "Import cantera objects - this step is the same regardless of test type"
 elyte_obj = ct.Solution(inputs.ctifile, inputs.elyte_phase)
 sulfur_obj = ct.Solution(inputs.ctifile, inputs.cat_phase1)
@@ -38,6 +37,18 @@ Li2S_tpb = ct.Interface(inputs.ctifile, 'tpb', [elyte_obj, Li2S_obj, conductor_o
 elyte_obj.electric_potential = inputs.Phi_el_init
 carbon_obj.electric_potential = inputs.Cell_voltage
 conductor_obj.electric_potential = inputs.Cell_voltage
+
+#print(sulfur_el_s.forward_rate_constants, '\n', sulfur_el_s.reverse_rate_constants)
+#print(carbon_el_s.forward_rate_constants, '\n', carbon_el_s.reverse_rate_constants)
+#print(Li2S_el_s.forward_rate_constants, '\n', Li2S_el_s.reverse_rate_constants)
+
+if 'cascade' or 'Bessler' in inputs.ctifile:
+    dG0_an = lithium_el_s.delta_standard_gibbs
+    E0_an = dG0_an/ct.faraday
+    print(E0_an)
+    dG0 = carbon_el_s.delta_standard_gibbs
+    E0 = dG0/ct.faraday
+    print(-E0)
 
 if hasattr(inputs, 'C_k_el_0'):
     elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
@@ -118,14 +129,25 @@ class cathode():
     
     A_S_0 = 2*pi*inputs.np_S8_init*(3*eps_S_0/2/inputs.np_S8_init/pi)**(2/3)
     A_L_0 = 2*pi*inputs.np_Li2S_init*(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(2/3)
+    
+    r_S_0 = 3*eps_S_0/A_S_0
+    r_L_0 = 3*eps_L_0/A_L_0
+#    print(r_S_0, r_L_0)
 
     A_C_0 = inputs.A_C_0
+    print(A_C_0 - (pi*inputs.np_S8_init*r_S_0**2) - (pi*inputs.np_Li2S_init*r_L_0**2))
     
     eps_el_0 = 1 - eps_S_0 - eps_C_0 - eps_L_0
     eps_pore = 1 - eps_C_0
     print(eps_el_0/eps_S_0/1.8)
     print(eps_el_0)
-        
+    
+    m_el = H*eps_el_0*elyte_obj.density_mass
+    m_sulfur = H*eps_S_0*sulfur_obj.density_mass
+    m_carbon = H*eps_C_0*carbon_obj.density_mass
+    m_L = H*eps_L_0*Li2S_obj.density_mass
+    m_cat = inputs.A_cat*(m_el + m_sulfur + m_carbon + m_L)
+    
     n_S_atoms = np.zeros([len(elyte_obj.species_names)])
     for i, species in enumerate(elyte_obj.species_names):
         if elyte_obj.n_atoms(species, 'S') and i != 2:
@@ -139,6 +161,8 @@ class cathode():
             S_atoms_bool[i] = 0
         elif n_S_atoms[i] != 0 and i != 2:
             S_atoms_bool[i] = 1
+            
+    n_S_species = np.count_nonzero(S_atoms_bool)
         
     n_S_0 = eps_el_0*H*np.dot(n_S_atoms, inputs.C_k_el_0) \
           + 8*sulfur_obj.density_mole*eps_S_0*H \
@@ -157,9 +181,13 @@ class cathode():
     
     def set_i_ext(value):
         cathode.i_ext = value
+        
+    nucleation_flag = np.zeros((inputs.npoints_cathode, 1))
+    np_L = inputs.np_Li2S_init*np.ones((inputs.npoints_cathode, 1))
             
     # Calculate the actual current density. 
     i_ext_amp = -inputs.C_rate*oneC
+#    print('External current =', i_ext_amp)
     
     sigma_eff = inputs.sigma_cat*eps_C_0/tau**3
         
@@ -178,6 +206,9 @@ class cathode():
         
     def set_tags(value):
         cathode.tags = value
+        
+    A_C_vec = np.array([])
+    nucl_thresh = 1e-2
     
 "============================================================================="        
         
@@ -200,7 +231,7 @@ class sep():
     epsilon_el = 1 - epsilon      # Volume fraction of electrolyte [-]
     dyInv = npoints/H             # Inverse of y-direction discretization [1/m]
     dy = H/npoints
-    
+    sep_density_mass = 940        # HDPE density [kg/m^3]
     # Mobility of electrolyte species
     u_Li_el = inputs.D_Li_el*epsilon_el/ct.gas_constant/inputs.T/tau**3
     
@@ -226,6 +257,10 @@ class sep():
     offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
     
     n_S_0 = epsilon_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
+    
+    m_HDPE = H*epsilon*sep_density_mass
+    m_el = H*epsilon_el*elyte_obj.density_mass
+    m_sep = inputs.A_cat*(m_HDPE + m_el)
     
 #    z_k_el = elyte_obj.species_charges
     
@@ -276,6 +311,11 @@ class anode():
     
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
+    m_Li = H*inputs.epsilon_an*lithium_obj.density_mass
+    m_el = H*eps_el*elyte_obj.density_mass
+    m_an = inputs.A_cat*(m_Li + m_el)
+    m_bat = cathode.m_cat + sep.m_sep + m_an
+    
 #    z_k_el = elyte_obj.species_charges
         
 "============================================================================="
@@ -292,7 +332,6 @@ class sol_init():
     offsets = cathode.offsets
     ptr = cathode.ptr
     for j in np.arange(0, cathode.npoints):
-        
         SV_0[offsets[j] + ptr['eps_S8']] = cathode.eps_S_0
         algvar[offsets[j] + ptr['eps_S8']] = 1
         
@@ -308,10 +347,10 @@ class sol_init():
         SV_0[offsets[j]+ptr['phi_ed']] = inputs.Cell_voltage
         
         SV_0[offsets[j]+ptr['np_S8']]=inputs.np_S8_init
-        algvar[offsets[j] + ptr['np_S8']] = 1
+#        algvar[offsets[j] + ptr['np_S8']] = 1
         
         SV_0[offsets[j]+ptr['np_Li2S']] = inputs.np_Li2S_init
-        algvar[offsets[j] + ptr['np_Li2S']] = 1
+#        algvar[offsets[j] + ptr['np_Li2S']] = 1
      
     # Separator
     offsets = sep.offsets
@@ -334,7 +373,6 @@ class sol_init():
         algvar[offsets[j] + ptr['phi_dl']] = 1
         
         SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init
-        
     
                                            
 "============================================================================="

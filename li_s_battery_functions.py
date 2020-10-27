@@ -16,7 +16,6 @@ def dst(s1, s2, D_eff, dy1, dy2):
     
     dyInv = 1/(0.5*(dy1 + dy2))
     w1 = dy2/(dy1 + dy2); w2 = dy1/(dy1 + dy2)
-    C_0 = (s1['C_tot'] + s2['C_tot'])*0.5
     C_k = (w1*s1['C_k'] + w2*s2['C_k'])  #*0.5
     z_k = inputs.z_k_el
     

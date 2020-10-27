@@ -16,7 +16,7 @@ will be handled by a standalone module
 """
 
 import numpy as np
-from math import pi
+from math import pi, exp
 
 class inputs():
     
@@ -29,8 +29,8 @@ class inputs():
     
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
-    npoints_sep = 1*flag_sep
-    npoints_cathode = 1*flag_cathode
+    npoints_sep = 5*flag_sep
+    npoints_cathode = 3*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -49,7 +49,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.05
+    C_rate = 0.1
 #    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
@@ -63,9 +63,13 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-    ctifile = 'sulfur_cathode_cascade.yml'
+#    ctifile = 'sulfur_cathode_cascade_Crate.cti'
+#    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
 #    ctifile = 'Kuzmina.yml'
-    ctifile = 'Kuzmina3.yml'
+#    ctifile = 'Kuzmina3.yml'
+#    ctifile = 'Assary.yml'
+    ctifile = 'Bessler_Dennis.yml'
+#    ctifile = 'Shriram.yml'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -87,22 +91,17 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    Phi_el_init = 1.3
-    Cell_voltage = 2.4
+    Phi_el_init = 0.1
+    Cell_voltage = 2.5
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
-    # Initial number of nucleation sites per volume for solid phases. Eventually will
-    #   use a nucleation theory.
-    np_S8_init = 312e6      # Initial number of sulfur nucleation sites [n/m^3]
-    np_Li2S_init = 312e6    # Initial number of Li2S nucleation sites [n/m^3]
-    
     # Cell geometry
-    H_cat = 50e-6               # Cathode thickness [m]
+    H_cat = 100e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
-    A_C_0 = 1e5                 # Initial volume specific area of carbon [1/m]
+    A_C_0 = 2e4  # Initial volume specific area of carbon [1/m]
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
@@ -110,14 +109,27 @@ class inputs():
     #   or 'bulk' in the string >sulfur_method below.
     sulfur_method = 'loading'
     A_cat = 1.327e-4            # Cathode planar area [m^2]
-    m_S_0 = 2.5e-2              # Initial total mass of sulfur in cathode [kg_S8]
+    m_S_0 = 1.9e-2              # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
                                 # if 'bulk' method chosen. Sulfur loading in
                                 # [kg_S8/m^2] if 'loading' method chosen.
+                                
+    # Initial number of nucleation sites per volume for solid phases. Eventually will
+    #   use a nucleation theory.
+    if 'cascade' in ctifile:
+        n = 6e13*exp(3.2465*C_rate)
+        print("Density for cascade")
+    else:
+        n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
+        print("Density for Assary or Kuzmina", n)
+    
+#    n = 5e13
+    np_S8_init = npoints_cathode*1000/H_cat/A_cat # Initial number of sulfur nucleation sites [n/m^3]
+    np_Li2S_init = n   # Initial number of Li2S nucleation sites [n/m^3]
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
     #   the complementary phase is only the carbon structure - i.e. 40 wt% 
     #   sulfur means 60 wt% carbon.
-    pct_w_S8_0 = 0.8  # Initial weight percent of sulfur in cathode [kg_S8/kg]
+    pct_w_S8_0 = 0.6  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
     C_counter_n = 1.024 - 1.821e-14*2 - 3.314e-6*2 - 2.046e-6*2 - 2.046e-6*2 - 5.348e-6*2
     if 'Kuzmina' in ctifile:
@@ -133,7 +145,21 @@ class inputs():
         z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0, 0.])
         # DK: Need to rebuild with updated version of cantera to use `species_charges`
         #   then parameter will be set in the _init.py file
+        mech = 'Kuzmina'
         print('Using Kuzmina')
+    elif 'Assary' in ctifile:
+        C_k_el_0 = np.array([1.023e1, 
+                             1.024, 
+                             1.024, 
+                             1.943e-4, 
+                             1.821e-4, 
+                             3.314e-6, 
+                             2.046e-8,
+                             2.046e-10,
+                             5.348e-16])
+        z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0, 0.])
+        mech = 'Assary'
+        print('Using Assary')
     elif 'cascade' in ctifile:
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
@@ -145,7 +171,21 @@ class inputs():
                              2.046e-6,
                              5.348e-6])
         z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
+        mech = 'Cascade'
         print('Using cascade')
+    elif 'Dennis' or 'Shriram' in ctifile:
+        C_k_el_0 = np.array([1.023e1, 
+                             1.024, 
+                             1.023, 
+                             1.943e-2, 
+                             1.821e-4, 
+                             3.314e-4, 
+                             2.046e-5,
+                             5.348e-10,
+                             8.456e-13])
+        z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
+        mech = 'Bessler-Dennis'
+        print('Using Bessler-Dennis')
     
     "Cathode geometry and transport"
     # Anode geometry
@@ -163,11 +203,11 @@ class inputs():
     
     "Anode geometry and transport"
     # Anode geometry
-    epsilon_an = 0.6    # Volume fraction of anode phase [-]
+    epsilon_an = 0.63    # Volume fraction of anode phase [-]
     tau_an = 1.6        # Tortuosity, assume equal values for carbon and elyte [-]
     r_p_an = 5e-6       # Average pore radius [m]
     d_p_an = 5e-6       # Average particle diameter for graphite [m]
-    H_an = 25e-6        # Anode thickness [m]
+    H_an = 100e-6        # Anode thickness [m]
     overlap_an = 0.4    # Percentage of anode particle overlapping with other
                         #   anode particles. Reduces total anode/elyte
                         #   surface area [-]
