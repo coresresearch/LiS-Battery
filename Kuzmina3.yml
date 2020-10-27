@@ -147,7 +147,7 @@ species:
   composition: {Li: 1, E: -1}
   thermo:
     model: constant-cp
-    h0: -100 kJ/mol
+    h0: -278 kJ/mol
     s0: 13.4 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -197,7 +197,7 @@ species:
   composition: {Li: 2, S: 8}
   thermo:
     model: constant-cp
-    h0: -684.9 kJ/mol
+    h0: -1040.9 kJ/mol
     s0: -142.5 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -207,7 +207,7 @@ species:
   composition: {Li: 2, S: 6}
   thermo:
     model: constant-cp
-    h0: -676.7 kJ/mol
+    h0: -1032.7 kJ/mol
     s0: -117 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -217,7 +217,7 @@ species:
   composition: {Li: 2, S: 4}
   thermo:
     model: constant-cp
-    h0: -674.5 kJ/mol
+    h0: -1030.5 kJ/mol
     s0: -95.8 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -227,7 +227,7 @@ species:
   composition: {Li: 2, S: 3}
   thermo:
     model: constant-cp
-    h0: -747.3 kJ/mol
+    h0: -1103.3 kJ/mol
     s0: -93.8 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -237,7 +237,7 @@ species:
   composition: {Li: 2, S: 2}
   thermo:
     model: constant-cp
-    h0: -678.2 kJ/mol
+    h0: -1034.2 kJ/mol
     s0: -85.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -247,7 +247,7 @@ species:
   composition: {Li: 2, S: 1}
   thermo:
     model: constant-cp
-    h0: -573.1 kJ/mol
+    h0: -929.1 kJ/mol
     s0: -81.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -270,13 +270,13 @@ species:
 anode-elyte-reactions:
 - equation: Li(s) <=> Li+(e) + electron
   id: anode_faradaic_reaction
-  rate-constant: {A: 5e4, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e3, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 sulfur-elyte-reactions:
 - equation: S8(s) <=> S8(e)
   id: sulfur_dissolution
-  rate-constant: {A: 1.0e-5, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1.0e-4, b: 0.0, Ea: 0.0}
 
 carbon-elyte-reactions:
 - equation: S8(e) + 2 Li+(e) + 2 electron <=> Li2S8(e)
@@ -286,31 +286,31 @@ carbon-elyte-reactions:
 
 - equation: Li2S8(e) + 2 Li+(e) + 2 electron <=> Li2S6(e) + Li2S2(e)
   id: sulfur_reduction_2
-  rate-constant: {A: 1e10, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 2e11, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: Li2S6(e) + 2 Li+(e) + 2 electron <=> Li2S4(e) + Li2S2(e)
   id: sulfur_reduction_3
-  rate-constant: {A: 1e10, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 5e7, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: Li2S8(e) + 2 Li+(e) + 2 electron <=> 2 Li2S4(e)
   id: sulfur_reduction_4
-  rate-constant: {A: 1e10, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e7, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 cathode-edge-reactions:
 - equation: Li2S4(e) + 2 Li+(e) + 2 electron <=> Li2S3(e) + Li2S(s)
   id: sulfur_reduction_5
-  rate-constant: {A: 1e8, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e7, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: Li2S3(e) + 2 Li+(e) + 2 electron <=> Li2S2(e) + Li2S(s)
   id: sulfur_reduction_6
-  rate-constant: {A: 1e8, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e7, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: Li2S2(e) + 2 Li+(e) + 2 electron <=> 2 Li2S(s)
   id: sulfur_reduction_7
-  rate-constant: {A: 1e8, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e3, b: 0.0, Ea: 0.0}
   beta: 0.5

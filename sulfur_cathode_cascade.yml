@@ -8,7 +8,7 @@ descriptions: |-
     Modified by D. Korff, Colorado School of Mines
     06-12-2019
 
-    units(length = "cm", time = "s", quantity = "mol", act_energy = "J/mol")
+
 
 phases:
 - name: sulfur
@@ -201,7 +201,7 @@ species:
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
-    molar-volume: 1.0239e-4 m^3/mol
+    molar-volume: 1.239e-4 m^3/mol
 
 - name: S6-(e)
   composition: {S: 6, E: 2}
@@ -270,13 +270,13 @@ species:
 anode-elyte-reactions:
 - equation: Li(s) <=> Li+(e) + electron
   id: anode_faradaic_reaction
-  rate-constant: {A: 6e-2, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 6e-3, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 sulfur-elyte-reactions:
 - equation: S8(s) <=> S8(e)
   id: sulfur_dissolution
-  rate-constant: {A: 1.0e-6, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1.0e-5, b: 0.0, Ea: 0.0}
 
 carbon-elyte-reactions:
 - equation: 0.5 S8(e) + electron <=> 0.5 S8-(e)
@@ -286,12 +286,12 @@ carbon-elyte-reactions:
 
 - equation: 1.5 S8-(e) + electron <=> 2 S6-(e)
   id: sulfur_reduction_2
-  rate-constant: {A: 5e7, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 5e10, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: S6-(e) + electron <=> 1.5 S4-(e)
   id: sulfur_reduction_3
-  rate-constant: {A: 6e7, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 6e8, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: 0.5 S4-(e) + electron <=> S2-(e)
