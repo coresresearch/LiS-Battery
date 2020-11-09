@@ -141,7 +141,7 @@ species:
   composition: {Li: 1, E: -1}
   thermo:
     model: constant-cp
-    h0: -278 kJ/mol
+    h0: -10 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -241,7 +241,7 @@ species:
   composition: {Li: 2, S: 1}
   thermo:
     model: constant-cp
-    h0: -1112.48 kJ/mol
+    h0: -576.48 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -264,7 +264,7 @@ species:
 anode-elyte-reactions:
 - equation: Li(s) <=> Li+(e) + electron
   id: anode_faradaic_reaction
-  rate-constant: {A: 1e-9, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 4e-9, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 sulfur-elyte-reactions:
@@ -301,4 +301,4 @@ carbon-elyte-reactions:
 lithium-sulfide-elyte-reactions:
 - equation: 2 Li+(e) + S-(e) <=> Li2S(s)
   id: sulfur_reduction_6
-  rate-constant: {A: 2.75e-1, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 2.75e-5, b: 0.0, Ea: 0.0}

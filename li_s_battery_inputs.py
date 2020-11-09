@@ -30,7 +30,7 @@ class inputs():
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
     npoints_sep = 5*flag_sep
-    npoints_cathode = 3*flag_cathode
+    npoints_cathode = 4*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -49,7 +49,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.1
+    C_rate = 0.02
 #    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
@@ -91,6 +91,7 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
+#    Phi_el_init = 1.3
     Phi_el_init = 0.1
     Cell_voltage = 2.5
 
@@ -99,9 +100,10 @@ class inputs():
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
     # Cell geometry
-    H_cat = 100e-6               # Cathode thickness [m]
+    H_cat = 41e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
-    A_C_0 = 2e4  # Initial volume specific area of carbon [1/m]
+    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
+#    A_C_0 = 2e4
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
@@ -115,15 +117,17 @@ class inputs():
                                 
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
-    if 'cascade' in ctifile:
-        n = 6e13*exp(3.2465*C_rate)
+    if 'cascade' or 'Bessler' in ctifile:
+        n = 6e21  
+#        n = 6e13*exp(3.2465*C_rate)
         print("Density for cascade")
     else:
         n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
         print("Density for Assary or Kuzmina", n)
     
 #    n = 5e13
-    np_S8_init = npoints_cathode*1000/H_cat/A_cat # Initial number of sulfur nucleation sites [n/m^3]
+#    np_S8_init = npoints_cathode*1000/H_cat/A_cat
+    np_S8_init = npoints_cathode*1000000/H_cat/A_cat # Initial number of sulfur nucleation sites [n/m^3]
     np_Li2S_init = n   # Initial number of Li2S nucleation sites [n/m^3]
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
@@ -131,7 +135,7 @@ class inputs():
     #   sulfur means 60 wt% carbon.
     pct_w_S8_0 = 0.6  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
-    C_counter_n = 1.024 - 1.821e-14*2 - 3.314e-6*2 - 2.046e-6*2 - 2.046e-6*2 - 5.348e-6*2
+    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-10*2
     if 'Kuzmina' in ctifile:
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
@@ -171,12 +175,15 @@ class inputs():
                              2.046e-6,
                              5.348e-6])
         z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
-        mech = 'Cascade'
+        if 'lithiated' in ctifile:
+            mech = 'Cascade_li'
+        else:
+            mech = 'Cascade'
         print('Using cascade')
     elif 'Dennis' or 'Shriram' in ctifile:
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
-                             1.023, 
+                             C_counter_n, 
                              1.943e-2, 
                              1.821e-4, 
                              3.314e-4, 
@@ -223,7 +230,9 @@ class inputs():
     # Elytespecies bulk diffusion coefficients and charges. 
     #   Assumes four component elyte: [TEGDME, Li+, TFSI-, S8(e), Li2S8, Li2S6
     #                                  Li2S4, Li2S3, Li2S2]
-    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
+#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
+#                        1e-10, 1e-10])
+    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
                         1e-10, 1e-10])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]

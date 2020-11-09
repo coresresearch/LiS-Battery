@@ -109,10 +109,10 @@ def main():
         cat.nucleation_flag = np.zeros((inputs.npoints_cathode, 1))
         # New initial conditions from previous simulation
         if cycle_num == 0:
-            SV_0 = SV_0
-#            SV_0 = SV_eq[-1, :]
-            SV_dot_0 = SV_dot_0
-#            SV_dot_0 = SV_dot_eq[-1, :]
+#            SV_0 = SV_0
+            SV_0 = SV_eq[-1, :]
+#            SV_dot_0 = SV_dot_0
+            SV_dot_0 = SV_dot_eq[-1, :]
         else:   
             SV_0 = SV_0_cycle  
             SV_dot_0 = SV_dot_0_cycle  
@@ -140,7 +140,7 @@ def main():
         # Obtain tag strings for dataframe columns
         tags = tag_strings(SV_dch_df)
         plot_sim(tags, SV_dch_df, 'Discharging', 0+2*cycle_num, fig, axes)
-        plot_meanPS(SV_dch_df, tags, 'Discharging')
+#        plot_meanPS(SV_dch_df, tags, 'Discharging')
         
         print('Done Discharging\n')
         
@@ -223,6 +223,7 @@ def main():
     exp_data_01C = pd.read_csv(r'0.1C Data.csv', header=None)  
     exp_data_05C = pd.read_csv(r'0.5C Data.csv', header=None)
     exp_data_1C = pd.read_csv(r'1C Data.csv', header=None)
+    Bessler = pd.read_csv(r'Bessler Dennis Data.csv', header=None)
     SV_copy = SV_dch_df.copy()
     SV_copy.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el)
     "Set up your figure"
@@ -243,20 +244,21 @@ def main():
         tick.label1.set_fontname('Times New Roman')    
     color = matplotlib.cm.plasma(inputs.C_rate)
     p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'k-', linewidth=lw)
-    p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'bo')
-    p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'mo')
-    p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
-    plt.xlim((0, 1770))
-    plt.xticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600])
-    plt.ylim((1.5, 2.8))
+#    p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'ro')
+#    p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'co')
+#    p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
+    p5, = plt.plot(Bessler.iloc[:,0], Bessler.iloc[:,1], 'mo', ms=4)
+    plt.xlim((0, 1700))
+    plt.xticks([0, 400, 800, 1200, 1600])
+    plt.ylim((1.8, 2.6))
     plt.ylabel(r'Cell Voltage $[\mathrm{V}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
 #        plt.legend(["Discharge", "Charge"])
         
-#    file_name_dch = 'dch'+str(inputs.C_rate)+"C_"+inputs.mech+'.csv'
-#    SV_dch = SV_dch_df.copy()
-#    SV_dch.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el)
-#    SV_dch.to_csv(file_name_dch, index=False, header=True)
+    file_name_dch = 'dch'+str(inputs.C_rate)+"C_"+inputs.mech+'.csv'
+    SV_dch = SV_dch_df.copy()
+    SV_dch.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el)
+    SV_dch.to_csv(file_name_dch, index=False, header=True)
     
     t_elapsed = time.time() - t_count
     print('t_cpu=', t_elapsed, '\n')    
@@ -363,7 +365,9 @@ class cc_cycling(Implicit_Problem):
             np_S = inputs.np_S8_init
             np_L = inputs.np_Li2S_init
             
+#            A_S = 1e5*(eps_S8/cat.eps_S_0)**1.5  
             A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+#            A_L = 1e5*(eps_Li2S/cat.eps_L_0)**1.5  
             A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
 
             r_S = 3*eps_S8/A_S
@@ -475,7 +479,9 @@ class cc_cycling(Implicit_Problem):
             
         np_S = inputs.np_S8_init
         np_L = inputs.np_Li2S_init  #SV[offset + ptr['np_Li2S']]
+#        A_S = 1e5*(eps_S8/cat.eps_S_0)**1.5  
         A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+#        A_L = 1e5*(eps_Li2S/cat.eps_L_0)**1.5  
         A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
         r_S = 3*eps_S8/A_S
@@ -611,7 +617,7 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(res, '\n\n')
+#        print(SV, '\n\n')
         return res  
     
     "========================================================================="
@@ -631,7 +637,7 @@ class cc_cycling(Implicit_Problem):
         event5 = np.zeros([cat.npoints])
 #        event5 = 2.8 - y[cat.ptr_vec['phi_ed']]
         event6 = np.zeros([cat.npoints])
-#        event6 = y[cat.ptr_vec['phi_ed']] - 1.8
+        event6 = y[cat.ptr_vec['phi_ed']] - 1.8
         
         event7 = np.zeros([cat.npoints*elyte.n_species])
         event7 = y[cat.ptr_vec['rho_k_el']]

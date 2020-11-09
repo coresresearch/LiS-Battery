@@ -123,9 +123,12 @@ class cathode():
     rho_C = carbon_obj.density_mass
     m_solid = m_S/omega_S
     
-    eps_S_0 = m_S/rho_S/H
-    eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-5; 
+    eps_S_0 = 0.16  
+#    eps_S_0 = m_S/rho_S/H
+    eps_C_0 = 0.062 
+#    eps_C_0 = m_solid*omega_C/rho_C/H
+    eps_L_0 = 1e-4; 
+#    eps_L_0 = 1e-5
     
     A_S_0 = 2*pi*inputs.np_S8_init*(3*eps_S_0/2/inputs.np_S8_init/pi)**(2/3)
     A_L_0 = 2*pi*inputs.np_Li2S_init*(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(2/3)
@@ -187,7 +190,7 @@ class cathode():
             
     # Calculate the actual current density. 
     i_ext_amp = -inputs.C_rate*oneC
-#    print('External current =', i_ext_amp)
+    print('External current =', i_ext_amp)
     
     sigma_eff = inputs.sigma_cat*eps_C_0/tau**3
         
