@@ -29,7 +29,7 @@ class inputs():
     
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
-    npoints_sep = 5*flag_sep
+    npoints_sep = 1*flag_sep
     npoints_cathode = 4*flag_cathode
     
     # Set number of discretized shells in each particle    
@@ -68,8 +68,9 @@ class inputs():
 #    ctifile = 'Kuzmina.yml'
 #    ctifile = 'Kuzmina3.yml'
 #    ctifile = 'Assary.yml'
-    ctifile = 'Bessler_Dennis.yml'
-#    ctifile = 'Shriram.yml'
+#    ctifile = 'Bessler_Dennis.yml'
+    ctifile = 'Shriram.yml'
+#    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -118,7 +119,7 @@ class inputs():
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
-        n = 6e21  
+        n = 6e14  
 #        n = 6e13*exp(3.2465*C_rate)
         print("Density for cascade")
     else:
@@ -127,7 +128,7 @@ class inputs():
     
 #    n = 5e13
 #    np_S8_init = npoints_cathode*1000/H_cat/A_cat
-    np_S8_init = npoints_cathode*1000000/H_cat/A_cat # Initial number of sulfur nucleation sites [n/m^3]
+    np_S8_init = npoints_cathode*3000/H_cat/A_cat # 1000000 Initial number of sulfur nucleation sites [n/m^3]
     np_Li2S_init = n   # Initial number of Li2S nucleation sites [n/m^3]
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
@@ -181,6 +182,7 @@ class inputs():
             mech = 'Cascade'
         print('Using cascade')
     elif 'Dennis' or 'Shriram' in ctifile:
+        C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-10*2
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
                              C_counter_n, 
@@ -192,7 +194,20 @@ class inputs():
                              8.456e-13])
         z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
         mech = 'Bessler-Dennis'
-        print('Using Bessler-Dennis')
+    elif 'Shriram' in ctifile:
+        C_counter_n = 1.0
+        C_k_el_0 = np.array([1.023e1,
+                             1.00104,
+                             1.0,
+                             1.9e-2,
+                             1.78e-4,
+                             3.24e-4,
+                             2.0e-5,
+                             5.229e-10,
+                             8.267e-13])
+        z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
+        print('Using Shriram')
+        mech = 'Shriram'
     
     "Cathode geometry and transport"
     # Anode geometry
@@ -206,7 +221,7 @@ class inputs():
                         
     # Transport
     C_dl_cat = 1.5e-2    # Double-layer capacitance [F/m^2]
-    sigma_cat = 75.0     # Bulk cathode electrical conductivity [S/m]
+    sigma_cat = 60.0     # Bulk cathode electrical conductivity [S/m]
     
     "Anode geometry and transport"
     # Anode geometry

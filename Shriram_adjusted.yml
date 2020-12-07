@@ -1,6 +1,6 @@
 descriptions: |-
-  This is an implementation of the Li-S model used by Jonathan P. Neidhardt
-    et al (DOI: 10.1149/2.023209jes)
+  This is an implementation of the Li-S model used by Niloofar Kamyab
+    et al (DOI: 10.1149/1945-7111/abbbbf)
 
     units(length = "cm", time = "s", quantity = "mol", act_energy = "J/mol")
 
@@ -181,7 +181,7 @@ species:
   composition: {S: 8}
   thermo:
     model: constant-cp
-    h0: 10.0 kJ/mol
+    h0: 16.1 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -191,7 +191,7 @@ species:
   composition: {S: 8, E: 2}
   thermo:
     model: constant-cp
-    h0: -454.292 kJ/mol
+    h0: -462.2 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -201,7 +201,7 @@ species:
   composition: {S: 6, E: 2}
   thermo:
     model: constant-cp
-    h0: -454.3265 kJ/mol
+    h0: -478.1 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -211,7 +211,7 @@ species:
   composition: {S: 4, E: 2}
   thermo:
     model: constant-cp
-    h0: -447.9322 kJ/mol
+    h0: -479.9 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -221,7 +221,7 @@ species:
   composition: {S: 2, E: 2}
   thermo:
     model: constant-cp
-    h0: -422.116 kJ/mol
+    h0: -453.9 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -231,7 +231,7 @@ species:
   composition: {S: 1, E: 2}
   thermo:
     model: constant-cp
-    h0: -406.29 kJ/mol
+    h0: -438.0 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -241,7 +241,7 @@ species:
   composition: {Li: 2, S: 1}
   thermo:
     model: constant-cp
-    h0: -576.875 kJ/mol
+    h0: -492.93 kJ/mol
     s0: 0.0 J/mol/K
   equation-of-state:
     model: constant-volume
@@ -264,41 +264,47 @@ species:
 anode-elyte-reactions:
 - equation: Li(s) <=> Li+(e) + electron
   id: anode_faradaic_reaction
-  rate-constant: {A: 4.086e-9, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 0.394, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 sulfur-elyte-reactions:
 - equation: S8(s) <=> S8(e)
   id: sulfur_dissolution
-  rate-constant: {A: 1.9e-2, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1, b: 0.0, Ea: 0.0}
 
 carbon-elyte-reactions:
 - equation: 0.5 S8(e) + electron <=> 0.5 S8-(e)
   id: sulfur_reduction_1
-  rate-constant: {A: 7.725e13, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1.454, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 - equation: 1.5 S8-(e) + electron <=> 2 S6-(e)
   id: sulfur_reduction_2
-  rate-constant: {A: 4.331e16, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 0.214, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 - equation: S6-(e) + electron <=> 1.5 S4-(e)
   id: sulfur_reduction_3
-  rate-constant: {A: 3.193e14, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 0.628, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 - equation: 0.5 S4-(e) + electron <=> S2-(e)
   id: sulfur_reduction_4
-  rate-constant: {A: 2.375e11, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 0.724, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 - equation: 0.5 S2-(e) + electron <=> S-(e)
   id: sulfur_reduction_4
-  rate-constant: {A: 4.655e12, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 0.255, b: 0.0, Ea: 0.0}
+  exchange-current-density-formulation: True
   beta: 0.5
 
 lithium-sulfide-elyte-reactions:
 - equation: 2 Li+(e) + S-(e) <=> Li2S(s)
   id: sulfur_reduction_6
-  rate-constant: {A: 2.75e-5, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e2, b: 0.0, Ea: 0.0}

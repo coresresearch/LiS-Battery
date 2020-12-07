@@ -29,10 +29,10 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     
     vol_fracs = tags['eps_S8'] + tags['eps_Li2S']
 #    phi = tags['phi_dl'] + tags['phi_ed']
-    phi = tags['phi_ed'][0]
+    phi = tags['phi_ed']
     fontsize = 18
     SV_df = SV_df_stage.copy()
-    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
+    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_tot_0)
     print(SV_df.iloc[-1, -1])
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
@@ -73,12 +73,14 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     # Plot species densities in electrolyte
     for i in np.arange(0, inputs.npoints_cathode):
         offset = i*cathode.n_S_species
-        SV_plot = SV_df.plot(x='Time', y=rho_S[offset:cathode.n_S_species+offset], logy=True, ax=axes[2], 
+        SV_plot = SV_df.plot(x='Time', y=rho_S[offset:cathode.n_S_species+offset], logy=False, ax=axes[2], 
                              xlim=[0,t.iloc[-1]], colormap='plasma', linewidth=2.) #ax=axes[2]
+#        SV_plot = SV_df.plot(x='Time', y=rho_S[-1], logy=False, ax=axes[2],
+#                             xlim=[0,t.iloc[-1]], linewidth=2.)
     #    SV_plot.set_title(stage, fontsize = fontsize)
         SV_plot.set_ylabel(r'$C_k$ [kmol/m$^3]$', fontsize = fontsize)
         SV_plot.set_xlabel('Capacity $[Ah/kg_{sulfur}]$', fontsize = fontsize).set_visible(True)
-        SV_plot.set_ylim((1e-11, 1e1))
+#        SV_plot.set_ylim((1e-11, 1e1))
     #    SV_plot.set_ylim((-0.1, 7.1))
         SV_plot.set_xlim((0, 1700))
         SV_plot.set_xticks([200, 400, 600, 800, 1000, 1200, 1400, 1600])
@@ -117,7 +119,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
 def plot_meanPS(SV, tags, cycle):
     meanPS_data = pd.read_csv(r'MeanPS Data.csv', header=None)  
     SV_df = SV.copy()
-    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
+    SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_tot_0)
 #    SV_df2 = SV2.copy()
 #    SV_df2.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_0 + cathode.m_S_el)
     
@@ -337,15 +339,14 @@ def tag_strings(SV):
 
     
     
-if __name__ == "__main__":
-#    plot_meanPS(SV_dch, SV_ch, tags, 'Discharging')
-#    plot_meanPS(SV_ch, tags, 'Charging')
-    conservation_tests(SV_dch, tags, 1)
-    conservation_tests(SV_ch, tags, 3)
-   
+
 "============================================================================="
     
-def conservation_tests(SV, tags, sulfur_fig):
+def conservation_tests(SV_import, tags, sulfur_fig):
+    
+    SV = SV_import.copy()
+    SV.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_tot_0)
+    
     F = ct.faraday
     flag_cat = 1
     flag_sep = 1
@@ -361,6 +362,10 @@ def conservation_tests(SV, tags, sulfur_fig):
     n_S_solid_vec = np.zeros([len(SV.index)])
     n_S_Li2S_vec = np.zeros([len(SV.index)])
     n_S_cat = np.zeros([len(SV.index)])
+    n_S_cat1 = np.zeros([len(SV.index)])
+    n_S_cat2 = np.zeros([len(SV.index)])
+    n_S_cat3 = np.zeros([len(SV.index)])
+    n_S_cat4 = np.zeros([len(SV.index)])
     n_S_sep = np.zeros([len(SV.index)])
     n_S_an = np.zeros([len(SV.index)])
     charge_el_cat = np.zeros([len(SV.index)])
@@ -405,20 +410,33 @@ def conservation_tests(SV, tags, sulfur_fig):
 #        eps_C_vec[i] = 1 - eps_S8 - eps_Li2S - eps_el
 
         # Concentration vector for all species in elyte at current state
-#        rho_el_cat = state.iloc[cathode.ptr_vec['rho_k_el']]
-#        rho_el_sep = state.iloc[sep.ptr_vec['rho_k_el']]
-#        rho_el_an = state.iloc[anode.ptr['rho_k_el']]
+        rho_el_cat = state.iloc[cathode.ptr_vec['rho_k_el']]
+        rho_el_sep = state.iloc[sep.ptr_vec['rho_k_el']]
+        rho_el_an = state.iloc[anode.ptr['rho_k_el']]
         
         # Concentration of just sulfur containing species in electrolyte
+        rho_S_el_cat1 = state.iloc[cathode.offsets[0] + cathode.ptr['rho_k_el']]
+        rho_S_el_cat2 = state.iloc[cathode.offsets[1] + cathode.ptr['rho_k_el']]
+        rho_S_el_cat3 = state.iloc[cathode.offsets[2] + cathode.ptr['rho_k_el']]
+        rho_S_el_cat4 = state.iloc[cathode.offsets[3] + cathode.ptr['rho_k_el']]
         rho_S_el_cat = state.iloc[cathode.ptr_vec['rho_k_el']]
         rho_S_el_sep = state.iloc[sep.ptr_vec['rho_k_el']]
         rho_S_el_an = state.iloc[anode.ptr_vec['rho_k_el']]
 
         # Number of moles of sulfur atoms in elyte of each component
+        rho_S_el_cat_geo1 = rho_S_el_cat1*eps_el[0]
+        rho_S_el_cat_geo2 = rho_S_el_cat2*eps_el[1]
+        rho_S_el_cat_geo3 = rho_S_el_cat3*eps_el[2]
+        rho_S_el_cat_geo4 = rho_S_el_cat4*eps_el[3]
         rho_S_el_cat_geo = np.multiply(rho_S_el_cat.values.reshape(inputs.npoints_cathode, elyte_obj.n_species), eps_el.reshape(inputs.npoints_cathode, 1))
         n_S_cat[i] = cathode.dy*np.dot(n_S_atoms, rho_S_el_cat_geo.reshape(len(n_S_atoms), 1))
         n_S_sep[i] = sep.epsilon_el*sep.H*np.dot(cathode.n_S_atoms, rho_S_el_sep)
         n_S_an[i] = anode.eps_el*anode.H*np.dot(cathode.n_S_atoms, rho_S_el_an)
+        
+        n_S_cat1[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo1)
+        n_S_cat2[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo2)
+        n_S_cat3[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo3)
+        n_S_cat4[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo4)
         
         # Number of moles of sulfur atoms in solid phases
         n_S_solid = sum(8*sulfur_obj.density_mole*eps_S8*cathode.dy)
@@ -479,22 +497,25 @@ def conservation_tests(SV, tags, sulfur_fig):
 #        
 #        n_Li_tot[i] = n_Li_cat[i] + n_Li_Li2S[i]
         
-        """3. Charge neutrality"""
+#        """3. Charge neutrality"""
 #        charge_el_cat[i] = eps_el*cathode.H*np.dot(inputs.z_k_el, rho_el_cat)
 #        charge_el_sep[i] = sep.epsilon_el*sep.H*np.dot(inputs.z_k_el, rho_el_sep)
 #        charge_el_an[i] = anode.eps_el*anode.H*np.dot(inputs.z_k_el, rho_el_an)
-#            C_S_anions_0 = inputs.C_k_el_0[5:]
-#            C_S_anions = SV[offset + ptr['rho_k_el'][5:]]
-#            
-#            Q = -i_ext*t/F
-#            Q_S = sum((C_S_anions - C_S_anions_0)*(-2)*eps_el*cat.H)
-#            Q_dl = cat.C_dl*A_C*cat.H*SV[offset + ptr['phi_dl']]/F
-#            print(Q, Q_S, Q_dl, Q + Q_S - Q_dl, t, '\n')
-        
+#        C_S_anions_0 = inputs.C_k_el_0[5:]
+#        C_S_anions = SV[cathode.ptr_vec['rho_k_el'][4:]]
+#        C_S_anions_an = SV[anode.ptr_vec['rho_k_el'][4:]]
+#        C_S_anions_sep = SV[sep.ptr_vec['rho_k_el'][4:]]
+#        C_S_anions = C_S_anions_
+#        
+#        Q = -i_ext*t/F
+#        Q_S = sum((C_S_anions - C_S_anions_0)*(-2)*eps_el*cat.H)
+#        Q_dl = cat.C_dl*A_C*cat.H*SV[offset + ptr['phi_dl']]/F
+#        print(Q, Q_S, Q_dl, Q + Q_S - Q_dl, t, '\n')
+#        
     pct_error_S = 100*(n_S_tot - n_S_0)/n_S_0
-    N_Li_integral = np.cumsum(N_Li_sep) #*dt_vec
-    N_Li_dl_integral = np.cumsum(N_Li_dl)
-    pct_error_Li = (N_Li_integral + n_Li_tot)
+#    N_Li_integral = np.cumsum(N_Li_sep) #*dt_vec
+#    N_Li_dl_integral = np.cumsum(N_Li_dl)
+#    pct_error_Li = (N_Li_integral + n_Li_tot)
     
 #    test = (n_S_0 - n_S_tot[-1])
     """---------------------------------------------------------------------"""
@@ -525,7 +546,12 @@ def conservation_tests(SV, tags, sulfur_fig):
     p6, = plt.plot(SV.loc[:, 'Time'], n_S_cat, linewidth=lw)
     p7, = plt.plot(SV.loc[:, 'Time'], n_S_sep, linewidth=lw)
     p8, = plt.plot(SV.loc[:, 'Time'], n_S_an, linewidth=lw)
-    plt.legend(['Total', 'S8', 'Li2S', 'Initial', 'Cathode elyte', 'Sep elyte', 'Anode elyte'])
+#    p9, = plt.plot(SV.loc[:, 'Time'], n_S_cat1, linewidth=lw)
+#    p10, = plt.plot(SV.loc[:, 'Time'], n_S_cat2+n_S_cat1, linewidth=lw)
+#    p11, = plt.plot(SV.loc[:, 'Time'], n_S_cat3+n_S_cat2+n_S_cat1, linewidth=lw)
+#    p12, = plt.plot(SV.loc[:, 'Time'], n_S_cat4+n_S_cat3+n_S_cat2+n_S_cat1, linewidth=lw)
+    plt.legend(['Total', 'S8', 'Li2S', 'Initial', 'Cathode elyte', 'Sep elyte', 'Anode elyte',
+                'Cat1', 'Cat2', 'Cat3', 'Cat4'])
 #    p1, = plt.plot(SV_df.loc[:, 'Time'], SV_df.loc[:, tags['phi_ed']], 'k-', linewidth=lw)
 #    plt.xlim((0, SV.loc[-1, 'Time']))
 #    plt.xticks([0, 30000, 60000, 90000, 120000, 150000, 180000])
@@ -696,6 +722,11 @@ def conservation_tests(SV, tags, sulfur_fig):
 
 """========================================================================="""
     
-    
+if __name__ == "__main__":
+#    plot_meanPS(SV_dch, SV_ch, tags, 'Discharging')
+#    plot_meanPS(SV_ch, tags, 'Charging')
+    conservation_tests(SV_dch, tags, 1)
+    conservation_tests(SV_eq, tags, 3)
+   
     
     

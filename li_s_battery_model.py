@@ -41,12 +41,12 @@ def main():
     SV_0 = sol_init.SV_0
     SV_dot_0 = np.zeros_like(SV_0)
     t_0 = 0.
-    t_f = 3600./inputs.C_rate
+    t_f = 3600./inputs.C_rate  #63006.69900049 93633
     algvar = sol_init.algvar
     atol = np.ones_like(SV_0)*1e-6
     atol[cat.ptr_vec['eps_S8']] = 1e-15
     atol[cat.ptr_vec['eps_Li2S']] = 1e-15
-    atol[cat.ptr_vec['rho_k_el']] = 1e-30
+    atol[cat.ptr_vec['rho_k_el']] = 1e-16 # 1e-16 for Bessler
     rtol = 1e-6; sim_output = 50
     
     rtol_ch = 1e-6
@@ -133,7 +133,7 @@ def main():
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
-        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)
+        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(131865.32)
             
         SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
 
@@ -225,7 +225,7 @@ def main():
     exp_data_1C = pd.read_csv(r'1C Data.csv', header=None)
     Bessler = pd.read_csv(r'Bessler Dennis Data.csv', header=None)
     SV_copy = SV_dch_df.copy()
-    SV_copy.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el)
+    SV_copy.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_tot_0)
     "Set up your figure"
     fig = plt.figure(3)
     ax = fig.add_axes([0.2,0.2,0.6,0.75])
@@ -328,7 +328,7 @@ class cc_cycling(Implicit_Problem):
             conductor.electric_potential = s1['phi_ed']
             elyte.X = s1['X_k']
             
-            D_el = cat.D_el*eps_el**(1.5)
+            D_el = cat.D_el*eps_el**(cat.bruggeman)
 
             # Current node plus face boundary fluxes
             i_el_p = cat.sigma_eff*(s1['phi_ed'] - s2['phi_ed'])*cat.dyInv
@@ -338,7 +338,7 @@ class cc_cycling(Implicit_Problem):
             mult = tanh(eps_S8/cat.eps_dropoff)  
             sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
             sdot_S = S_el_s.get_net_production_rates(elyte)  
-    
+
             mult = tanh(eps_Li2S/cat.eps_dropoff)  
             sdot_Li2S = L_el_s.get_creation_rates(Li2S) - mult*(L_el_s.get_destruction_rates(Li2S))
             sdot_L = L_el_s.get_net_production_rates(elyte)
@@ -365,25 +365,39 @@ class cc_cycling(Implicit_Problem):
             np_S = inputs.np_S8_init
             np_L = inputs.np_Li2S_init
             
-#            A_S = 1e5*(eps_S8/cat.eps_S_0)**1.5  
-            A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-#            A_L = 1e5*(eps_Li2S/cat.eps_L_0)**1.5  
-            A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
+            A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
+#            A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+            A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
+#            A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
 
             r_S = 3*eps_S8/A_S
             r_L = 3*eps_Li2S/A_L
             
             tpb_len = 3*eps_Li2S/(r_L**2)
-            A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+            A_C = cat.A_C_0 #- (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+#            print(A_C, SV[offset + ptr['phi_ed']])
             
             R_C = sdot_C*A_C
-            R_S = sdot_S*A_S
-            R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+            if eps_S8 < 1e-5:
+                R_S = 0*sdot_S*A_S
+                sw = 0
+            else:
+                R_S = sdot_S*A_S
+                sw = 1
+                
+            if eps_Li2S < 1e-5 and i_ext == 0:
+                R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
+                sw2 = 0
+            else:
+                R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+                sw2 = 1
     
             i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
                Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
             i_Far = (i_C)*F/cat.dyInv
+#            if eps_S8 < 1e-3:
+#                print(-i_Far + i_el_m - i_el_p)
             
             # Net rate of formation
             R_net = R_C + R_S + R_L 
@@ -391,23 +405,23 @@ class cc_cycling(Implicit_Problem):
             
             """Calculate change in Sulfur"""                
             res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
-                                        - sulfur.volume_mole*sdot_S8*A_S)
-       
+                                        - sw*sulfur.volume_mole*sdot_S8*A_S)
+
             """Calculate change in Li2S"""
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                          - Li2S.volume_mole*(sdot_Li2S*A_L
+                                          - sw2*Li2S.volume_mole*(sdot_Li2S*A_L
                                           + sdot_tpb*tpb_len))
-            
+#            print(sdot_Li2S, A_L, sdot_tpb, tpb_len, res[offset + ptr['eps_Li2S']], 'node =', j)
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
             (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el 
             + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                             - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
-            
+#            print(R_net, i_ext)
             """Calculate change in delta-phi double layer"""
             res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
             (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C)
-            
+#            print(i_Far, i_ext, eps_S8)
             """Algebraic expression for charge neutrality in all phases"""
             res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
             
@@ -446,7 +460,7 @@ class cc_cycling(Implicit_Problem):
         
         # Set outlet boundary conditions for THIS node
         i_el_p = 0
-        D_el = cat.D_el*eps_el**(1.5)
+        D_el = cat.D_el*eps_el**(cat.bruggeman)
         N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, sep.dy)
 
         sdot_C = C_el_s.get_net_production_rates(elyte)
@@ -460,7 +474,7 @@ class cc_cycling(Implicit_Problem):
         sdot_L = L_el_s.get_net_production_rates(elyte)
         sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
         sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
-        
+#        print(L_el_s.delta_gibbs, i_ext, t)
         # Calculate new particle radii based on new volume fractions
 #        C_Li2S2 = SV[offset + ptr['rho_k_el'][-1]]
 #        nucl_mult = tanh(C_Li2S2/cat.nucl_thresh)
@@ -479,27 +493,42 @@ class cc_cycling(Implicit_Problem):
             
         np_S = inputs.np_S8_init
         np_L = inputs.np_Li2S_init  #SV[offset + ptr['np_Li2S']]
-#        A_S = 1e5*(eps_S8/cat.eps_S_0)**1.5  
-        A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-#        A_L = 1e5*(eps_Li2S/cat.eps_L_0)**1.5  
-        A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
+        A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
+#        A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+        A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
+#        A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
         r_S = 3*eps_S8/A_S
         r_L = 3*eps_Li2S/A_L
                 
         tpb_len = 3*eps_Li2S/(r_L**2)
         
-        A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+        A_C = cat.A_C_0 #- (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+#        print(A_C, SV[offset + ptr['phi_ed']], '\n\n')
 #        cat.A_C_vec = np.append(cat.A_C_vec, A_C)
         
         R_C = sdot_C*A_C
-        R_S = sdot_S*A_S
-        R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
-
+        if eps_S8 < 1e-5:
+            R_S = 0*sdot_S*A_S
+            sw = 0
+        else:
+            R_S = sdot_S*A_S
+            sw = 1
+        
+        if eps_Li2S < 1e-5 and i_ext == 0:
+            R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
+            sw2 = 0
+        else:
+            R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+            sw2 = 1
+#        print(eps_S8, '\n', R_S, '\n')
         i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
                Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
         i_Far = (i_C)*F/cat.dyInv
+#        if eps_S8 < 1e-3:
+#            print(-i_Far + i_el_m - i_el_p,
+#                  -t*cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el), '\n\n')
         
         # Net rate of formation
         R_net = R_C + R_S + R_L 
@@ -507,26 +536,27 @@ class cc_cycling(Implicit_Problem):
                                  
         """Calculate change in Sulfur"""                
         res[offset + ptr['eps_S8']] = (SV_dot[offset + ptr['eps_S8']] 
-                                    - sulfur.volume_mole*sdot_S8*A_S)
-        
+                                    - sw*sulfur.volume_mole*sdot_S8*A_S)
+
         """Calculate change in Li2S"""
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
-                                      - Li2S.volume_mole*(sdot_Li2S*A_L
+                                      - sw2*Li2S.volume_mole*(sdot_Li2S*A_L
                                       + sdot_tpb*tpb_len))
+#        print(sdot_Li2S, A_L, sdot_tpb, tpb_len, res[offset + ptr['eps_Li2S']], 'node =', j+1, '\n\n')
                 
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
         (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el
         + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                         - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
-        
+#        print(R_net, i_ext, eps_S8, '\n\n')
         """Calculate change in delta-phi double layer"""
         res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
         (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C)
-        
+#        print(i_Far, i_ext, eps_S8, '\n\n')
         """Algebraic expression for charge neutrality in all phases"""
         res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
-        
+#        print(i_el_m, i_el_p, i_io_m, i_io_p, res[offset+ptr['phi_ed']], '\n')
         """Calculate change in S8 nucleation sites"""
         res[offset + ptr['np_S8']] = SV[offset + ptr['np_S8']] - np_S
         
@@ -617,7 +647,7 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(SV, '\n\n')
+#        print(i_ext, t, '\n\n')
         return res  
     
     "========================================================================="
