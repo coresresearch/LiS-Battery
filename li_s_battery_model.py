@@ -45,9 +45,9 @@ def main():
     algvar = sol_init.algvar
     atol = np.ones_like(SV_0)*1e-6
     atol[cat.ptr_vec['eps_S8']] = 1e-15
-    atol[cat.ptr_vec['eps_Li2S']] = 1e-15
-    atol[cat.ptr_vec['rho_k_el']] = 1e-16 # 1e-16 for Bessler
-    rtol = 1e-6; sim_output = 50
+    atol[cat.ptr_vec['eps_Li2S']] = 1e-10
+    atol[cat.ptr_vec['rho_k_el']] = 1e-26 # 1e-16 for Bessler
+    rtol = 1e-2; sim_output = 50
     
     rtol_ch = 1e-6
     atol_ch = np.ones_like(SV_0)*1e-6
@@ -133,7 +133,7 @@ def main():
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
-        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(131865.32)
+        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)  #131865.32
             
         SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
 
@@ -244,18 +244,18 @@ def main():
         tick.label1.set_fontname('Times New Roman')    
     color = matplotlib.cm.plasma(inputs.C_rate)
     p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'k-', linewidth=lw)
-#    p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'ro')
-#    p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'co')
-#    p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
-    p5, = plt.plot(Bessler.iloc[:,0], Bessler.iloc[:,1], 'mo', ms=4)
+    p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'ro')
+    p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'co')
+    p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
+#    p5, = plt.plot(Bessler.iloc[:,0], Bessler.iloc[:,1], 'mo', ms=4)
     plt.xlim((0, 1700))
     plt.xticks([0, 400, 800, 1200, 1600])
     plt.ylim((1.8, 2.6))
     plt.ylabel(r'Cell Voltage $[\mathrm{V}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
     plt.xlabel(r'Capacity $[\mathrm{Ah} \hspace{0.5} \mathrm{kg}^{-1}_{\mathrm{sulfur}}]$', fontstyle='normal', fontname='Times new Roman', fontsize=fs+2, labelpad=5.0)
 #        plt.legend(["Discharge", "Charge"])
-        
-    file_name_dch = 'dch'+str(inputs.C_rate)+"C_"+inputs.mech+'.csv'
+    th_cat = str(int(inputs.H_cat*1e6))
+    file_name_dch = 'dch'+str(inputs.C_rate)+"C_"+th_cat+"um_"+inputs.mech+'.csv'
     SV_dch = SV_dch_df.copy()
     SV_dch.loc[:, 'Time'] *= -cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el)
     SV_dch.to_csv(file_name_dch, index=False, header=True)
@@ -365,32 +365,32 @@ class cc_cycling(Implicit_Problem):
             np_S = inputs.np_S8_init
             np_L = inputs.np_Li2S_init
             
-            A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
-#            A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-            A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
-#            A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
+#            A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
+            A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+#            A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
+            A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
 
             r_S = 3*eps_S8/A_S
             r_L = 3*eps_Li2S/A_L
             
             tpb_len = 3*eps_Li2S/(r_L**2)
-            A_C = cat.A_C_0 #- (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+            A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
 #            print(A_C, SV[offset + ptr['phi_ed']])
             
             R_C = sdot_C*A_C
-            if eps_S8 < 1e-5:
-                R_S = 0*sdot_S*A_S
-                sw = 0
-            else:
-                R_S = sdot_S*A_S
-                sw = 1
+#            if eps_S8 < 1e-5:
+#                R_S = 0*sdot_S*A_S
+#                sw = 0
+#            else:
+            R_S = sdot_S*A_S
+            sw = 1
                 
-            if eps_Li2S < 1e-5 and i_ext == 0:
-                R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
-                sw2 = 0
-            else:
-                R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
-                sw2 = 1
+#            if eps_Li2S < 1e-5 and i_ext == 0:
+#                R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
+#                sw2 = 0
+#            else:
+            R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+            sw2 = 1
     
             i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
@@ -493,34 +493,34 @@ class cc_cycling(Implicit_Problem):
             
         np_S = inputs.np_S8_init
         np_L = inputs.np_Li2S_init  #SV[offset + ptr['np_Li2S']]
-        A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
-#        A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-        A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
-#        A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
+#        A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
+        A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
+#        A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
+        A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
         r_S = 3*eps_S8/A_S
         r_L = 3*eps_Li2S/A_L
                 
         tpb_len = 3*eps_Li2S/(r_L**2)
         
-        A_C = cat.A_C_0 #- (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
+        A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
 #        print(A_C, SV[offset + ptr['phi_ed']], '\n\n')
 #        cat.A_C_vec = np.append(cat.A_C_vec, A_C)
         
         R_C = sdot_C*A_C
-        if eps_S8 < 1e-5:
-            R_S = 0*sdot_S*A_S
-            sw = 0
-        else:
-            R_S = sdot_S*A_S
-            sw = 1
+#        if eps_S8 < 1e-5:
+#            R_S = 0*sdot_S*A_S
+#            sw = 0
+#        else:
+        R_S = sdot_S*A_S
+        sw = 1
         
-        if eps_Li2S < 1e-5 and i_ext == 0:
-            R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
-            sw2 = 0
-        else:
-            R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
-            sw2 = 1
+#        if eps_Li2S < 1e-5 and i_ext == 0:
+#            R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
+#            sw2 = 0
+#        else:
+        R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
+        sw2 = 1
 #        print(eps_S8, '\n', R_S, '\n')
         i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
@@ -647,7 +647,7 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(i_ext, t, '\n\n')
+#        print(res, t, '\n\n')
         return res  
     
     "========================================================================="

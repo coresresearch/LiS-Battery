@@ -29,8 +29,8 @@ class inputs():
     
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
-    npoints_sep = 1*flag_sep
-    npoints_cathode = 4*flag_cathode
+    npoints_sep = 5*flag_sep
+    npoints_cathode = 20*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -49,7 +49,7 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.02
+    C_rate = 0.1
 #    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
@@ -64,12 +64,12 @@ class inputs():
     
     "Set up Cantera phase names and CTI file info"
 #    ctifile = 'sulfur_cathode_cascade_Crate.cti'
-#    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
+    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
 #    ctifile = 'Kuzmina.yml'
 #    ctifile = 'Kuzmina3.yml'
 #    ctifile = 'Assary.yml'
 #    ctifile = 'Bessler_Dennis.yml'
-    ctifile = 'Shriram.yml'
+#    ctifile = 'Shriram.yml'
 #    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
@@ -92,19 +92,19 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-#    Phi_el_init = 1.3
-    Phi_el_init = 0.1
-    Cell_voltage = 2.5
+    Phi_el_init = 1.3
+#    Phi_el_init = 0.1
+    Cell_voltage = 2.4
 
     # Cutoff values for charging and discharging of electrodes:
     Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
     # Cell geometry
-    H_cat = 41e-6               # Cathode thickness [m]
+    H_cat = 100e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
-    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
-#    A_C_0 = 2e4
+#    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
+    A_C_0 = 2e4
     
     # There are two options for providing sulfur loading. Input the value in
     #   [kg_sulfur/m^2] pre-calculated or enter the mass of sulfur and cell
@@ -119,8 +119,8 @@ class inputs():
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
-        n = 6e14  
-#        n = 6e13*exp(3.2465*C_rate)
+#        n = 1.1e15  
+        n = 6e13*exp(3.0327*C_rate)
         print("Density for cascade")
     else:
         n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
@@ -240,15 +240,15 @@ class inputs():
     D_Li_an = 7.5e-16   # Bulk diffusion coefficient for Li in graphite [m^2/s]
     
     "Electrolyte/separator geometry and transport"
-    H_elyte = 9e-6     # Separator thickness [m]
+    H_elyte = 25e-6     # Separator thickness [m]
     
     # Elytespecies bulk diffusion coefficients and charges. 
     #   Assumes four component elyte: [TEGDME, Li+, TFSI-, S8(e), Li2S8, Li2S6
     #                                  Li2S4, Li2S3, Li2S2]
-#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
-#                        1e-10, 1e-10])
-    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
+    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
                         1e-10, 1e-10])
+#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
+#                        1e-10, 1e-10])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
     tau_sep = 1.6       # Tortuosity of separator [-]

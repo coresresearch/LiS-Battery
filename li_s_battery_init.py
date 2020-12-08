@@ -39,7 +39,7 @@ carbon_obj.electric_potential = inputs.Cell_voltage
 conductor_obj.electric_potential = inputs.Cell_voltage
 #print('k_f =', lithium_el_s.forward_rate_constants)
 #print('k_r =', lithium_el_s.reverse_rate_constants)
-print('dG =', Li2S_el_s.delta_standard_gibbs)
+#print('dG =', Li2S_el_s.delta_standard_gibbs)
 #print('E0 =', -lithium_el_s.delta_standard_gibbs/ct.faraday)
 
 #print(sulfur_el_s.forward_rate_constants, '\n', sulfur_el_s.reverse_rate_constants)
@@ -127,18 +127,20 @@ class cathode():
     rho_C = carbon_obj.density_mass
     m_solid = m_S/omega_S
     
-    eps_S_0 = 0.16  
-#    eps_S_0 = m_S/rho_S/H
-    eps_C_0 = 0.062 
-#    eps_C_0 = m_solid*omega_C/rho_C/H
-    eps_L_0 = 1e-4; 
-#    eps_L_0 = 1e-5
+#    eps_S_0 = 0.16  
+    eps_S_0 = m_S/rho_S/H
+#    eps_C_0 = 0.062 
+    eps_C_0 = 0.455  #m_solid*omega_C/rho_C/H
+#    eps_L_0 = 1e-4; 
+    eps_L_0 = 1e-5
     
     if inputs.mech == 'Bessler-Dennis':
         m_S_0 = eps_S_0*H*inputs.A_cat*sulfur_obj.density_mass
     
-    A_S_0 = 1e5  #2*pi*inputs.np_S8_init*(3*eps_S_0/2/inputs.np_S8_init/pi)**(2/3)
-    A_L_0 = 1e5  #2*pi*inputs.np_Li2S_init*(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(2/3)
+#    A_S_0 = 1e5  
+    A_S_0 = 2*pi*inputs.np_S8_init*(3*eps_S_0/2/inputs.np_S8_init/pi)**(2/3)
+#    A_L_0 = 1e5  
+    A_L_0 = 2*pi*inputs.np_Li2S_init*(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(2/3)
     
     r_S_0 = 3*eps_S_0/A_S_0
     r_L_0 = 3*eps_L_0/A_L_0
