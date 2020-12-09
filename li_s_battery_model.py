@@ -133,7 +133,7 @@ def main():
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
-        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(131865.32)
+        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)  #131865.32
             
         SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
 
