@@ -49,7 +49,7 @@ print('dG =', Li2S_el_s.delta_standard_gibbs)
 if 'cascade' or 'Bessler' in inputs.ctifile:
     dG0_an = lithium_el_s.delta_standard_gibbs
     E0_an = -dG0_an/ct.faraday
-    print(E0_an)
+    print('E_o_an = ',E0_an)
     dG0 = carbon_el_s.delta_standard_gibbs
     E0 = dG0/ct.faraday
     print(-E0)

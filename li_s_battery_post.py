@@ -33,7 +33,7 @@ def plot_sim(tags, SV_df_stage, stage, yax, fig, axes):
     fontsize = 18
     SV_df = SV_df_stage.copy()
     SV_df.loc[:, 'Time'] *= -cathode.i_ext_amp*inputs.A_cat/3600/(cathode.m_S_tot_0)
-    print(SV_df.iloc[-1, -1])
+    
     t = SV_df['Time']
     # Plot potential for the electrolyte and the double layer
     SV_plot = SV_df.plot(x='Time', y=phi, ax=axes[0], xlim=[0,t.iloc[-1]])
