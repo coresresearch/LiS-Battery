@@ -30,7 +30,7 @@ class inputs():
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
     npoints_sep = 5*flag_sep
-    npoints_cathode = 20*flag_cathode
+    npoints_cathode = 5*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -237,7 +237,7 @@ class inputs():
     
     "Anode geometry and transport"
     # Anode geometry
-    epsilon_an = 0.63    # Volume fraction of anode phase [-]
+    epsilon_an = 1  #0.63    # Volume fraction of anode phase [-]
     tau_an = 1.6        # Tortuosity, assume equal values for carbon and elyte [-]
     r_p_an = 5e-6       # Average pore radius [m]
     d_p_an = 5e-6       # Average particle diameter for graphite [m]

@@ -198,14 +198,14 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
 #            newcols.update(newcols_an)
             
         # Loop over number of species in electrolyte
-        for k in np.arange(0, elyte_obj.n_species):
-            species = elyte_obj.species_names[k]
-            newcols_el = {k + offset: 'rho_'+species+'_an'+str(j+1)}
-            newcols.update(newcols_el)
+#        for k in np.arange(0, elyte_obj.n_species):
+#            species = elyte_obj.species_names[k]
+#            newcols_el = {k + offset: 'rho_'+species+'_an'+str(j+1)}
+#            newcols.update(newcols_el)
             
         # Add tags for electrod and double layer potentials
-        newcols_phi = {0+elyte_obj.n_species+offset: 'Phi_an_dl'+str(j+1),
-                       1+elyte_obj.n_species+offset: 'Phi_an'+str(j+1)}
+        newcols_phi = {0+offset: 'Phi_an_dl'+str(j+1),
+                       1+offset: 'Phi_an'+str(j+1)}
         newcols.update(newcols_phi)
         
         SV_df.rename(columns=newcols, inplace = True)
@@ -279,7 +279,7 @@ def tag_strings(SV):
     rho_el_sep = []
     phi_sep = np.array([])
     
-    rho_el_an = []
+#    rho_el_an = []
     phi_dl_an = np.array([])
     phi_an = np.array([])
     
@@ -311,8 +311,8 @@ def tag_strings(SV):
     for j in np.arange(0, anode.npoints):
         offset = int(anode.offsets[j])
         
-        rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
-            SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
+#        rho_el_an[0 + offset:elyte_obj.n_species + offset] = \
+#            SV_labels[ptr['rho_k_el'][0]+offset:ptr['rho_k_el'][-1]+offset+1]
             
         phi_dl_an = np.append(phi_dl_an, SV_labels[ptr['phi_dl'] + offset])
         phi_an = np.append(phi_an, SV_labels[ptr['phi_ed'] + offset])
@@ -332,7 +332,7 @@ def tag_strings(SV):
     tags['eps_Li2S'] = r_Li2S; tags['eps_S8'] = r_S8; tags['rho_el'] = rho_el
     tags['phi_dl'] = phi_dl; tags['phi_ed'] = phi_ed; tags['np_S8'] = np_S8
     tags['np_Li2S'] = np_Li2S; tags['rho_el_sep'] = rho_el_sep; tags['phi_sep'] = phi_sep
-    tags['rho_el_an'] = rho_el_an; tags['phi_dl_an'] = phi_dl_an; tags['phi_an'] = phi_an
+    tags['phi_dl_an'] = phi_dl_an; tags['phi_an'] = phi_an  #; tags['rho_el_an'] = rho_el_an
     
     return tags
     

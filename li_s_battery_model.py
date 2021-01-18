@@ -283,7 +283,7 @@ from li_s_battery_init import lithium_el_s as lithium_s
 from li_s_battery_init import conductor_obj as conductor
 from li_s_battery_init import elyte_obj as elyte
 from li_s_battery_functions import set_state, set_geom, set_rxn
-from li_s_battery_functions import set_state_sep
+from li_s_battery_functions import set_state_sep, set_state_anode
 from li_s_battery_functions import dst
 from math import pi, exp, tanh
 
@@ -597,8 +597,8 @@ class cc_cycling(Implicit_Problem):
         s1 = dict(s2)
         
         # Shift forward to NEXT node
-        j = 0; offset = an.offsets[int(j)]
-        s2 = set_state(SV, offset, an.ptr)
+#        j = 0; offset = an.offsets[int(j)]
+#        s2 = set_state_anode(SV, offset, an.ptr)
                 
         # Shift back to THIS node
         offset = sep.offsets[-1]
@@ -606,20 +606,22 @@ class cc_cycling(Implicit_Problem):
         D_el = sep.D_el 
         
         # Current node plus face boundary conditions
-        N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, an.dy)
+#        N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, an.dy)
+#        i_io_p = 0
+#        N_io_p = 0
         
-        res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
-        - (N_io_m - N_io_p)*sep.dyInv/sep.epsilon_el)
+#        res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
+#        - (N_io_m - N_io_p)*sep.dyInv/sep.epsilon_el)
                 
-        res[offset + sep.ptr['phi']] = i_io_m - i_io_p
+#        res[offset + sep.ptr['phi']] = i_io_m - i_io_p
         
         """==============================ANODE=============================="""
         """INTERIOR NODES"""
           
-        i_io_m = i_io_p
-        N_io_m = N_io_p
+#        i_io_m = i_io_p
+#        N_io_m = N_io_p
         i_el_m = 0
-        s1 = dict(s2)
+#        s1 = dict(s2)
         
         j = 0
         offset = an.offsets[int(j)]
@@ -630,17 +632,19 @@ class cc_cycling(Implicit_Problem):
         
         elyte.X = s1['X_k']
         elyte.electric_potential = s1['phi_el']
-        lithium.electric_potential = s1['phi_ed']
-        conductor.electric_potential = s1['phi_ed']
+        lithium.electric_potential = SV[offset + an.ptr['phi_ed']]  #s1['phi_ed']
+        conductor.electric_potential = SV[offset + an.ptr['phi_ed']]  #s1['phi_ed']
         
         sdot_Li = lithium_s.get_net_production_rates(elyte)
         sdot_Far = lithium_s.get_net_production_rates(conductor)
         
         R_net = sdot_Li*an.A_Li
         i_Far = sdot_Far*an.A_Li*F*an.dy
+        
+        res[sep.offsets[-1] + sep.ptr['phi']] = i_io_m - i_Far
                    
-        res[offset + an.ptr['rho_k_el']] = (SV_dot[offset + an.ptr['rho_k_el']]
-        - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)
+        res[sep.offsets[-1] + sep.ptr['rho_k_el']] = (SV_dot[sep.offsets[-1] + sep.ptr['rho_k_el']]
+        - (R_net + (N_io_m - N_io_p)*sep.dyInv)/sep.epsilon_el)  
 
         res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']]
         - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 

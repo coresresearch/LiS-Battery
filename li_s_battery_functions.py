@@ -60,6 +60,18 @@ def set_state(SV, offset, ptr):
 
 """========================================================================="""
 
+def set_state_anode(SV, offset, ptr):
+    
+    state = {}
+    
+    state['phi_ed'] = SV[offset + ptr['phi_ed']]
+    state['phi_dl'] = SV[offset + ptr['phi_dl']]
+    state['phi_el'] = SV[offset + ptr['phi_ed']] - SV[offset + ptr['phi_dl']]
+    
+    return state
+
+"""========================================================================="""
+
 def set_geom(SV, offset, ptr):
     geom = {}
     

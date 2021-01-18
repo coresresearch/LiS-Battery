@@ -300,22 +300,22 @@ class anode():
     
     npoints = inputs.npoints_anode
     
-    nVars = 2 + elyte_obj.n_species
+    nVars = 2 #+ elyte_obj.n_species
     
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
     
-    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
-    ptr['phi_dl'] = ptr['rho_k_el'][-1] + 1
-    ptr['phi_ed'] = ptr['rho_k_el'][-1] + 2
+#    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
+    ptr['phi_dl'] = 0  #ptr['rho_k_el'][-1] + 1
+    ptr['phi_ed'] = 1  #ptr['rho_k_el'][-1] + 2
     
-    ptr_vec = {}
-    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
+#    ptr_vec = {}
+#    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
     
-    for i in np.arange(1, npoints):
-        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'],
-                                       cathode.nSV + sep.nSV + ptr['rho_k_el'] + i*nVars)
+#    for i in np.arange(1, npoints):
+#        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'],
+#                                       cathode.nSV + sep.nSV + ptr['rho_k_el'] + i*nVars)
     
     # Set length of solution vector for anode
     nSV = npoints*nVars
@@ -395,8 +395,8 @@ class sol_init():
     offsets = anode.offsets
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
-        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
-        algvar[offsets[j] + ptr['rho_k_el']] = 1
+#        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
+#        algvar[offsets[j] + ptr['rho_k_el']] = 1
         
         SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
         algvar[offsets[j] + ptr['phi_dl']] = 1
