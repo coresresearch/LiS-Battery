@@ -69,6 +69,7 @@ class inputs():
 #    ctifile = 'Kuzmina3.yml'
 #    ctifile = 'Assary.yml'
 #    ctifile = 'Bessler_Dennis.yml'
+#    ctifile = 'Bessler_Dennis_mod.yml'
 #    ctifile = 'Shriram.yml'
 #    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
@@ -101,7 +102,7 @@ class inputs():
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
     # Cell geometry
-    H_cat = 100e-6               # Cathode thickness [m]
+    H_cat = 31e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
 #    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
     A_C_0 = 2e4
@@ -112,13 +113,14 @@ class inputs():
     #   or 'bulk' in the string >sulfur_method below.
     sulfur_method = 'loading'
     A_cat = 1.327e-4            # Cathode planar area [m^2]
-    m_S_0 = 1.9e-2              # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
+    m_S_0 = 3.15e-2 #1.9e-2      # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
                                 # if 'bulk' method chosen. Sulfur loading in
                                 # [kg_S8/m^2] if 'loading' method chosen.
                                 
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
+#        n = 1e15
 #        n = 1.1e15  
         n = 6e13*exp(3.0327*C_rate)
         print("Density for cascade")
@@ -128,7 +130,7 @@ class inputs():
     
 #    n = 5e13
 #    np_S8_init = npoints_cathode*1000/H_cat/A_cat
-    np_S8_init = npoints_cathode*3000/H_cat/A_cat # 1000000 Initial number of sulfur nucleation sites [n/m^3]
+    np_S8_init = 4521477015825  #npoints_cathode*3000/H_cat/A_cat # 1000000 Initial number of sulfur nucleation sites [n/m^3]
     np_Li2S_init = n   # Initial number of Li2S nucleation sites [n/m^3]
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
@@ -136,7 +138,8 @@ class inputs():
     #   sulfur means 60 wt% carbon.
     pct_w_S8_0 = 0.6  # Initial weight percent of sulfur in cathode [kg_S8/kg]
     pct_w_C_0 = 1 - pct_w_S8_0   # Initial weight percent of carbon in cathode [kg_C/kg]
-    C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-10*2
+    C_counter_n = (1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 
+                    5.348e-10*2 - 8.456e-10*2)
     if 'Kuzmina' in ctifile:
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
@@ -166,20 +169,29 @@ class inputs():
         mech = 'Assary'
         print('Using Assary')
     elif 'cascade' in ctifile:
+        C_counter_n = (1.024 - 1.821e-4*2 - 3.314e-6*2 - 
+                        2.046e-6*2 - 2.046e-6*2 - 5.348e-6*2)
+        if 'lithiated' in ctifile:
+            C_counter_0 = 1.024
+        else:
+            C_counter_0 = C_counter_n
+            
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
-                             C_counter_n, 
+                             C_counter_0, 
                              1.943e-2, 
                              1.821e-4, 
                              3.314e-6, 
                              2.046e-6,
                              2.046e-6,
                              5.348e-6])
-        z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
+        
         if 'lithiated' in ctifile:
             mech = 'Cascade_li'
+            z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0., 0.])
         else:
             mech = 'Cascade'
+            z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
         print('Using cascade')
     elif 'Dennis' or 'Shriram' in ctifile:
         C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-10*2
