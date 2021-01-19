@@ -300,15 +300,15 @@ class anode():
     
     npoints = inputs.npoints_anode
     
-    nVars = 2 #+ elyte_obj.n_species
+    nVars = 1 #+ elyte_obj.n_species
     
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
     
 #    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
-    ptr['phi_dl'] = 0  #ptr['rho_k_el'][-1] + 1
-    ptr['phi_ed'] = 1  #ptr['rho_k_el'][-1] + 2
+#    ptr['phi_dl'] = 0  #ptr['rho_k_el'][-1] + 1
+    ptr['phi_ed'] = 0  #ptr['rho_k_el'][-1] + 2
     
 #    ptr_vec = {}
 #    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
@@ -390,6 +390,7 @@ class sol_init():
         algvar[offsets[j] + ptr['rho_k_el']] = 1
         
         SV_0[offsets[j] + ptr['phi']] = inputs.Phi_el_init
+        algvar[offsets[j] + ptr['phi']] = 1
      
     # Anode
     offsets = anode.offsets
@@ -398,8 +399,8 @@ class sol_init():
 #        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
 #        algvar[offsets[j] + ptr['rho_k_el']] = 1
         
-        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
-        algvar[offsets[j] + ptr['phi_dl']] = 1
+#        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
+#        algvar[offsets[j] + ptr['phi_dl']] = 1
         
         SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init
     

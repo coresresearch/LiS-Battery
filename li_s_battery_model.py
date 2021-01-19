@@ -641,20 +641,21 @@ class cc_cycling(Implicit_Problem):
         R_net = sdot_Li*an.A_Li
         i_Far = sdot_Far*an.A_Li*F*an.dy
         
-        res[sep.offsets[-1] + sep.ptr['phi']] = i_io_m - i_Far
+        res[sep.offsets[-1] + sep.ptr['phi']] = (SV_dot[sep.offsets[-1] + sep.ptr['phi']]
+        - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
                    
         res[sep.offsets[-1] + sep.ptr['rho_k_el']] = (SV_dot[sep.offsets[-1] + sep.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*sep.dyInv)/sep.epsilon_el)  
 
-        res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']]
-        - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
+#        res[offset + an.ptr['phi_dl']] = (SV_dot[offset + an.ptr['phi_dl']]
+#        - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
         
         res[offset + an.ptr['phi_ed']] = SV[offset + an.ptr['phi_ed']] 
         
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(res, t, '\n\n')
+        print(SV, t, '\n\n')
         return res  
     
     "========================================================================="

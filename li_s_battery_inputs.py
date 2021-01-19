@@ -30,7 +30,7 @@ class inputs():
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
     npoints_sep = 5*flag_sep
-    npoints_cathode = 5*flag_cathode
+    npoints_cathode = 3*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
