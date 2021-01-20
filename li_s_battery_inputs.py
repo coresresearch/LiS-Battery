@@ -30,7 +30,7 @@ class inputs():
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
     npoints_sep = 5*flag_sep
-    npoints_cathode = 3*flag_cathode
+    npoints_cathode = 5*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -102,7 +102,7 @@ class inputs():
     Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
     # Cell geometry
-    H_cat = 31e-6               # Cathode thickness [m]
+    H_cat = 100e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
 #    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
     A_C_0 = 2e4
@@ -113,7 +113,7 @@ class inputs():
     #   or 'bulk' in the string >sulfur_method below.
     sulfur_method = 'loading'
     A_cat = 1.327e-4            # Cathode planar area [m^2]
-    m_S_0 = 3.15e-2 #1.9e-2      # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
+    m_S_0 = 1.9e-2 #1.9e-2      # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
                                 # if 'bulk' method chosen. Sulfur loading in
                                 # [kg_S8/m^2] if 'loading' method chosen.
                                 

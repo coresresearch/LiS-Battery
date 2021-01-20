@@ -47,10 +47,10 @@ def main():
     algvar = sol_init.algvar
     atol = np.ones_like(SV_0)*1e-6
     atol[cat.ptr_vec['eps_S8']] = 1e-15
-    atol[cat.ptr_vec['eps_Li2S']] = 1e-10
+    atol[cat.ptr_vec['eps_Li2S']] = 1e-15
     atol[cat.ptr_vec['rho_k_el']] = 1e-26 # 1e-16 for Bessler
-    atol[cat.ptr_vec['rho_k_el']][3::elyte.n_species] = 26
-    rtol = 1e-6; sim_output = 50
+#    atol[cat.ptr_vec['rho_k_el']][3::elyte.n_species] = 26
+    rtol = 1e-4; sim_output = 50
      
     rtol_ch = 1e-6
     atol_ch = np.ones_like(SV_0)*1e-6
@@ -638,11 +638,14 @@ class cc_cycling(Implicit_Problem):
         sdot_Li = lithium_s.get_net_production_rates(elyte)
         sdot_Far = lithium_s.get_net_production_rates(conductor)
         
-        R_net = sdot_Li*an.A_Li
-        i_Far = sdot_Far*an.A_Li*F*an.dy
+        R_net = sdot_Li*an.A_Li*sep.dyInv
+        i_Far = sdot_Far*an.A_Li*F
+        R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/sep.dy/F
+        
+#        print(sdot_Far, i_ext, '\n')
         
         res[sep.offsets[-1] + sep.ptr['phi']] = (SV_dot[sep.offsets[-1] + sep.ptr['phi']]
-        - (-i_Far + i_el_m - i_el_p)*an.dyInv/an.C_dl/an.A_Li) 
+        + (-i_Far + i_el_m - i_el_p)/an.C_dl/an.A_Li) 
                    
         res[sep.offsets[-1] + sep.ptr['rho_k_el']] = (SV_dot[sep.offsets[-1] + sep.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*sep.dyInv)/sep.epsilon_el)  
@@ -655,7 +658,9 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-        print(SV, t, '\n\n')
+#        print(res, i_ext, t, '\n\n')
+#        if i_ext < 0:
+#            print(res, A_C, t, '\n\n')
         return res  
     
     "========================================================================="
