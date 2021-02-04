@@ -246,7 +246,7 @@ def main():
         tick.label1.set_fontsize(fs)
         tick.label1.set_fontname('Times New Roman')    
     color = matplotlib.cm.plasma(inputs.C_rate)
-    p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'k-', linewidth=lw)
+    p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'c-', linewidth=lw)
     p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'ro')
     p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'co')
     p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
@@ -330,8 +330,9 @@ class cc_cycling(Implicit_Problem):
             elyte.electric_potential = s1['phi_el'] 
             conductor.electric_potential = s1['phi_ed']
             elyte.X = s1['X_k']
-            
-            D_el = cat.D_el*eps_el**(cat.bruggeman)
+            b = 1e-16
+            D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+            D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
 
             # Current node plus face boundary fluxes
             i_el_p = cat.sigma_eff*(s1['phi_ed'] - s2['phi_ed'])*cat.dyInv
@@ -381,12 +382,12 @@ class cc_cycling(Implicit_Problem):
 #            print(A_C, SV[offset + ptr['phi_ed']])
             
             R_C = sdot_C*A_C
-#            if eps_S8 < 1e-5:
-#                R_S = 0*sdot_S*A_S
-#                sw = 0
-#            else:
-            R_S = sdot_S*A_S
-            sw = 1
+            if eps_S8 < 1e-5:
+                R_S = 0*sdot_S*A_S
+                sw = 0
+            else:
+                R_S = sdot_S*A_S
+                sw = 1
                 
 #            if eps_Li2S < 1e-5 and i_ext == 0:
 #                R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
@@ -463,7 +464,8 @@ class cc_cycling(Implicit_Problem):
         
         # Set outlet boundary conditions for THIS node
         i_el_p = 0
-        D_el = cat.D_el*eps_el**(cat.bruggeman)
+        D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+        D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
         N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, sep.dy)
 
         sdot_C = C_el_s.get_net_production_rates(elyte)
@@ -511,12 +513,12 @@ class cc_cycling(Implicit_Problem):
 #        cat.A_C_vec = np.append(cat.A_C_vec, A_C)
         
         R_C = sdot_C*A_C
-#        if eps_S8 < 1e-5:
-#            R_S = 0*sdot_S*A_S
-#            sw = 0
-#        else:
-        R_S = sdot_S*A_S
-        sw = 1
+        if eps_S8 < 1e-5:
+            R_S = 0*sdot_S*A_S
+            sw = 0
+        else:
+            R_S = sdot_S*A_S
+            sw = 1
         
 #        if eps_Li2S < 1e-5 and i_ext == 0:
 #            R_L = 0*sdot_L*A_L + 0*sdot_tpb_el*tpb_len
@@ -580,7 +582,8 @@ class cc_cycling(Implicit_Problem):
             
             # Shift back to THIS node
             offset = sep.offsets[int(j-1)]
-            D_el = sep.D_el
+            D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+            D_el = sep.D_el - D_scale
             
             # THIS node plus face boundary conditions
             N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, sep.dy)
@@ -602,8 +605,8 @@ class cc_cycling(Implicit_Problem):
                 
         # Shift back to THIS node
         offset = sep.offsets[-1]
-        
-        D_el = sep.D_el 
+        D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+        D_el = sep.D_el - D_scale
         
         # Current node plus face boundary conditions
 #        N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, an.dy)
@@ -660,7 +663,7 @@ class cc_cycling(Implicit_Problem):
 
 #        print(res, i_ext, t, '\n\n')
 #        if i_ext < 0:
-#            print(res, A_C, t, '\n\n')
+#            print(t, '\n\n')
         return res  
     
     "========================================================================="

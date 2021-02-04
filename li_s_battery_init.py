@@ -331,7 +331,7 @@ class anode():
     H = inputs.H_an
     
     C_dl = inputs.C_dl_an
-    A_Li = 1  #1/H
+    A_Li = 1.  #1/H
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
     
     u_Li_el = inputs.D_Li_el*eps_el/tau**3

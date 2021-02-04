@@ -252,7 +252,7 @@ species(name = "(tpb)", atoms = "")
 #-------------------------------------------------------------------------------
 # Anode reactions
 #-------------------------------------------------------------------------------
-surface_reaction("Li(s) <=> Li+(e) + electron", [6e-3, 0.0, 0.0], id="Anode-1", beta=0.5)
+surface_reaction("Li(s) <=> Li+(e) + electron", [2e-3, 0.0, 0.0], id="Anode-1", beta=0.5)
 
 #-------------------------------------------------------------------------------
 # Sulfur-electrolyte reactions
@@ -263,12 +263,12 @@ surface_reaction("S8(s) <=> S8(e)", [1.00e-7, 0.0, 0.0], id="S-E-1")
 # Carbon Electrolyte reactions
 #-------------------------------------------------------------------------------
 
-surface_reaction("0.5 S8(e) + Li+(e) + electron <=> 0.5 Li2S8(e)", [1e14, 0.0, 0.0], id="C-E-1", beta=0.5)
+surface_reaction("0.5 S8(e) + Li+(e) + electron <=> 0.5 Li2S8(e)", [5e14, 0.0, 0.0], id="C-E-1", beta=0.5)
 # 7.725
 
-surface_reaction("1.5 Li2S8(e) + Li+(e) + electron <=> 2 Li2S6(e)", [8e16, 0.0, 0.0], id="C-E-2", beta=0.5)
+surface_reaction("1.5 Li2S8(e) + Li+(e) + electron <=> 2 Li2S6(e)", [3e16, 0.0, 0.0], id="C-E-2", beta=0.5)
 
-surface_reaction("Li2S6(e) + Li+(e) + electron <=> 1.5 Li2S4(e)", [1e14, 0.0, 0.0], id="C-E-3", beta=0.5)
+surface_reaction("Li2S6(e) + Li+(e) + electron <=> 1.5 Li2S4(e)", [8e13, 0.0, 0.0], id="C-E-3", beta=0.5)
 
 surface_reaction("0.5 Li2S4(e) + Li+(e) + electron <=> Li2S2(e)", [1e11, 0.0, 0.0], id="C-E-4", beta=0.5)
 
@@ -277,36 +277,4 @@ surface_reaction("0.5 Li2S2(e) + Li+(e) + electron <=> Li2S(e)", [1e11, 0.0, 0.0
 #-------------------------------------------------------------------------------
 # Li2S Electrolyte reactions
 #-------------------------------------------------------------------------------
-surface_reaction("Li2S(e) <=> Li2S", [5.750e11, 0.0, 0.0], id="L-E-1")
-#edge_reaction("Li2S <=> 2 Li+(e) + 0.5 S2-(e) + electron", [2.625e-10, 0.0, 0.0], id="Cat-tpb-1", beta=0.5)
-#edge_reaction("2 Li+(e) + 0.5 S2-(e) + electron <=> Li2S", [5.625e-2, 0.0, 0.0], id="Cat-tpb-1", beta=0.5)
-
-#edge_reaction("2 Li+(e) + 0.5 S2-(e) + electron <=> Li2S", [1e-1, 0.0, 0.0], id="L-E-1", beta=0.5)
-#surface_reaction("Li2S(e) <=> Li2S(s)", [1e-10, 0.0, 0.0], id="L-E-2")
-
-#-------------------------------------------------------------------------------
-# Precipitation reactions
-#-------------------------------------------------------------------------------
-
-
-#-------------------------------------------------------------------------------
-# Old reactions
-#-------------------------------------------------------------------------------
-
-#surface_reaction("S8-(e) + 2 electron <=> 2 S4-(e)", [1e-40, 0.0, 0.0], id="C-E-2", beta=0.5)
-
-#surface_reaction("S4-(e) + 6 electron <=> 4 S-(e)", [1e-10, 0.0, 0.0], id="C-E-3", beta=0.5)
-
-#edge_reaction("S8(e) + 4 electron <=> 2 S4-(e)", [1e-21, 0.0, 0.0], id="C-E-1",beta=0.5)
-#edge_reaction("S4-(e) + 6 electron <=> 4 S-(e)", [1e-40, 0.0, 0.0], id="int-3", beta=0.5)
-
-
-#edge_reaction("2 S(e) + 2 Li(e) <=> Li2S2(s)", [2.0e1, 0.0, 0.0], id="int-4")
-#edge_reaction("2 Li(e) + Li2S2(s) <=> 2 Li2S(s) ", [1e-50, 0.0, 0.0], id="int-7", beta=0.5)
-#edge_reaction("3 S8(e) + 8 electron <=> 4 S6(e)", [5e-15, 0.0, 0.0], id="int-5", beta=0.5)
-#edge_reaction("2 S6(e) + 2 electron <=> 3 S4(e)", [5e-15, 0.0, 0.0], id="int-6", beta=0.5)
-#surface_reaction("S8(e) <=> 8 S(s)", [1.25e-6, 0.0, 0.0], id="int-1")
-#edge_reaction("S8(e) + 4 electron <=> 2 S4(e)", [1e-21, 0.0, 0.0], id="int-2",beta=0.5)
-#edge_reaction("S4(e) + 6 electron <=> 4 S(e)", [1e-40, 0.0, 0.0], id="int-3", beta=0.5)
-#surface_reaction("S(e) + 2 Li(e) <=> Li2S(s)", [2.0e-3, 0.0, 0.0], id="int-4")
-#surface_reaction("LiC6 <=> Li(e) + C6", [1.74e-5, 0.0, 0.0], id="int-1")
+surface_reaction("Li2S(e) <=> Li2S", [5.750e10, 0.0, 0.0], id="L-E-1")

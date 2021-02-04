@@ -29,7 +29,7 @@ class inputs():
     
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
-    npoints_sep = 5*flag_sep
+    npoints_sep = 1*flag_sep
     npoints_cathode = 5*flag_cathode
     
     # Set number of discretized shells in each particle    
@@ -49,8 +49,8 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-    C_rate = 0.1
-#    C_rate = 1
+#    C_rate = 0.5
+    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -70,6 +70,7 @@ class inputs():
 #    ctifile = 'Assary.yml'
 #    ctifile = 'Bessler_Dennis.yml'
 #    ctifile = 'Bessler_Dennis_mod.yml'
+#    ctifile = 'Bessler_Dennis_lithiated.yml'
 #    ctifile = 'Shriram.yml'
 #    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
@@ -93,8 +94,10 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    Phi_el_init = 1.3
-#    Phi_el_init = 0.1
+    if 'cascade' in ctifile:
+        Phi_el_init = 1.3
+    else:
+        Phi_el_init = 0.1
     Cell_voltage = 2.4
 
     # Cutoff values for charging and discharging of electrodes:
@@ -120,9 +123,8 @@ class inputs():
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
-#        n = 1e15
 #        n = 1.1e15  
-        n = 6e13*exp(3.0327*C_rate)
+        n = 5e13*exp(3.4151*C_rate)
         print("Density for cascade")
     else:
         n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
