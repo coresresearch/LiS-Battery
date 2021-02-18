@@ -53,6 +53,8 @@ if 'cascade' or 'Bessler' in inputs.ctifile:
     dG0 = carbon_el_s.delta_standard_gibbs
     E0 = dG0/ct.faraday
     print(-E0)
+    dG0_Li2S = Li2S_el_s.delta_standard_gibbs
+    print(dG0_Li2S)
 
 if hasattr(inputs, 'C_k_el_0'):
     elyte_obj.X = inputs.C_k_el_0/np.sum(inputs.C_k_el_0)
@@ -281,7 +283,7 @@ class sep():
     # Set the length of the solution vector for the separator
     nSV = npoints*nVars
     
-    D_el = inputs.D_Li_el*epsilon_el**(1.)/tau**3
+    D_el = inputs.D_Li_el*epsilon_el**(cathode.bruggeman)
     
     offsets = np.arange(int(cathode.nSV), int(cathode.nSV) + int(nSV), int(nVars))
     

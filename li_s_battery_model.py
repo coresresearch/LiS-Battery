@@ -132,7 +132,8 @@ def main():
         sim_dch = IDA(bat_dch)
         sim_dch.atol = atol
         sim_dch.rtol = rtol
-#        sim_dch.maxh = 57
+#        sim_dch.maxh = 2
+#        sim_dch.inith = 1e-5
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
@@ -246,7 +247,7 @@ def main():
         tick.label1.set_fontsize(fs)
         tick.label1.set_fontname('Times New Roman')    
     color = matplotlib.cm.plasma(inputs.C_rate)
-    p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'c-', linewidth=lw)
+    p1, = plt.plot(SV_copy.loc[:, 'Time'], SV_copy.loc[:, 'Phi_ed1'], 'k-', linewidth=lw)
     p2, = plt.plot(exp_data_01C.iloc[:,0], exp_data_01C.iloc[:,1], 'ro')
     p3, = plt.plot(exp_data_05C.iloc[:,0], exp_data_05C.iloc[:,1], 'co')
     p4, = plt.plot(exp_data_1C.iloc[:,0], exp_data_1C.iloc[:,1], 'ko')
@@ -330,7 +331,7 @@ class cc_cycling(Implicit_Problem):
             elyte.electric_potential = s1['phi_el'] 
             conductor.electric_potential = s1['phi_ed']
             elyte.X = s1['X_k']
-            b = 1e-16
+            b = 1e-18
             D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
             D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
 
@@ -349,29 +350,10 @@ class cc_cycling(Implicit_Problem):
             sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
             sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
             
-#            default_np_L = 1e5
-#            nucleation_coeff = 8e12
-#            # Calculate new particle radii based on new volume fractions
-#            C_Li2S2 = SV[offset + ptr['rho_k_el'][-1]]
-#            nucl_mult = tanh(C_Li2S2/cat.nucl_thresh)
-#            m_S_el = inputs.A_cat*eps_el*cat.dy*np.dot(cat.W_S_k, SV[offset + ptr['rho_k_el']])
-#            m_S = sulfur.density_mass*eps_S8*cat.dy + m_S_el
-#            local_C_rate = -i_el_m/1675/m_S
-#            if C_Li2S2 > 1e-15 and cat.nucleation_flag[j-1] == 0:
-#                np_L = nucleation_coeff*exp(1.7953*local_C_rate)
-#                cat.np_L[j-1] = np_L
-#                cat.nucleation_flag[j-1] = 1
-#                print(np_L, local_C_rate, -i_el_m)
-#            elif cat.nucleation_flag[j-1] == 1:
-#                np_L = nucl_mult*cat.np_L[j-1]
-#            else:
-#                np_L = default_np_L
             np_S = inputs.np_S8_init
             np_L = inputs.np_Li2S_init
             
-#            A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
             A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-#            A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
             A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
 
             r_S = 3*eps_S8/A_S
@@ -379,7 +361,6 @@ class cc_cycling(Implicit_Problem):
             
             tpb_len = 3*eps_Li2S/(r_L**2)
             A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
-#            print(A_C, SV[offset + ptr['phi_ed']])
             
             R_C = sdot_C*A_C
             if eps_S8 < 1e-5:
@@ -415,17 +396,17 @@ class cc_cycling(Implicit_Problem):
             res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
                                           - sw2*Li2S.volume_mole*(sdot_Li2S*A_L
                                           + sdot_tpb*tpb_len))
-#            print(sdot_Li2S, A_L, sdot_tpb, tpb_len, res[offset + ptr['eps_Li2S']], 'node =', j)
+
             """Calculate change in electrolyte"""
             res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
             (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el 
             + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                             - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
-#            print(R_net, i_ext)
+
             """Calculate change in delta-phi double layer"""
             res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
             (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C)
-#            print(i_Far, i_ext, eps_S8)
+
             """Algebraic expression for charge neutrality in all phases"""
             res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
             
@@ -479,28 +460,10 @@ class cc_cycling(Implicit_Problem):
         sdot_L = L_el_s.get_net_production_rates(elyte)
         sdot_tpb = Li2S_tpb.get_creation_rates(Li2S) - mult*(Li2S_tpb.get_destruction_rates(Li2S))
         sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
-#        print(L_el_s.delta_gibbs, i_ext, t)
-        # Calculate new particle radii based on new volume fractions
-#        C_Li2S2 = SV[offset + ptr['rho_k_el'][-1]]
-#        nucl_mult = tanh(C_Li2S2/cat.nucl_thresh)
-#        m_S_el = inputs.A_cat*eps_el*cat.dy*np.dot(cat.W_S_k, SV[offset + ptr['rho_k_el']])
-#        m_S = sulfur.density_mass*eps_S8*cat.dy + m_S_el
-#        local_C_rate = -i_el_m/1675/m_S
-#        if C_Li2S2 > 1e-15 and cat.nucleation_flag[-1] == 0:
-#            np_L = nucleation_coeff*exp(1.7953*local_C_rate)
-#            cat.np_L[-1] = np_L
-#            cat.nucleation_flag[-1] = 1
-#            print(np_L, t, '\n')
-#        elif cat.nucleation_flag[-1] == 1:
-#            np_L = nucl_mult*cat.np_L[-1]
-#        else:
-#            np_L = default_np_L
             
         np_S = inputs.np_S8_init
         np_L = inputs.np_Li2S_init  #SV[offset + ptr['np_Li2S']]
-#        A_S = cat.A_S_0*(eps_S8/cat.eps_S_0)**1.5  
         A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
-#        A_L = cat.A_L_0*(eps_Li2S/cat.eps_L_0)**1.5  
         A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
         r_S = 3*eps_S8/A_S
@@ -509,8 +472,6 @@ class cc_cycling(Implicit_Problem):
         tpb_len = 3*eps_Li2S/(r_L**2)
         
         A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
-#        print(A_C, SV[offset + ptr['phi_ed']], '\n\n')
-#        cat.A_C_vec = np.append(cat.A_C_vec, A_C)
         
         R_C = sdot_C*A_C
         if eps_S8 < 1e-5:
@@ -526,14 +487,11 @@ class cc_cycling(Implicit_Problem):
 #        else:
         R_L = sdot_L*A_L + sdot_tpb_el*tpb_len
         sw2 = 1
-#        print(eps_S8, '\n', R_S, '\n')
+
         i_C = (C_el_s.get_net_production_rates(conductor)*A_C + 
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
                Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
         i_Far = (i_C)*F/cat.dyInv
-#        if eps_S8 < 1e-3:
-#            print(-i_Far + i_el_m - i_el_p,
-#                  -t*cat.i_ext_amp*inputs.A_cat/3600/(cat.m_S_0 + cat.m_S_el), '\n\n')
         
         # Net rate of formation
         R_net = R_C + R_S + R_L 
@@ -547,27 +505,25 @@ class cc_cycling(Implicit_Problem):
         res[offset + ptr['eps_Li2S']] = (SV_dot[offset + ptr['eps_Li2S']] 
                                       - sw2*Li2S.volume_mole*(sdot_Li2S*A_L
                                       + sdot_tpb*tpb_len))
-#        print(sdot_Li2S, A_L, sdot_tpb, tpb_len, res[offset + ptr['eps_Li2S']], 'node =', j+1, '\n\n')
                 
         """Calculate change in electrolyte"""
         res[offset + ptr['rho_k_el']] = (SV_dot[offset + ptr['rho_k_el']] - 
         (R_net + (N_io_m - N_io_p)*cat.dyInv)/eps_el
         + SV[offset + ptr['rho_k_el']]*(- SV_dot[offset + ptr['eps_S8']] 
                                         - SV_dot[offset + ptr['eps_Li2S']])/eps_el)
-#        print(R_net, i_ext, eps_S8, '\n\n')
+
         """Calculate change in delta-phi double layer"""
         res[offset + ptr['phi_dl']] = (SV_dot[offset + ptr['phi_dl']] - 
         (-i_Far + i_el_m - i_el_p)*cat.dyInv/cat.C_dl/A_C)
-#        print(i_Far, i_ext, eps_S8, '\n\n')
+
         """Algebraic expression for charge neutrality in all phases"""
         res[offset + ptr['phi_ed']] = i_el_m - i_el_p + i_io_m - i_io_p
-#        print(i_el_m, i_el_p, i_io_m, i_io_p, res[offset+ptr['phi_ed']], '\n')
+
         """Calculate change in S8 nucleation sites"""
         res[offset + ptr['np_S8']] = SV[offset + ptr['np_S8']] - np_S
         
         """Calculate change in Li2S nucleation sites"""
         res[offset + ptr['np_Li2S']] = SV[offset + ptr['np_Li2S']] - np_L
-#        print(np_L, SV[offset + ptr['np_Li2S']], i_ext, offset, '\n')
         
         """============================SEPARATOR============================"""
         """INTERIOR NODES"""        
@@ -663,7 +619,7 @@ class cc_cycling(Implicit_Problem):
 
 #        print(res, i_ext, t, '\n\n')
 #        if i_ext < 0:
-#            print(t, '\n\n')
+#            print(SV, t, '\n\n')
         return res  
     
     "========================================================================="

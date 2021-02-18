@@ -49,8 +49,8 @@ class inputs():
     # The C-rate is the rate of charge/discharge - how many charges/discharges
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
-#    C_rate = 0.5
-    C_rate = 1
+    C_rate = 0.1
+#    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -64,13 +64,13 @@ class inputs():
     
     "Set up Cantera phase names and CTI file info"
 #    ctifile = 'sulfur_cathode_cascade_Crate.cti'
-    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
+#    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
 #    ctifile = 'Kuzmina.yml'
 #    ctifile = 'Kuzmina3.yml'
 #    ctifile = 'Assary.yml'
 #    ctifile = 'Bessler_Dennis.yml'
 #    ctifile = 'Bessler_Dennis_mod.yml'
-#    ctifile = 'Bessler_Dennis_lithiated.yml'
+    ctifile = 'Bessler_Dennis_lithiated.yml'
 #    ctifile = 'Shriram.yml'
 #    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
@@ -97,7 +97,7 @@ class inputs():
     if 'cascade' in ctifile:
         Phi_el_init = 1.3
     else:
-        Phi_el_init = 0.1
+        Phi_el_init = 0
     Cell_voltage = 2.4
 
     # Cutoff values for charging and discharging of electrodes:
@@ -195,19 +195,27 @@ class inputs():
             mech = 'Cascade'
             z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
         print('Using cascade')
-    elif 'Dennis' or 'Shriram' in ctifile:
-        C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-10*2
+    elif 'Bessler' or 'Shriram' in ctifile:
+        C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-13*2
+        if 'lithiated' in ctifile:
+            C_counter_0 = 1.024
+        else:
+            C_counter_0 = C_counter_n
         C_k_el_0 = np.array([1.023e1, 
                              1.024, 
-                             C_counter_n, 
+                             C_counter_0, 
                              1.943e-2, 
                              1.821e-4, 
                              3.314e-4, 
                              2.046e-5,
                              5.348e-10,
                              8.456e-13])
-        z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
-        mech = 'Bessler-Dennis'
+        if 'lithiated' in ctifile:
+            mech = 'Bessler_Li'
+            z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0., 0.])
+        else:
+            mech = 'Bessler'
+            z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
     elif 'Shriram' in ctifile:
         C_counter_n = 1.0
         C_k_el_0 = np.array([1.023e1,
