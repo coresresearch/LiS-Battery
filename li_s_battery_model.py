@@ -48,9 +48,9 @@ def main():
     atol = np.ones_like(SV_0)*1e-6
     atol[cat.ptr_vec['eps_S8']] = 1e-15
     atol[cat.ptr_vec['eps_Li2S']] = 1e-15
-    atol[cat.ptr_vec['rho_k_el']] = 1e-26 # 1e-16 for Bessler
+    atol[cat.ptr_vec['rho_k_el']] = 1e-20 # 1e-16 for Bessler
 #    atol[cat.ptr_vec['rho_k_el']][3::elyte.n_species] = 26
-    rtol = 1e-4; sim_output = 50
+    rtol = 1e-5; sim_output = 50
      
     rtol_ch = 1e-6
     atol_ch = np.ones_like(SV_0)*1e-6
@@ -331,7 +331,8 @@ class cc_cycling(Implicit_Problem):
             elyte.electric_potential = s1['phi_el'] 
             conductor.electric_potential = s1['phi_ed']
             elyte.X = s1['X_k']
-            b = 1e-18
+            b = np.array([1e-13, 1e-11, 4e-11, 1e-12, 6e-12, 6e-12, 1e-11,
+                        1e-11, 1e-11])
             D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
             D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
 
@@ -363,7 +364,7 @@ class cc_cycling(Implicit_Problem):
             A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
             
             R_C = sdot_C*A_C
-            if eps_S8 < 1e-5:
+            if eps_S8 < cat.eps_S8_cutoff:
                 R_S = 0*sdot_S*A_S
                 sw = 0
             else:
@@ -474,7 +475,7 @@ class cc_cycling(Implicit_Problem):
         A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
         
         R_C = sdot_C*A_C
-        if eps_S8 < 1e-5:
+        if eps_S8 < cat.eps_S8_cutoff:
             R_S = 0*sdot_S*A_S
             sw = 0
         else:
@@ -617,7 +618,7 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(res, i_ext, t, '\n\n')
+        print(res, i_ext, t, '\n\n')
 #        if i_ext < 0:
 #            print(SV, t, '\n\n')
         return res  

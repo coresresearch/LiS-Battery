@@ -29,7 +29,7 @@ class inputs():
     
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
-    npoints_sep = 1*flag_sep
+    npoints_sep = 5*flag_sep
     npoints_cathode = 5*flag_cathode
     
     # Set number of discretized shells in each particle    
@@ -123,8 +123,8 @@ class inputs():
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
-#        n = 1.1e15  
-        n = 5e13*exp(3.4151*C_rate)
+#        n = 620999563729888.0  #1520999563729888.0  #275771605112807.8
+        n = 5e13*exp(2.4221*C_rate)  #5e13*exp(3.4151*C_rate)
         print("Density for cascade")
     else:
         n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
@@ -267,10 +267,10 @@ class inputs():
     # Elytespecies bulk diffusion coefficients and charges. 
     #   Assumes four component elyte: [TEGDME, Li+, TFSI-, S8(e), Li2S8, Li2S6
     #                                  Li2S4, Li2S3, Li2S2]
+#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
+#                        1e-10, 1e-10])
     D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
                         1e-10, 1e-10])
-#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-9, 6e-10, 6e-10, 1e-10,
-#                        1e-10, 1e-10])
     
     epsilon_sep = 0.5   # Volume fraction of separator [-]
     tau_sep = 1.6       # Tortuosity of separator [-]
