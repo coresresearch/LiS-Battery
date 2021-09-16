@@ -30,7 +30,7 @@ class inputs():
     # Set number of discretized nodes in each component's y-direction
     npoints_anode = 1*flag_anode
     npoints_sep = 5*flag_sep
-    npoints_cathode = 5*flag_cathode
+    npoints_cathode = 20*flag_cathode
     
     # Set number of discretized shells in each particle    
     flag_req = 0
@@ -66,11 +66,11 @@ class inputs():
 #    ctifile = 'sulfur_cathode_cascade_Crate.cti'
 #    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
 #    ctifile = 'Kuzmina.yml'
-#    ctifile = 'Kuzmina3.yml'
+    ctifile = 'Kuzmina3.yml'
 #    ctifile = 'Assary.yml'
 #    ctifile = 'Bessler_Dennis.yml'
 #    ctifile = 'Bessler_Dennis_mod.yml'
-    ctifile = 'Bessler_Dennis_lithiated.yml'
+#    ctifile = 'Bessler_Dennis_lithiated.yml'
 #    ctifile = 'Shriram.yml'
 #    ctifile = 'Shriram_adjusted.yml'
     cat_phase1 = 'sulfur'
@@ -94,10 +94,10 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    if 'cascade' in ctifile:
-        Phi_el_init = 1.3
-    else:
+    if 'Bessler' in ctifile:
         Phi_el_init = 0
+    else:
+        Phi_el_init = 1.3
     Cell_voltage = 2.4
 
     # Cutoff values for charging and discharging of electrodes:
@@ -116,15 +116,17 @@ class inputs():
     #   or 'bulk' in the string >sulfur_method below.
     sulfur_method = 'loading'
     A_cat = 1.327e-4            # Cathode planar area [m^2]
-    m_S_0 = 1.9e-2 #1.9e-2      # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
-                                # if 'bulk' method chosen. Sulfur loading in
-                                # [kg_S8/m^2] if 'loading' method chosen.
-                                
+    m_S_0 = 1.9e-2 #1.9e-2     # Initial total mass of sulfur in cathode [kg_S8] 2.5e-2
+                    #1.957e-2   # if 'bulk' method chosen. Sulfur loading in
+                    #2.53e-2    # [kg_S8/m^2] if 'loading' method chosen.
+                    #3.57e-2 
+                    
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
     if 'cascade' or 'Bessler' in ctifile:
 #        n = 620999563729888.0  #1520999563729888.0  #275771605112807.8
-        n = 5e13*exp(2.4221*C_rate)  #5e13*exp(3.4151*C_rate)
+#        n = 6e15*exp(2.4221*C_rate)  
+        n = 5e13*exp(2.4221*C_rate)  
         print("Density for cascade")
     else:
         n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
@@ -247,11 +249,12 @@ class inputs():
     
     "Anode geometry and transport"
     # Anode geometry
-    epsilon_an = 1  #0.63    # Volume fraction of anode phase [-]
+    epsilon_an = 0.95  #0.63    # Volume fraction of anode phase [-]
     tau_an = 1.6        # Tortuosity, assume equal values for carbon and elyte [-]
     r_p_an = 5e-6       # Average pore radius [m]
     d_p_an = 5e-6       # Average particle diameter for graphite [m]
-    H_an = 100e-6        # Anode thickness [m]
+    H_an = 95e-6        # Anode thickness [m]
+    H_an_el = 5e-6
     overlap_an = 0.4    # Percentage of anode particle overlapping with other
                         #   anode particles. Reduces total anode/elyte
                         #   surface area [-]

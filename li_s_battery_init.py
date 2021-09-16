@@ -192,11 +192,11 @@ class cathode():
     W_S_k = elyte_obj.molecular_weights[3:]
     
     m_S_el = inputs.A_cat*eps_el_0*H*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
-    m_S_el_an = inputs.A_cat*(1 - inputs.epsilon_an)*inputs.H_an*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
+    m_S_el_an = inputs.A_cat*inputs.H_an_el*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_el_sep = inputs.A_cat*(1 - inputs.epsilon_sep)*inputs.H_elyte*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_tot_0 = m_S_0 + m_S_el + m_S_el_an + m_S_el_sep 
     
-    V_elyte = inputs.A_cat*(inputs.H_an*(1-inputs.epsilon_an) +
+    V_elyte = inputs.A_cat*(inputs.H_an_el +
                             inputs.H_elyte*(1-inputs.epsilon_sep) +
                             inputs.H_cat*eps_el_0)
     print('Elyte/sulfur ratio ', 1e3*V_elyte/m_S_tot_0)
@@ -241,6 +241,15 @@ class cathode():
         
     A_C_vec = np.array([])
     nucl_thresh = 1e-2
+    
+    if 'lithiated' in inputs.ctifile:
+        print('Using lithiated mechanism')
+        lithiated_flag = 1
+        C_Li_0 = inputs.C_k_el_0[ptr['iFar']] + 2*np.sum(inputs.C_k_el_0[4:])
+    else:
+        lithiated_flag = 0
+        C_Li_0 = inputs.C_k_el_0[ptr['iFar']]
+        
     
 "============================================================================="        
         
@@ -303,22 +312,22 @@ class anode():
     
     npoints = inputs.npoints_anode
     
-    nVars = 1 #+ elyte_obj.n_species
+    nVars = 2 + elyte_obj.n_species
     
     # Pointers
     ptr = {}
     ptr['iFar'] = elyte_obj.species_index(inputs.Li_species_elyte)
     
-#    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
-#    ptr['phi_dl'] = 0  #ptr['rho_k_el'][-1] + 1
-    ptr['phi_ed'] = 0  #ptr['rho_k_el'][-1] + 2
+    ptr['rho_k_el'] = np.arange(0, elyte_obj.n_species)
+    ptr['phi_dl'] = ptr['rho_k_el'][-1] + 1
+    ptr['phi_ed'] = ptr['rho_k_el'][-1] + 2
     
-#    ptr_vec = {}
-#    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
+    ptr_vec = {}
+    ptr_vec['rho_k_el'] = cathode.nSV + sep.nSV + ptr['rho_k_el']
     
-#    for i in np.arange(1, npoints):
-#        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'],
-#                                       cathode.nSV + sep.nSV + ptr['rho_k_el'] + i*nVars)
+    for i in np.arange(1, npoints):
+        ptr_vec['rho_k_el'] = np.append(ptr_vec['rho_k_el'],
+                                       cathode.nSV + sep.nSV + ptr['rho_k_el'] + i*nVars)
     
     # Set length of solution vector for anode
     nSV = npoints*nVars
@@ -333,6 +342,10 @@ class anode():
     dy = inputs.H_an/npoints
     H = inputs.H_an
     
+    H_el = inputs.H_an_el
+    dy_el = H_el/1
+    dyInv_el = 1/H_el
+    
     C_dl = inputs.C_dl_an
     A_Li = 1.5  #1/H
     sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
@@ -343,8 +356,8 @@ class anode():
     
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
-    m_Li = H*inputs.epsilon_an*lithium_obj.density_mass
-    m_el = H*eps_el*elyte_obj.density_mass
+    m_Li = H*lithium_obj.density_mass
+    m_el = H_el*elyte_obj.density_mass
     m_an = inputs.A_cat*(m_Li + m_el)
     m_bat = cathode.m_cat + sep.m_sep + m_an
     
@@ -399,11 +412,11 @@ class sol_init():
     offsets = anode.offsets
     ptr = anode.ptr
     for j in np.arange(0, anode.npoints):
-#        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
-#        algvar[offsets[j] + ptr['rho_k_el']] = 1
+        SV_0[offsets[j] + ptr['rho_k_el']] = inputs.C_k_el_0
+        algvar[offsets[j] + ptr['rho_k_el']] = 1
         
-#        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
-#        algvar[offsets[j] + ptr['phi_dl']] = 1
+        SV_0[offsets[j] + ptr['phi_dl']] = inputs.Phi_an_init - inputs.Phi_el_init
+        algvar[offsets[j] + ptr['phi_dl']] = 1
         
         SV_0[offsets[j] + ptr['phi_ed']] = inputs.Phi_an_init
     

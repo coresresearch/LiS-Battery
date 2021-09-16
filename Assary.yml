@@ -270,7 +270,7 @@ species:
 anode-elyte-reactions:
 - equation: Li(s) <=> Li+(e) + electron
   id: anode_faradaic_reaction
-  rate-constant: {A: 1e3, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 1e4, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 sulfur-elyte-reactions:
@@ -291,7 +291,7 @@ carbon-elyte-reactions:
 
 - equation: Li2S6(e) + 2 Li+(e) + 2 electron <=> Li2S4(e) + Li2S2(e)
   id: sulfur_reduction_3
-  rate-constant: {A: 1e8, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 2e7, b: 0.0, Ea: 0.0}
   beta: 0.5
 
 - equation: Li2S8(e) + 2 Li+(e) + 2 electron <=> 2 Li2S4(e)

@@ -301,4 +301,4 @@ carbon-elyte-reactions:
 lithium-sulfide-elyte-reactions:
 - equation: 2 Li+(e) + S-(e) <=> Li2S(s)
   id: sulfur_reduction_6
-  rate-constant: {A: 2.75e-5, b: 0.0, Ea: 0.0}
+  rate-constant: {A: 2.75e-1, b: 0.0, Ea: 0.0}

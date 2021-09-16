@@ -198,10 +198,10 @@ def label_columns(t, SV, an_np, sep_np, cat_np):
 #            newcols.update(newcols_an)
             
         # Loop over number of species in electrolyte
-#        for k in np.arange(0, elyte_obj.n_species):
-#            species = elyte_obj.species_names[k]
-#            newcols_el = {k + offset: 'rho_'+species+'_an'+str(j+1)}
-#            newcols.update(newcols_el)
+        for k in np.arange(0, elyte_obj.n_species):
+            species = elyte_obj.species_names[k]
+            newcols_el = {k + offset: 'rho_'+species+'_an'+str(j+1)}
+            newcols.update(newcols_el)
             
         # Add tags for electrod and double layer potentials
         newcols_phi = {0+offset: 'Phi_an'+str(j+1)}
@@ -411,7 +411,7 @@ def conservation_tests(SV_import, tags, sulfur_fig):
         # Concentration vector for all species in elyte at current state
         rho_el_cat = state.iloc[cathode.ptr_vec['rho_k_el']]
         rho_el_sep = state.iloc[sep.ptr_vec['rho_k_el']]
-#        rho_el_an = state.iloc[anode.ptr['rho_k_el']]
+        rho_el_an = state.iloc[anode.ptr['rho_k_el']]
         
         # Concentration of just sulfur containing species in electrolyte
         rho_S_el_cat1 = state.iloc[cathode.offsets[0] + cathode.ptr['rho_k_el']]
@@ -420,7 +420,7 @@ def conservation_tests(SV_import, tags, sulfur_fig):
         rho_S_el_cat4 = state.iloc[cathode.offsets[3] + cathode.ptr['rho_k_el']]
         rho_S_el_cat = state.iloc[cathode.ptr_vec['rho_k_el']]
         rho_S_el_sep = state.iloc[sep.ptr_vec['rho_k_el']]
-#        rho_S_el_an = state.iloc[anode.ptr_vec['rho_k_el']]
+        rho_S_el_an = state.iloc[anode.ptr_vec['rho_k_el']]
 
         # Number of moles of sulfur atoms in elyte of each component
         rho_S_el_cat_geo1 = rho_S_el_cat1*eps_el[0]
@@ -430,7 +430,7 @@ def conservation_tests(SV_import, tags, sulfur_fig):
         rho_S_el_cat_geo = np.multiply(rho_S_el_cat.values.reshape(inputs.npoints_cathode, elyte_obj.n_species), eps_el.reshape(inputs.npoints_cathode, 1))
         n_S_cat[i] = cathode.dy*np.dot(n_S_atoms, rho_S_el_cat_geo.reshape(len(n_S_atoms), 1))
         n_S_sep[i] = sep.epsilon_el*sep.H*np.dot(cathode.n_S_atoms, rho_S_el_sep)
-#        n_S_an[i] = anode.eps_el*anode.H*np.dot(cathode.n_S_atoms, rho_S_el_an)
+        n_S_an[i] = anode.eps_el*anode.H*np.dot(cathode.n_S_atoms, rho_S_el_an)
         
         n_S_cat1[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo1)
         n_S_cat2[i] = cathode.dy*np.dot(cathode.n_S_atoms, rho_S_el_cat_geo2)
@@ -441,10 +441,10 @@ def conservation_tests(SV_import, tags, sulfur_fig):
         n_S_solid = sum(8*sulfur_obj.density_mole*eps_S8*cathode.dy)
         n_S_Li2S = sum(Li2S_obj.density_mole*eps_Li2S*cathode.dy)
         
-        n_S_elyte[i] = n_S_cat[i] + n_S_sep[i] #+ n_S_an[i]
+        n_S_elyte[i] = n_S_cat[i] + n_S_sep[i] + n_S_an[i]
         n_S_solid_vec[i] = n_S_solid
         n_S_Li2S_vec[i] = n_S_Li2S
-        n_S_tot[i] = (n_S_cat[i] + n_S_solid + n_S_Li2S) + n_S_sep[i] #+ n_S_an[i]
+        n_S_tot[i] = (n_S_cat[i] + n_S_solid + n_S_Li2S) + n_S_sep[i] + n_S_an[i]
         
 #        """2. Conservation of lithium"""
 #        offset1 = cathode.offsets[-1]

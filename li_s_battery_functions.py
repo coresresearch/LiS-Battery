@@ -28,6 +28,15 @@ def dst(s1, s2, D_eff, dy1, dy2):
     
     return N_io, i_io
 
+def scale_Diff(C_k):
+    b = 1e-11
+    D_vec = np.zeros_like(C_k)
+    C_Li = C_k[cat.ptr['iFar']] + cat.lithiated_flag*2*np.sum(C_k[4:])
+    
+    D_scale = b*abs(cat.C_Li_0 - C_Li)
+    D_vec[cat.ptr['iFar']] = D_scale
+    return D_vec
+
 """========================================================================="""
 
 def set_state(SV, offset, ptr):
