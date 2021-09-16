@@ -129,25 +129,16 @@ class cathode():
     rho_C = carbon_obj.density_mass
     m_solid = m_S/omega_S
     
-#    eps_S_0 = 0.16  
     eps_S_0 = m_S/rho_S/H
-#    eps_C_0 = 0.062 
     eps_C_0 = 0.056  #m_solid*omega_C/rho_C/H
     print('Eps_C_0 =', eps_C_0)
-#    eps_L_0 = 1e-4; 
     eps_L_0 = 1e-5
     
-#    if inputs.mech == 'Bessler-Dennis':
-#        m_S_0 = eps_S_0*H*inputs.A_cat*sulfur_obj.density_mass
-    
-#    A_S_0 = 1e5  
     A_S_0 = 2*pi*inputs.np_S8_init*(3*eps_S_0/2/inputs.np_S8_init/pi)**(2/3)
-#    A_L_0 = 1e5  
     A_L_0 = 2*pi*inputs.np_Li2S_init*(3*eps_L_0/2/inputs.np_Li2S_init/pi)**(2/3)
     
     r_S_0 = 3*eps_S_0/A_S_0
     r_L_0 = 3*eps_L_0/A_L_0
-#    print(r_S_0, r_L_0)
 
     A_C_0 = inputs.A_C_0
     print('A_S =', A_S_0)
@@ -186,7 +177,6 @@ class cathode():
           + 8*sulfur_obj.density_mole*eps_S_0*H \
           + Li2S_obj.density_mole*eps_L_0*H
               
-#    W_S_k = elyte_obj.molecular_weights*S_atoms_bool # Old method
     W_S = sulfur_obj.molecular_weights/sulfur_obj.n_atoms(sulfur_obj.species_names[0], 'S')
     cap_weights = np.array([1, 7/8, 0.8333, 0.75, 0.5, 0])
     W_S_k = elyte_obj.molecular_weights[3:]
@@ -392,10 +382,8 @@ class sol_init():
         SV_0[offsets[j]+ptr['phi_ed']] = inputs.Cell_voltage
         
         SV_0[offsets[j]+ptr['np_S8']]=inputs.np_S8_init
-#        algvar[offsets[j] + ptr['np_S8']] = 1
         
         SV_0[offsets[j]+ptr['np_Li2S']] = inputs.np_Li2S_init
-#        algvar[offsets[j] + ptr['np_Li2S']] = 1
      
     # Separator
     offsets = sep.offsets

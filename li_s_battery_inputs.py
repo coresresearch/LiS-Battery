@@ -50,7 +50,6 @@ class inputs():
     #   can be carried out in 1 hour theoretically? This sets current density
     #   amplitude for impedence tests and external current for CC cycling
     C_rate = 0.1
-#    C_rate = 1
     
     # Set the test type to run the model for. The following types are supported
     #   For constant external current dis/charge cycling test set to:
@@ -89,9 +88,6 @@ class inputs():
     Li_species_elyte = 'Li+(e)'
     Max_sulfide = 'S8(e)'
     
-#    # Set initial SOC 
-#    SOC_0 = 0.1
-    
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
     if 'Bessler' in ctifile:
@@ -99,15 +95,10 @@ class inputs():
     else:
         Phi_el_init = 1.3
     Cell_voltage = 2.4
-
-    # Cutoff values for charging and discharging of electrodes:
-    Li_an_min = 0.01; Li_an_max = 1 - Li_an_min
-    Li_cat_min = 0.01; Li_cat_max = 1 - Li_cat_min
     
     # Cell geometry
     H_cat = 100e-6               # Cathode thickness [m]
     r_C = H_cat/npoints_cathode/2
-#    A_C_0 = 1.32e5  # Initial volume specific area of carbon [1/m]
     A_C_0 = 2e4
     
     # There are two options for providing sulfur loading. Input the value in
@@ -123,18 +114,14 @@ class inputs():
                     
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
-    if 'cascade' or 'Bessler' in ctifile:
-#        n = 620999563729888.0  #1520999563729888.0  #275771605112807.8
-#        n = 6e15*exp(2.4221*C_rate)  
+    if 'cascade' or 'Bessler' in ctifile: 
         n = 5e13*exp(2.4221*C_rate)  
         print("Density for cascade")
     else:
-        n = 6e13*exp(1.8966*C_rate)  #8e12*exp(1.7953*C_rate)
+        n = 5e13*exp(2.4221*C_rate)  
         print("Density for Assary or Kuzmina", n)
     
-#    n = 5e13
-#    np_S8_init = npoints_cathode*1000/H_cat/A_cat
-    np_S8_init = 4521477015825  #npoints_cathode*3000/H_cat/A_cat # 1000000 Initial number of sulfur nucleation sites [n/m^3]
+    np_S8_init = 4521477015825  # Initial number of sulfur nucleation sites [n/m^3]
     np_Li2S_init = n   # Initial number of Li2S nucleation sites [n/m^3]
     
     # Weight percent of sulfur in the cathode per cathode volume, this assumes 
@@ -270,8 +257,6 @@ class inputs():
     # Elytespecies bulk diffusion coefficients and charges. 
     #   Assumes four component elyte: [TEGDME, Li+, TFSI-, S8(e), Li2S8, Li2S6
     #                                  Li2S4, Li2S3, Li2S2]
-#    D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
-#                        1e-10, 1e-10])
     D_Li_el = np.array([1e-12, 1e-10, 4e-10, 1e-11, 6e-11, 6e-11, 1e-10,
                         1e-10, 1e-10])
     

@@ -48,9 +48,8 @@ def main():
     atol = np.ones_like(SV_0)*1e-3
     atol[cat.ptr_vec['eps_S8']] = 1e-22
     atol[cat.ptr_vec['eps_Li2S']] = 1e-15
-    atol[cat.ptr_vec['rho_k_el']] = 1e-26 # 1e-19 for Bessler
-#    atol[cat.ptr_vec['rho_k_el']][3::elyte.n_species] = 26
-    rtol = 1e-4; sim_output = 50  # 3e-4 at 1C
+    atol[cat.ptr_vec['rho_k_el']] = 1e-26 
+    rtol = 1e-4; sim_output = 50  
      
     rtol_ch = 1e-6
     atol_ch = np.ones_like(SV_0)*1e-6
@@ -60,9 +59,6 @@ def main():
     atol_ch[cat.ptr_vec['rho_k_el']] = 1e-30
     
     rate_tag = str(inputs.C_rate)+"C"
-#    if 'cascade' in inputs.ctifile:
-#        ncols = 2 + inputs.flag_req
-#    else:
     ncols = 1 + inputs.flag_req
     fig, axes = plt.subplots(sharey="row", figsize=(9,12), nrows=3, ncols = (ncols)*inputs.n_cycles, num=1)
     plt.subplots_adjust(wspace = 0.15, hspace = 0.4)
@@ -76,7 +72,6 @@ def main():
 
     # Set external current to 0 for equilibration
     cat.set_i_ext(0)
-#    cat.nucleation_flag = 1
     
     # Create problem object
     bat_eq = res_class(res_class.res_fun, SV_0, SV_dot_0, t_0)
@@ -108,13 +103,10 @@ def main():
         "------------Discharging-------------"
     
         print('Discharging...')
-#        cat.np_L = inputs.np_Li2S_init
         cat.nucleation_flag = np.zeros((inputs.npoints_cathode, 1))
         # New initial conditions from previous simulation
         if cycle_num == 0:
-#            SV_0 = SV_0
             SV_0 = SV_eq[-1, :]
-#            SV_dot_0 = SV_dot_0
             SV_dot_0 = SV_dot_eq[-1, :]
         else:   
             SV_0 = SV_0_cycle  
@@ -133,11 +125,11 @@ def main():
         sim_dch.atol = atol
         sim_dch.rtol = rtol
         sim_dch.maxh = 1
-        sim_dch.inith = 1e-5  #1e-5 for bessler
+        sim_dch.inith = 1e-5 
         sim_dch.verbosity = sim_output
         sim_dch.make_consistent('IDA_YA_YDP_INIT')
 
-        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)  #  78087.336183830  131865.32
+        t_dch, SV_dch, SV_dot_dch = sim_dch.simulate(t_f)  
             
         SV_dch_df = label_columns(t_dch, SV_dch, an.npoints, sep.npoints, cat.npoints)
 
@@ -217,10 +209,6 @@ def main():
             
             plot_meanPS(SV_ch_df, tags, 'Charging')
         SV_ch_df = 0
-#        
-#        print('Max S_8(e) concentration = ', max(SV_ch[:, 6]))
-#        SV_0_cycle = SV_ch[-1, :]
-#        SV_dot_0_cycle = SV_ch[-1, :]
         
         print('Done Charging\n')  
     
@@ -332,12 +320,9 @@ class cc_cycling(Implicit_Problem):
             elyte.electric_potential = s1['phi_el'] 
             conductor.electric_potential = s1['phi_ed']
             elyte.X = s1['X_k']
-#            b = 1e-14  
-#            D_scale = b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
             D_scale = scale_Diff(s1['C_k'])
             D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
-#            if i_ext < 0:
-#                print(D_scale, cat.D_el, '\n')
+
             # Current node plus face boundary fluxes
             i_el_p = cat.sigma_eff*(s1['phi_ed'] - s2['phi_ed'])*cat.dyInv
             N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, cat.dy)
@@ -384,8 +369,6 @@ class cc_cycling(Implicit_Problem):
               (Li2S_tpb.get_creation_rates(conductor)*mult - 
                Li2S_tpb.get_destruction_rates(conductor))*tpb_len)
             i_Far = (i_C)*F/cat.dyInv
-#            if eps_S8 < 1e-3:
-#                print(-i_Far + i_el_m - i_el_p)
             
             # Net rate of formation
             R_net = R_C + R_S + R_L 
@@ -436,7 +419,6 @@ class cc_cycling(Implicit_Problem):
         j = cat.npoints-1; offset = cat.offsets[int(j)]
         
         # Set variables to CURRENT NODE value
-#        geom = set_geom(SV, offset, cat.ptr)
         eps_S8 = max(SV[offset + ptr['eps_S8']], cat.eps_cutoff)
         eps_Li2S = max(SV[offset + ptr['eps_Li2S']], cat.eps_cutoff)
         eps_el = 1 - cat.eps_C_0 - eps_S8 - eps_Li2S  
@@ -448,10 +430,8 @@ class cc_cycling(Implicit_Problem):
         
         # Set outlet boundary conditions for THIS node
         i_el_p = 0
-        D_scale = scale_Diff(s1['C_k'])  #b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+        D_scale = scale_Diff(s1['C_k'])  
         D_el = (cat.D_el - D_scale)*eps_el**(cat.bruggeman)
-#        if i_ext < 0:
-#            print(D_scale, cat.D_el, D_el, t, '\n')
 
         N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, sep.dy)
 
@@ -468,7 +448,7 @@ class cc_cycling(Implicit_Problem):
         sdot_tpb_el = mult*Li2S_tpb.get_creation_rates(elyte) - Li2S_tpb.get_destruction_rates(elyte)
             
         np_S = inputs.np_S8_init
-        np_L = inputs.np_Li2S_init  #SV[offset + ptr['np_Li2S']]
+        np_L = inputs.np_Li2S_init  
         A_S = 2*pi*np_S*(3*eps_S8/2/np_S/pi)**(2/3)
         A_L = 2*pi*np_L*(3*eps_Li2S/2/np_L/pi)**(2/3)
         
@@ -544,10 +524,8 @@ class cc_cycling(Implicit_Problem):
             
             # Shift back to THIS node
             offset = sep.offsets[int(j-1)]
-            D_scale = scale_Diff(s1['C_k'])  #b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+            D_scale = scale_Diff(s1['C_k'])  
             D_el = sep.D_el - D_scale
-#            if i_ext < 0:
-#                print(D_scale, cat.D_el, D_el, t, '\n')
             
             # THIS node plus face boundary conditions
             N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, sep.dy)
@@ -569,17 +547,11 @@ class cc_cycling(Implicit_Problem):
                 
         # Shift back to THIS node
         offset = sep.offsets[-1]
-        D_scale = scale_Diff(s1['C_k'])  #b*abs(inputs.C_k_el_0[cat.ptr['iFar']] - s1['C_k'][cat.ptr['iFar']])
+        D_scale = scale_Diff(s1['C_k'])  
         D_el = sep.D_el - D_scale
-#        if i_ext < 0:
-#            print(D_scale, cat.D_el, D_el, t, '\n\n')
         
         # Current node plus face boundary conditions
         N_io_p, i_io_p = dst(s1, s2, D_el, sep.dy, an.dy_el)
-#        N_io_p = N_io_p*[1, 1, 1, 0, 0, 0, 0, 0, 0]
-#        i_io_p = np.dot(N_io_p, inputs.z_k_el)*F
-#        i_io_p = 0
-#        N_io_p = 0
         
         res[offset + sep.ptr['rho_k_el']] = (SV_dot[offset + sep.ptr['rho_k_el']]
         - (N_io_m - N_io_p)*sep.dyInv/sep.epsilon_el)
@@ -603,8 +575,8 @@ class cc_cycling(Implicit_Problem):
         
         elyte.X = s1['X_k']
         elyte.electric_potential = s1['phi_el']
-        lithium.electric_potential = s1['phi_ed']  #SV[offset + an.ptr['phi_ed']]  #
-        conductor.electric_potential = s1['phi_ed']  #SV[offset + an.ptr['phi_ed']]  #
+        lithium.electric_potential = s1['phi_ed']  
+        conductor.electric_potential = s1['phi_ed'] 
         
         sdot_Li = lithium_s.get_net_production_rates(elyte)
         sdot_Far = lithium_s.get_net_production_rates(conductor)
@@ -612,11 +584,6 @@ class cc_cycling(Implicit_Problem):
         R_net = sdot_Li*an.A_Li*an.dyInv
         i_Far = sdot_Far*an.A_Li*F
         R_net[cat.ptr['iFar']] += (-i_Far + i_el_m - i_el_p)/an.dy/F
-        
-#        print(sdot_Far, i_ext, '\n')
-        
-#        res[sep.offsets[-1] + sep.ptr['phi']] = (SV_dot[sep.offsets[-1] + sep.ptr['phi']]
-#        + (-i_Far + i_el_m - i_el_p)/an.C_dl/an.A_Li) 
                    
         res[offset + an.ptr['rho_k_el']] = (SV_dot[offset+ an.ptr['rho_k_el']]
         - (R_net + (N_io_m - N_io_p)*an.dyInv)/an.eps_el)  
@@ -629,9 +596,6 @@ class cc_cycling(Implicit_Problem):
         """==============================ANODE=============================="""
         """CC BOUNDARY"""
 
-#        print(res, i_ext, t, '\n\n')
-#        if i_ext < 0:
-#            print(t, '\n\n')
         return res  
     
     "========================================================================="
