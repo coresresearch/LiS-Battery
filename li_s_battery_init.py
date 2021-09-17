@@ -178,7 +178,6 @@ class cathode():
           + Li2S_obj.density_mole*eps_L_0*H
               
     W_S = sulfur_obj.molecular_weights/sulfur_obj.n_atoms(sulfur_obj.species_names[0], 'S')
-    W_S_k = elyte_obj.molecular_weights[3:]
     
     m_S_el = inputs.A_cat*eps_el_0*H*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_el_an = inputs.A_cat*inputs.H_an_el*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)

@@ -177,7 +177,7 @@ def main():
             SV_dot_req = SV_dot_dch
             
         "-----------Charging-----------"
-        if 'dog' in inputs.ctifile:  
+        if inputs.flag_charge == 1:  
             print('Charging...')
             
             SV_0 = SV_req[-1, :]  
@@ -328,6 +328,9 @@ class cc_cycling(Implicit_Problem):
             N_io_p, i_io_p = dst(s1, s2, D_el, cat.dy, cat.dy)
             
             sdot_C = C_el_s.get_net_production_rates(elyte)
+            
+            # mult is a function to smooth the transition of sulfur consumption
+            #   between on and off
             mult = tanh(eps_S8/cat.eps_dropoff)  
             sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
             sdot_S = S_el_s.get_net_production_rates(elyte)  
@@ -351,6 +354,8 @@ class cc_cycling(Implicit_Problem):
             A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
             
             R_C = sdot_C*A_C
+            
+            # Switch used for any of the Bessler based mechanisms
 #            if eps_S8 < cat.eps_S8_cutoff:
 #                R_S = 0*sdot_S*A_S
 #                sw = 0
@@ -437,6 +442,8 @@ class cc_cycling(Implicit_Problem):
 
         sdot_C = C_el_s.get_net_production_rates(elyte)
         
+        # mult is a function to smooth the transition of sulfur consumption
+        #   between on and off
         mult = tanh(eps_S8/cat.eps_dropoff)  
         sdot_S8 = S_el_s.get_creation_rates(sulfur) - mult*S_el_s.get_destruction_rates(sulfur)
         sdot_S = S_el_s.get_net_production_rates(elyte)  
@@ -460,6 +467,8 @@ class cc_cycling(Implicit_Problem):
         A_C = cat.A_C_0 - (pi*np_S*r_S**2) - (pi*np_L*r_L**2)
         
         R_C = sdot_C*A_C
+        
+        # Switch used for any of the Bessler based mechanisms
 #        if eps_S8 < cat.eps_S8_cutoff:
 #            R_S = 0*sdot_S*A_S
 #            sw = 0

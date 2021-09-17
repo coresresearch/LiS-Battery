@@ -34,6 +34,7 @@ class inputs():
     
     # Set number of discretized shells in each particle    
     flag_req = 0
+    flag_charge = 0
     n_cycles = 1
     
     """Plotting options"""
