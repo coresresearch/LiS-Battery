@@ -98,7 +98,6 @@ class inputs():
     
     # Cell geometry
     H_cat = 100e-6               # Cathode thickness [m]
-    r_C = H_cat/npoints_cathode/2
     A_C_0 = 2e4
     
     # There are two options for providing sulfur loading. Input the value in
@@ -222,13 +221,10 @@ class inputs():
     
     "Cathode geometry and transport"
     # Anode geometry
-    epsilon_carbon = 0.062      # Volume fraction of carbon in cathode [-]
+    epsilon_carbon = 0.056      # Volume fraction of carbon in cathode [-]
     tau_cat = 1.6               # Tortuosity for cathode [-]
     r_p_cat = 5e-6              # Average pore radius [m]
     d_p_cat = 5e-6              # Average particle diameter [m]
-    overlap_cat = 0.4           # Percentage of carbon particle overlapping with other
-                                #   carbon particles. Reduces total carbon/elyte
-                                #   surface area [-]
                         
     # Transport
     C_dl_cat = 1.5e-2    # Double-layer capacitance [F/m^2]
@@ -237,19 +233,12 @@ class inputs():
     "Anode geometry and transport"
     # Anode geometry
     epsilon_an = 0.95  #0.63    # Volume fraction of anode phase [-]
-    tau_an = 1.6        # Tortuosity, assume equal values for carbon and elyte [-]
-    r_p_an = 5e-6       # Average pore radius [m]
-    d_p_an = 5e-6       # Average particle diameter for graphite [m]
     H_an = 95e-6        # Anode thickness [m]
     H_an_el = 5e-6
-    overlap_an = 0.4    # Percentage of anode particle overlapping with other
-                        #   anode particles. Reduces total anode/elyte
-                        #   surface area [-]
                         
     # Transport
     C_dl_an = 1.5e-1    # Double-layer capacitance [F/m^2]
     sigma_an = 75.0     # Bulk anode electrical conductivity [S/m]
-    D_Li_an = 7.5e-16   # Bulk diffusion coefficient for Li in graphite [m^2/s]
     
     "Electrolyte/separator geometry and transport"
     H_elyte = 25e-6     # Separator thickness [m]

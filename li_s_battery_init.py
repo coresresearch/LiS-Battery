@@ -130,7 +130,7 @@ class cathode():
     m_solid = m_S/omega_S
     
     eps_S_0 = m_S/rho_S/H
-    eps_C_0 = 0.056  #m_solid*omega_C/rho_C/H
+    eps_C_0 = inputs.epsilon_carbon  #m_solid*omega_C/rho_C/H
     print('Eps_C_0 =', eps_C_0)
     eps_L_0 = 1e-5
     
@@ -178,7 +178,6 @@ class cathode():
           + Li2S_obj.density_mole*eps_L_0*H
               
     W_S = sulfur_obj.molecular_weights/sulfur_obj.n_atoms(sulfur_obj.species_names[0], 'S')
-    cap_weights = np.array([1, 7/8, 0.8333, 0.75, 0.5, 0])
     W_S_k = elyte_obj.molecular_weights[3:]
     
     m_S_el = inputs.A_cat*eps_el_0*H*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
@@ -326,7 +325,6 @@ class anode():
     
     # Geometric parameters
     eps_el = 1 - inputs.epsilon_an
-    tau = inputs.tau_an
     r_p = inputs.r_p_cat
     dyInv = npoints/inputs.H_an
     dy = inputs.H_an/npoints
@@ -338,12 +336,7 @@ class anode():
     
     C_dl = inputs.C_dl_an
     A_Li = 1.5  #1/H
-    sigma_eff = inputs.sigma_an*inputs.epsilon_an/tau**3
-    
-    u_Li_el = inputs.D_Li_el*eps_el/tau**3
-    
-    D_el = inputs.D_Li_el*eps_el**(1.)/tau**3
-    
+            
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
     m_Li = H*lithium_obj.density_mass
