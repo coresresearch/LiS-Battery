@@ -49,9 +49,11 @@ General steps to run the model:
   - `A_cat`: planar area of the cell
   - `m_S_0`: sulfur loading (mass per area) or bulk (mass) depending on `sulfur_method` string value
   - Other geometric and material parameters can be set for the cell components in this file as well
-2. The model can be run from `li_s_battery_inputs.py` directly, or by opening and running `li_s_battery_model.py` where solver parameters can be modified if desired.
-3. After the model is finished running, it will print summary plots of voltage, solid phase volume fractions, and species concentrations. Additionally, the data will be saved in the current folder as a `.csv` file.
+2. The model can be run from `li_s_battery_inputs.py` directly, or by running `li_s_battery_model.py` where solver parameters can be modified if desired.
+3. After the model is finished running, it will print summary plots of voltage, solid phase volume fractions, and species concentrations, and the simulation data (state variables vs. time) will be saved in the current folder as a `.csv` file.
 
 # Further work on model
 
-Work is being done to further generalize the code and move all parameters users may wish to adjust directly into the `li_s_battery_inputs.py` file, including solver settings, etc. Additionally, further updates to the model will likely alter the numerical solver package used to allow for more flexibility.
+Work is being done to further generalize the code and move all parameters users may wish to adjust directly into the `li_s_battery_inputs.py` file, including solver settings, etc. Additionally, further updates to the model will likely alter the numerical solver package used to allow for more flexibility.  
+
+Please feel free to download, use, and modify the code as you wish.  If you have useful contributions, please consider making a pull request.  If there are feature requests or suggestions, please open an issue. Thank you!
