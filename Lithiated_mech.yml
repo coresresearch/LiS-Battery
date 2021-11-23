@@ -1,6 +1,35 @@
 descriptions: |-
-  This is an implementation of the Li-S model used by Jonathan P. Neidhardt
-    et al (DOI: 10.1149/2.023209jes)
+  This is a modified implementation of the Li-S model used by Jonathan P. Neidhardt
+    et al (DOI: 10.1149/2.023209jes). It uses a "lithiated" mechanism, i.e.
+    assumes that the dissolved polysulfide species in the electrolyte form
+    a solvation structure of some kind and are not fully dissociated by
+    solvent. 
+
+    The first section of this file, 'phases' defines each phase of the system
+    as listed here:
+
+      sulfur: the solid sulfur phase, S8, found in the cathode of the cell.
+      carbon: the solid carbon phase, found in the cathode of the cell
+      electron: the phase Cantera uses for electrons in electronically conductive
+                phases
+      electrolyte: the liquid electrolyte phase
+      lithium_sulfide: solid Li2S found in the cathode
+      sulfur_surf: the 2-phase interface boundary between sulfur and electrolyte
+      carbon_surf: the 2-phase interface boundary between carbon and electrolyte
+      lithium_sulfide_surf: the 2-phase interface boundary between Li2S and
+                            electrolyte
+      lithium: the solid lithium phase in the anode
+      lithium_surf: the 2-phase interface boundary between lithium anode and
+                    the electrolyte
+      tpb: the three-phase boundary interface between the carbon, Li2S, and
+            electrolyte (may be unused)
+
+    The second section of this file is the 'species' section. It contains
+    definitions for species present in all phases and their base thermodynamic
+    and physical propertie, for example, h0 and molar volume of the species.
+
+    The third section of this file contains the reactions of all phases, 2-phase
+    boundaries, and 3-phase boundaries wherever applicable.
 
     units(length = "cm", time = "s", quantity = "mol", act_energy = "J/mol")
 
