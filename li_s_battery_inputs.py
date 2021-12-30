@@ -63,16 +63,11 @@ class inputs():
     T = 298.15  # [K]
     
     "Set up Cantera phase names and CTI file info"
-#    ctifile = 'sulfur_cathode_cascade_Crate.cti'
-#    ctifile = 'sulfur_cathode_cascade_lithiated.cti'
-#    ctifile = 'Kuzmina.yml'
-    ctifile = 'Kuzmina3.yml'
-#    ctifile = 'Assary.yml'
-#    ctifile = 'Bessler_Dennis.yml'
-#    ctifile = 'Bessler_Dennis_mod.yml'
-#    ctifile = 'Bessler_Dennis_lithiated.yml'
-#    ctifile = 'Shriram.yml'
-#    ctifile = 'Shriram_adjusted.yml'
+#    ctifile = 'Kuzmina_mech.yml'
+#    ctifile = 'Assary_mech.yml'
+#    ctifile = 'Non_Lithiated_mech.yml'
+    ctifile = 'Lithiated_mech.yml'
+
     cat_phase1 = 'sulfur'
     cat_phase2 = 'lithium_sulfide'
     cat_phase3 = 'carbon'
@@ -91,7 +86,7 @@ class inputs():
     
     # Set initial potential values for anode, elyte, and cell
     Phi_an_init = 0.0
-    if 'Bessler' in ctifile:
+    if 'Lithiated' in ctifile:
         Phi_el_init = 0
     else:
         Phi_el_init = 1.3
@@ -114,7 +109,7 @@ class inputs():
                     
     # Initial number of nucleation sites per volume for solid phases. Eventually will
     #   use a nucleation theory.
-    if 'cascade' or 'Bessler' in ctifile: 
+    if 'cascade' or 'Lithiated' in ctifile: 
         n = 5e13*exp(2.4221*C_rate)  
         print("Density for cascade")
     else:
@@ -184,9 +179,9 @@ class inputs():
             mech = 'Cascade'
             z_k_el = np.array([0., 1., -1., 0., -2., -2., -2., -2., -2.])
         print('Using cascade')
-    elif 'Bessler' or 'Shriram' in ctifile:
+    elif 'Lithiated' in ctifile:
         C_counter_n = 1.024 - 1.821e-4*2 - 3.314e-4*2 - 2.046e-5*2 - 5.348e-10*2 - 8.456e-13*2
-        if 'lithiated' in ctifile:
+        if 'Lithiated' in ctifile and not 'Non' in ctifile:
             C_counter_0 = 1.024
         else:
             C_counter_0 = C_counter_n
@@ -199,7 +194,7 @@ class inputs():
                              2.046e-5,
                              5.348e-10,
                              8.456e-13])
-        if 'lithiated' in ctifile:
+        if 'Lithiated' in ctifile and not 'Non' in ctifile:
             mech = 'Bessler_Li'
             z_k_el = np.array([0., 1., -1., 0., 0., 0., 0., 0., 0.])
         else:
@@ -233,8 +228,8 @@ class inputs():
     
     "Anode geometry and transport"
     # Anode geometry
-    epsilon_an = 0.95  #0.63    # Volume fraction of anode phase [-]
-    H_an = 95e-6        # Anode thickness [m]
+    epsilon_an = 0.95   # Volume fraction of anode phase [-]
+    H_an = 100e-6        # Anode thickness [m]
     H_an_el = 5e-6
                         
     # Transport

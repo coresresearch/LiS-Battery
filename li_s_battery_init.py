@@ -180,11 +180,11 @@ class cathode():
     W_S = sulfur_obj.molecular_weights/sulfur_obj.n_atoms(sulfur_obj.species_names[0], 'S')
     
     m_S_el = inputs.A_cat*eps_el_0*H*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
-    m_S_el_an = inputs.A_cat*inputs.H_an_el*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
+    m_S_el_an = inputs.A_cat*inputs.H_an*(1-inputs.epsilon_an)*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_el_sep = inputs.A_cat*(1 - inputs.epsilon_sep)*inputs.H_elyte*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_tot_0 = m_S_0 + m_S_el + m_S_el_an + m_S_el_sep 
     
-    V_elyte = inputs.A_cat*(inputs.H_an_el +
+    V_elyte = inputs.A_cat*(inputs.H_an*(1-inputs.epsilon_an) +
                             inputs.H_elyte*(1-inputs.epsilon_sep) +
                             inputs.H_cat*eps_el_0)
     print('Elyte/sulfur ratio ', 1e3*V_elyte/m_S_tot_0)
@@ -329,7 +329,7 @@ class anode():
     dy = inputs.H_an/npoints
     H = inputs.H_an
     
-    H_el = inputs.H_an_el
+    H_el = H*eps_el
     dy_el = H_el/1
     dyInv_el = 1/H_el
     
